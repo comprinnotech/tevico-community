@@ -2,8 +2,8 @@ import os
 import boto3
 
 from typing import Any, Dict
-from tevico.engine.configs.config import ConfigUtils
-from tevico.engine.entities.provider.provider import Provider
+from framework.engine.configs.config import ConfigUtils
+from framework.engine.entities.provider.provider import Provider
 
 
 class AWSProvider(Provider):

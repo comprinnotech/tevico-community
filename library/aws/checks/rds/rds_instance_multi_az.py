@@ -1,8 +1,7 @@
 import boto3
 
-from tevico.engine.entities import report
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 
 class rds_instance_multi_az(Check):

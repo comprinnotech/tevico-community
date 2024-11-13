@@ -4,8 +4,8 @@ EMAIL: deepak.puri@comprinno.net
 DATE: 2024-10-09
 """
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 class ec2_network_acl_allow_ingress_any_port(Check):
 

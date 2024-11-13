@@ -3,8 +3,8 @@
 from functools import reduce
 from typing import List
 
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.report.report_model import AnalyticsReport, CheckStatusReport, GeneralReport, SeverityReport
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.report.report_model import AnalyticsReport, CheckStatusReport, GeneralReport, SeverityReport
 
 
 def __check_status_accumulator(acc: CheckStatusReport, check: CheckReport):

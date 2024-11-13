@@ -5,12 +5,12 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from tevico.engine.configs.config import ConfigUtils, TevicoConfig
-from tevico.engine.core.utils import CoreUtils
-from tevico.engine.entities.framework.framework_model import FrameworkModel, FrameworkSection
-from tevico.engine.entities.profile.profile_model import ProfileModel
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.configs.config import ConfigUtils, TevicoConfig
+from framework.engine.core.utils import CoreUtils
+from framework.engine.entities.framework.framework_model import FrameworkModel, FrameworkSection
+from framework.engine.entities.profile.profile_model import ProfileModel
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 class Provider(ABC):
     

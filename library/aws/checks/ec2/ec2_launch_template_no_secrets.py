@@ -7,8 +7,8 @@ import boto3
 import base64
 import re
 
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 
 class ec2_launch_template_no_secrets(Check):

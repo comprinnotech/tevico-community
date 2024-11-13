@@ -4,8 +4,8 @@ DATE: 2024-10-17
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 from datetime import datetime
 
 class organizations_account_part_of_organizations(Check):

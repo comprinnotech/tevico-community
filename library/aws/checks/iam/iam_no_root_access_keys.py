@@ -5,8 +5,8 @@ DATE: 2024-10-10
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 class iam_no_root_access_keys(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)

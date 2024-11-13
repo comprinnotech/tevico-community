@@ -1,7 +1,7 @@
 
-from tevico.engine.configs.config import ConfigUtils
-from tevico.engine.core.enums import CommandsEnum
-from tevico.engine.handler import FrameworkHandler
+from framework.engine.configs.config import ConfigUtils
+from framework.engine.core.enums import CommandsEnum
+from framework.engine.handler import FrameworkHandler
 
 
 def parse_args() -> None:

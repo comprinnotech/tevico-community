@@ -4,10 +4,9 @@ DATE: 2024-10-17
 """
 
 import boto3
-from typing import List, Dict, Any
-from datetime import datetime
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from typing import List
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 class iam_account_maintain_current_contact_details(Check):
 

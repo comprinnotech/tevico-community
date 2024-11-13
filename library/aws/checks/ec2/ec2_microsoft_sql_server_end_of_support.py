@@ -6,8 +6,8 @@ DATE: 2024-10-11
 
 import boto3
 from datetime import datetime
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 class ec2_microsoft_sql_server_end_of_support(Check):
 

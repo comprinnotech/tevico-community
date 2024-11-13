@@ -1,19 +1,18 @@
-import json
 import os
 import subprocess
 import traceback
 from typing import Dict, List, Union
 
 from jinja2 import Environment, FileSystemLoader
-from tevico.engine.configs.config import CreateParams
-from tevico.engine.core.enums import EntitiesEnum
-from tevico.engine.core.utils import CoreUtils
-from tevico.engine.entities.provider.provider import Provider
-from tevico.engine.entities.provider.provider_model import ProviderMetadata
-from tevico.engine.entities.report.check_model import CheckReport
+from framework.engine.configs.config import CreateParams
+from framework.engine.core.enums import EntitiesEnum
+from framework.engine.core.utils import CoreUtils
+from framework.engine.entities.provider.provider import Provider
+from framework.engine.entities.provider.provider_model import ProviderMetadata
+from framework.engine.entities.report.check_model import CheckReport
 from datetime import datetime
 
-from tevico.engine.entities.report.utils import generate_analytics
+from framework.engine.entities.report.utils import generate_analytics
 
 class TevicoFramework():
     

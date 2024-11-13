@@ -5,9 +5,9 @@ from typing import Optional, Type, Any
 
 import yaml
 
-from tevico.engine.configs.config import TevicoConfig
-from tevico.engine.entities.check.check import Check
-from tevico.engine.entities.report.check_model import CheckMetadata
+from framework.engine.configs.config import TevicoConfig
+from framework.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckMetadata
 
 
 class CoreUtils:

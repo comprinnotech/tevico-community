@@ -7,8 +7,8 @@ import base64
 import boto3
 import re
 
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 
 class ec2_instance_secrets_user_data(Check):

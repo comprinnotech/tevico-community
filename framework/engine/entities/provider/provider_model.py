@@ -1,9 +1,9 @@
 
 
 from typing import Any, Dict, List
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
-from tevico.engine.entities.profile.profile_model import ProfileModel
+from framework.engine.entities.profile.profile_model import ProfileModel
 
 
 class ProviderModel(BaseModel):

@@ -4,8 +4,8 @@ DATE: 2024-10-11
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.report.check_model import CheckReport
+from framework.engine.entities.check.check import Check
 
 class iam_customer_attached_policy_admin_privileges_found(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:

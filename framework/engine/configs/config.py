@@ -5,7 +5,7 @@ import textwrap
 from typing import Dict, Optional
 from pydantic import BaseModel
 
-from tevico.engine.core.enums import CommandsEnum
+from framework.engine.core.enums import CommandsEnum
 
 
 class EntitiesConfig(BaseModel):

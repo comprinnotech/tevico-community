@@ -1,7 +1,7 @@
 
 
-from tevico.engine.configs.config import TevicoConfig
-from tevico.engine.framework import TevicoFramework
+from framework.engine.configs.config import TevicoConfig
+from framework.engine.framework import TevicoFramework
 
 
 class FrameworkHandler():

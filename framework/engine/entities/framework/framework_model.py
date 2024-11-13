@@ -2,7 +2,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
-from tevico.engine.entities.check.check import Check
+from framework.engine.entities.check.check import Check
 
 
 class FrameworkSection(BaseModel):
