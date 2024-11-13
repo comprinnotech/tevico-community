@@ -244,7 +244,7 @@ class TevicoFramework():
             print(f'\n❌ Error creating zip file: {zip_file_path}')
             os._exit(1)
 
-        print(f'\n📦 Report zipped successfully: {zip_file_path}')
+        print(f'\n📦 Report zipped successfully: {os.path.abspath(zip_file_path)}')
         
         
     def run(self):
