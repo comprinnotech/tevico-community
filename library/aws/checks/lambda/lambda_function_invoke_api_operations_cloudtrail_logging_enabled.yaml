@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: lambda_function_invoke_api_operations_cloudtrail_logging_enabled
+CheckTitle: Ensure CloudTrail is logging Lambda function invoke API operations.
+CheckType: [Detective Control]
+ServiceName: lambda
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:lambda:region:account-id:function/function-name
+Severity: medium
+ResourceType: AwsCloudTrailTrail
+Description: Ensure CloudTrail is enabled for logging Lambda function invoke API operations to facilitate monitoring and auditing.
+Risk: Without CloudTrail logging enabled for Lambda invokes, it is challenging to monitor and audit Lambda function activity, potentially exposing the environment to undetected malicious activity.
+RelatedUrl: https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudtrail-events.html
+Remediation: 
+  Code:
+    CLI: aws cloudtrail create-trail --name <trail_name> --is-multi-region-trail --enable-log-file-validation
+    NativeIaC: ""
+    Other: ""
+    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudtrail
+  Recommendation:
+    Text: Enable CloudTrail logging for all Lambda function API invocations to support monitoring and auditing.
+    Url: https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudtrail-events.html
+Categories: [Detective Control]
+DependsOn: []
+RelatedTo: []
+Notes: Detective Control

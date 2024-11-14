@@ -8,7 +8,8 @@ import boto3
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
-class elb_logging_enabled(Check):
+class elb_ssl_listeners_enabled(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('elb')
         paginator = client.get_paginator('describe_load_balancers')
@@ -16,24 +17,22 @@ class elb_logging_enabled(Check):
         report = CheckReport(name=__name__)
         report.passed = True
         
-        # Iterate over all ELBs
         for page in paginator.paginate():
             load_balancers = page['LoadBalancerDescriptions']
             for lb in load_balancers:
                 lb_name = lb['LoadBalancerName']
+                listeners = lb['ListenerDescriptions']
                 
-                # Get ELB attributes to check logging
-                lb_attributes = client.describe_load_balancer_attributes(LoadBalancerName=lb_name)['LoadBalancerAttributes']
+                ssl_enabled = False
+                for listener in listeners:
+                    if listener['Listener']['Protocol'] == 'HTTPS' or listener['Listener']['Protocol'] == 'SSL':
+                        ssl_enabled = True
+                        break
                 
-                # Check if access logging is enabled
-                access_logs = lb_attributes.get('AccessLog', {})
-                if access_logs.get('Enabled', False):
+                if ssl_enabled:
                     report.resource_ids_status[lb_name] = True
                 else:
                     report.resource_ids_status[lb_name] = False
                     report.passed = False
-
+        
         return report
-
-
-

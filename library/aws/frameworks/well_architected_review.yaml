@@ -124,6 +124,14 @@ sections:
     checks:
      - account_maintain_current_contact_details
      - account_security_contact_information_registered
+     - acm_certificates_expiration_check
+     - acm_certificates_transparency_logs_enabled
+     - apigateway_execution_logging_enabled
+     - apigateway_restapi_logging_enabled
+     - apigateway_rest_api_waf_acl_attached
+     - apigateway_rest_api_client_certificate_enabled
+     - apigateway_waf_protection_enabled
+     - apigatewayv2_api_access_logging_enabled
      - ec2_image_builder_enabled
      - ec2_instance_managed_by_ssm
      - ec2_managed_instance_patch_compliance_status
@@ -131,6 +139,18 @@ sections:
      - ec2_network_acl_allow_ingress_any_port
      - ec2_network_acl_allow_ingress_tcp_port_22
      - ec2_security_group_default_restrict_traffic
+     - ecr_image_private_image_scanning_enabled
+     - ecr_repository_scan_images_on_push_enabled
+     - ecr_repository_scan_vulnerabilities_in_latest_image
+     - efs_encryption_at_rest_enabled
+     - eks_cluster_kms_cmk_encryption_in_secrets_enabled
+     - eks_cluster_logging_enabled
+     - eks_control_plane_endpoint_access_restricted
+     - elb_ssl_listeners_enabled
+     - elb_v2_logging_enabled
+     - elb_waf_acl_attached
+     - dynamodb_tables_kms_cmk_encryption_enabled
+     - guardduty_enabled_centralized
      - iam_account_maintain_current_contact_details
      - iam_account_security_contact_information_registered
      - iam_attached_policy_admin_privileges_found
@@ -146,4 +166,11 @@ sections:
      - iam_password_policy_uppercase
      - iam_root_hardware_mfa_enabled
      - iam_root_mfa_enabled
+     - inspector_ec2_scan_enabled
+     - inspector_lambda_standard_scan_enabled
+     - kms_cmk_rotation_enabled
+     - kms_cmk_are_used
+     - lambda_function_invoke_api_operations_cloudtrail_logging_enabled
+     - lambda_function_not_publicly_accessible
+     - networkfirewall_logging_enabled
      - organizations_account_part_of_organizations

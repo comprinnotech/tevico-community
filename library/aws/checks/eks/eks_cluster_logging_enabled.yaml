@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: eks_cluster_logging_enabled
+CheckTitle: Ensure EKS Cluster Logging is Enabled for Control Plane Components
+CheckType: [Infrastructure Protection]
+ServiceName: eks
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: medium
+ResourceType: AwsEksCluster
+Description: Ensures that EKS clusters have logging enabled for control plane components, which is important for monitoring, auditing, and troubleshooting purposes.
+Risk: Without logging enabled, critical data about the cluster's control plane may be inaccessible, hindering security analysis and monitoring capabilities.
+RelatedUrl: ""
+Remediation: 
+  Code:
+    CLI: ""
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable logging for EKS control plane components in your EKS cluster to improve observability.
+    Url: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
+Categories: [Infrastructure Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Infrastructure Protection

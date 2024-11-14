@@ -8,32 +8,30 @@ import boto3
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
-class elb_logging_enabled(Check):
+class elb_v2_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('elb')
+        client = connection.client('elbv2')
         paginator = client.get_paginator('describe_load_balancers')
         
         report = CheckReport(name=__name__)
         report.passed = True
         
-        # Iterate over all ELBs
+        # Iterate over all ALBs and NLBs
         for page in paginator.paginate():
-            load_balancers = page['LoadBalancerDescriptions']
+            load_balancers = page['LoadBalancers']
             for lb in load_balancers:
-                lb_name = lb['LoadBalancerName']
+                lb_arn = lb['LoadBalancerArn']
                 
-                # Get ELB attributes to check logging
-                lb_attributes = client.describe_load_balancer_attributes(LoadBalancerName=lb_name)['LoadBalancerAttributes']
+                # Get ELBv2 attributes to check logging
+                attributes = client.describe_load_balancer_attributes(LoadBalancerArn=lb_arn)['Attributes']
                 
                 # Check if access logging is enabled
-                access_logs = lb_attributes.get('AccessLog', {})
-                if access_logs.get('Enabled', False):
-                    report.resource_ids_status[lb_name] = True
+                logging_enabled = any(attr['Key'] == 'access_logs.s3.enabled' and attr['Value'] == 'true' for attr in attributes)
+                
+                if logging_enabled:
+                    report.resource_ids_status[lb_arn] = True
                 else:
-                    report.resource_ids_status[lb_name] = False
+                    report.resource_ids_status[lb_arn] = False
                     report.passed = False
 
         return report
-
-
-

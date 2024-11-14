@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: elb_waf_acl_attached
+CheckTitle: Ensure WAF ACL is Attached to Application Load Balancers (ALB)
+CheckType: [Infrastructure Protection]
+ServiceName: elbv2
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: high
+ResourceType: AwsElbLoadBalancer
+Description: Ensure a WAF ACL is attached to Application Load Balancers to protect against common web exploits.
+Risk: Without a WAF ACL, the application is more vulnerable to web-based attacks, potentially impacting data security and service availability.
+RelatedUrl: ""
+Remediation: 
+  Code:
+    CLI: aws wafv2 associate-web-acl --resource-arn <alb-arn> --web-acl-arn <web-acl-arn>
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Attach a WAF ACL to the Application Load Balancer to enhance security.
+    Url: https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html
+Categories: [Infrastructure Protection]
+DependsOn: []
+RelatedTo: []
+Notes: 

@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: lambda_function_not_publicly_accessible
+CheckTitle: Ensure Lambda function is not publicly accessible.
+CheckType: [Infrastructure Protection]
+ServiceName: lambda
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:lambda:region:account-id:function/function-name
+Severity: high
+ResourceType: AwsLambdaFunction
+Description: Ensures that Lambda functions are not publicly accessible to prevent unauthorized access.
+Risk: Publicly accessible Lambda functions expose the environment to unauthorized access, potentially leading to data breaches and malicious activity.
+RelatedUrl: https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html
+Remediation: 
+  Code:
+    CLI: aws lambda remove-permission --function-name <function_name> --statement-id <statement_id>
+    NativeIaC: ""
+    Other: ""
+    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
+  Recommendation:
+    Text: Ensure that Lambda functions are not publicly accessible by reviewing and restricting their permissions.
+    Url: https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html
+Categories: [Infrastructure Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Infrastructure Protection

@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: elb_ssl_listeners_enabled
+CheckTitle: Ensure Classic ELB Listeners Use SSL/HTTPS for Secure Connections
+CheckType: [Data Protection]
+ServiceName: elb
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:loadbalancer/load-balancer-name
+Severity: high
+ResourceType: AwsElbLoadBalancer
+Description: Ensure Classic Elastic Load Balancers (ELBs) have SSL or HTTPS listeners enabled to encrypt traffic between clients and the load balancer.
+Risk: Non-SSL listeners could expose sensitive data to interception or tampering during transmission, posing a security risk to the application and users.
+RelatedUrl: ""
+Remediation: 
+  Code:
+    CLI: ""
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Configure SSL/HTTPS listeners for your Classic ELB to ensure secure, encrypted communications.
+    Url: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-listener-config.html
+Categories: [Data Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Data Protection

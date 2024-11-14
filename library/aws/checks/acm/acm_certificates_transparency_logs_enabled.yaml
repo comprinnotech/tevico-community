@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: acm_certificates_transparency_logs_enabled
+CheckTitle: Ensure that ACM certificates have transparency logs enabled
+CheckType: [Detective Control]
+ServiceName: acm
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: medium
+ResourceType: AwsCertificateManagerCertificate
+Description: Ensure that ACM certificates have transparency logs enabled for enhanced security and monitoring.
+Risk: Disabling certificate transparency logs can obscure the visibility of certificates, potentially leading to unauthorized certificate issuance.
+RelatedUrl: https://docs.aws.amazon.com/acm/latest/userguide/acm-bestpractices.html
+Remediation: 
+  Code:
+    CLI: "aws acm update-certificate-options --certificate-arn <certificate-arn> --options CertificateTransparencyLoggingPreference=ENABLED"
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable certificate transparency logging to improve certificate visibility and security.
+    Url: https://docs.aws.amazon.com/acm/latest/userguide/acm-bestpractices.html
+Categories: [Detective Control]
+DependsOn: []
+RelatedTo: []
+Notes: Detective Control

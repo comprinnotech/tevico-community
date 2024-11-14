@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: apigateway_rest_api_client_certificate_enabled
+CheckTitle: Ensure that Amazon API Gateway REST APIs require client certificates for authentication
+CheckType: [Data Protection]
+ServiceName: apigateway
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: medium
+ResourceType: AwsApiGatewayRestApi
+Description: This check ensures that each REST API in Amazon API Gateway is configured to require client certificate authentication to enhance security and data protection.
+Risk: Not requiring client certificates for API access can expose the API to unauthorized users and increase the risk of data exposure.
+RelatedUrl: "https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started-client-side-ssl-authentication.html"
+Remediation: 
+  Code:
+    CLI: aws apigateway update-stage --rest-api-id <api_id> --stage-name <stage_name> --patch-operations op=replace,path=/clientCertificateId,value=<client_certificate_id>
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable client certificate authentication for each API Gateway REST API stage.
+    Url: https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started-client-side-ssl-authentication.html
+Categories: [Data Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Data Protection

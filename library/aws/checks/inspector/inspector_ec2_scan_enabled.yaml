@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: inspector_ec2_scan_enabled
+CheckTitle: Ensure Amazon Inspector EC2 Scanning is Enabled
+CheckType: [Vulnerability Management]
+ServiceName: inspector2
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:ec2:region:account-id:instance/instance-id
+Severity: medium
+ResourceType: AwsEc2Instance
+Description: Verifies that Amazon Inspector EC2 scanning is enabled for all instances.
+Risk: Without active EC2 scanning, vulnerabilities may go undetected, increasing security risks.
+RelatedUrl: https://docs.aws.amazon.com/inspector/latest/user/getting-started.html
+Remediation: 
+  Code:
+    CLI: aws inspector2 enable --resource-type EC2
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable EC2 scanning in Amazon Inspector for continuous vulnerability assessment.
+    Url: https://docs.aws.amazon.com/inspector/latest/user/getting-started.html
+Categories: [Vulnerability Management]
+DependsOn: []
+RelatedTo: []
+Notes: Vulnerability Management

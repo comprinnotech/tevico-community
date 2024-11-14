@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: guardduty_enabled_centralized
+CheckTitle: Ensure GuardDuty is Enabled and Centralized
+CheckType: [Infrastructure Protection]
+ServiceName: guardduty
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:guardduty:region:account-id:detector/detector-id
+Severity: high
+ResourceType: AwsGuardDutyDetector
+Description: Ensure GuardDuty is enabled in all regions and findings are centralized to a master account for unified threat detection.
+Risk: Without centralized GuardDuty, it’s challenging to achieve unified visibility into potential threats across multiple accounts and regions, increasing the risk of undetected security incidents.
+RelatedUrl: ""
+Remediation: 
+  Code:
+    CLI: aws guardduty create-detector --enable
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable GuardDuty in all regions and set up centralized findings forwarding to a master account.
+    Url: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings-accounts.html
+Categories: [Infrastructure Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Infrastructure Protection

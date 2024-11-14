@@ -1,35 +1,25 @@
 Provider: aws
 CheckID: apigatewayv2_api_access_logging_enabled
-CheckTitle: Ensure API Gateway V2 has Access Logging enabled.
-CheckAliases:
-  - apigatewayv2_access_logging_enabled
-CheckType:
-  - IAM
+CheckTitle: Ensure access logging is enabled for Amazon API Gateway V2 APIs
+CheckType: [Detective Control]
 ServiceName: apigateway
 SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: medium
 ResourceType: AwsApiGatewayV2Api
-Description: Ensure API Gateway V2 has Access Logging enabled.
-Risk: If no authorizer is enabled anyone can use the service.
-RelatedUrl: ""
-Remediation:
+Description: This check ensures that access logging is enabled for API Gateway V2 APIs (HTTP or WebSocket APIs) to provide Detective Control of API requests.
+Risk: Without access logging, it is difficult to monitor and troubleshoot API access, which can lead to security risks and reduced visibility into API activity.
+RelatedUrl: "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html"
+Remediation: 
   Code:
-    CLI: ""
+    CLI: aws apigatewayv2 update-stage --api-id <api_id> --stage-name <stage_name> --access-log-settings DestinationArn=<log_group_arn>
     NativeIaC: ""
-    Other: https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_30#aws-console
-    Terraform: https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_30#cloudformation
+    Other: ""
+    Terraform: ""
   Recommendation:
-    Text:
-      Monitoring is an important part of maintaining the reliability, availability
-      and performance of API Gateway and your AWS solutions. You should collect monitoring
-      data from all of the parts of your AWS solution. CloudTrail provides a record
-      of actions taken by a user, role, or an AWS service in API Gateway. Using the
-      information collected by CloudTrail, you can determine the request that was
-      made to API Gateway, the IP address from which the request was made, who made
-      the request, etc.
-    Url: https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html
-Categories: []
+    Text: Enable access logging for each API Gateway V2 stage to ensure auditability and monitoring.
+    Url: https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html
+Categories: [Detective Control]
 DependsOn: []
 RelatedTo: []
-Notes: ""
+Notes: Detective Control

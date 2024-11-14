@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: inspector_lambda_standard_scan_enabled
+CheckTitle: Ensure Amazon Inspector Lambda Standard Scanning is Enabled
+CheckType: [Vulnerability Management]
+ServiceName: inspector2
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:lambda:region:account-id:function/function-name
+Severity: medium
+ResourceType: AwsLambdaFunction
+Description: Verifies that Amazon Inspector standard scanning is enabled for Lambda functions.
+Risk: Without Lambda scanning enabled, potential vulnerabilities in Lambda functions may go undetected, increasing security risks.
+RelatedUrl: https://docs.aws.amazon.com/inspector/latest/user/getting-started.html
+Remediation: 
+  Code:
+    CLI: aws inspector2 enable --resource-type LAMBDA
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable Lambda scanning in Amazon Inspector to ensure continuous vulnerability assessments.
+    Url: https://docs.aws.amazon.com/inspector/latest/user/getting-started.html
+Categories: [Vulnerability Management]
+DependsOn: []
+RelatedTo: []
+Notes: Vulnerability Management

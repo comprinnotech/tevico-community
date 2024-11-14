@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: elb_v2_logging_enabled
+CheckTitle: Ensure Access Logging is Enabled for ELBv2 (ALB/NLB)
+CheckType: [Detective Control]
+ServiceName: elb
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: high
+ResourceType: AwsElbLoadBalancer
+Description: Ensure access logging is enabled for ELBv2 Application Load Balancers (ALB) and Network Load Balancers (NLB) to monitor and analyze traffic.
+Risk: Without access logging, visibility into request patterns and troubleshooting may be limited, impacting security and operational analysis.
+RelatedUrl: ""
+Remediation: 
+  Code:
+    CLI: aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb-arn> --attributes Key=access_logs.s3.enabled,Value=true Key=access_logs.s3.bucket,Value=<bucket-name>
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Enable access logging for ELBv2 and specify an S3 bucket for log storage.
+    Url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+Categories: [Detective Control]
+DependsOn: []
+RelatedTo: []
+Notes: Detective Control

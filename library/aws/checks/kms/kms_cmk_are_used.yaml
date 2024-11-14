@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: kms_cmk_are_used
+CheckTitle: Ensure Customer-Managed KMS Keys (CMKs) Are in Use.
+CheckType: [Data Protection]
+ServiceName: kms
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:kms:region:account-id:certificate/resource-id
+Severity: medium
+ResourceType: AwsKmsKey
+Description: Ensure that resources are encrypted using customer-managed KMS keys (CMKs) for enhanced control over encryption and key management.
+Risk: Using AWS-managed keys instead of CMKs could reduce control over encryption policies, access, and key rotation, posing potential security and compliance risks.
+RelatedUrl: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#customer-cmk
+Remediation: 
+  Code:
+    CLI: aws kms create-key --description "My CMK" --key-usage ENCRYPT_DECRYPT
+    NativeIaC: ""
+    Other: ""
+    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key
+  Recommendation:
+    Text: Use customer-managed KMS keys (CMKs) to encrypt sensitive data, giving you full control over encryption policies and key management.
+    Url: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#customer-cmk
+Categories: [Data Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Data Protection
