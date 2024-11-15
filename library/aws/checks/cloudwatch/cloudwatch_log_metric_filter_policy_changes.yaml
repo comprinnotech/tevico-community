@@ -1,0 +1,32 @@
+Provider: aws
+CheckID: cloudwatch_log_metric_filter_policy_changes
+CheckTitle: Ensure CloudWatch log metric filters detect IAM policy changes
+CheckType:
+  - Software and Configuration Checks
+  - Industry and Regulatory Standards
+  - CIS AWS Foundations Benchmark
+ServiceName: cloudwatch
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: ""
+ResourceType: AwsCloudWatchLogMetricFilter
+Description: Ensure CloudWatch metric filters are in place to detect IAM policy changes
+Risk:
+  CloudWatch log metric filters help in detecting IAM policy changes by capturing events like policy creation, modification, or deletion. If no such filters exist, changes might go unnoticed, posing a security risk.
+RelatedUrl: ""
+Remediation:
+  Code:
+    CLI: |
+      aws logs put-metric-filter --log-group-name <log-group-name> --filter-name <filter-name> --filter-pattern "<pattern>" --metric-name <metric-name> --metric-namespace <namespace>
+    NativeIaC: ""
+    Other: ""
+  Recommendation:
+    Text: |
+      Set up CloudWatch metric filters with patterns to capture IAM policy changes and ensure they are monitored. This enables automatic alerting for critical IAM events.
+    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html
+Categories:
+  - security
+  - monitoring
+DependsOn: []
+RelatedTo: []
+Notes: ""

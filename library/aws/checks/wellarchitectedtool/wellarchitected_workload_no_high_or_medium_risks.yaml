@@ -1,0 +1,34 @@
+Provider: aws
+CheckID: "wellarchitected_workload_no_high_or_medium_risks"
+CheckTitle: Check if Well-Architected workload has high or medium risks.
+CheckType: []
+ServiceName: wellarchitected
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:wellarchitected:region:account-id:workload/workload-id
+Severity: ""
+ResourceType: AwsWellArchitectedWorkload
+Description: |
+  This check ensures that no AWS Well-Architected workloads have high or medium risks.
+  It checks the risk levels and marks the workload as failing if high or medium risks are found.
+  If no high or medium risks are found, the workload will pass.
+Risk: |
+  Workloads containing high or medium risks could face architectural or operational challenges,
+  which may affect security, cost optimization, and performance. Immediate action should be taken to address them.
+RelatedUrl: https://aws.amazon.com/well-architected/
+Remediation:
+  Code:
+    CLI:
+      aws wellarchitected get-workload-risk-and-issues --workload-id workload-id
+    NativeIaC: ""
+    Other: https://aws.amazon.com/well-architected/reviews/
+  Recommendation:
+    Text: |
+      Review your workload’s risks and issues to address any high or medium risks identified.
+      Use the AWS Well-Architected Tool for continuous improvement of your workloads.
+    Url: https://aws.amazon.com/well-architected/
+Categories: [well-architected, security, best-practices]
+DependsOn: []
+RelatedTo: []
+Notes: |
+  This check identifies whether workloads in AWS Well-Architected contain high or medium risks.
+  Addressing these risks will improve the workload’s compliance with AWS best practices.

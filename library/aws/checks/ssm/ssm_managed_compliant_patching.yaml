@@ -1,0 +1,24 @@
+Provider: "aws"
+CheckID: "ssm_managed_compliant_patching"
+CheckTitle: "Ensure EC2 instances are compliant with SSM patching."
+CheckType: []
+ServiceName: "ssm"
+SubServiceName: ""
+ResourceIdTemplate: "arn:aws:ec2:region:account-id:instance/<instance_id>"
+Severity: ""
+ResourceType: "AwsEc2Instance"
+Description: "Ensure EC2 instances managed by SSM are compliant with patching policies."
+Risk: "Non-compliant instances might not be receiving the latest patches, leading to potential security vulnerabilities."
+RelatedUrl: "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager.html"
+Remediation:
+  Code:
+    CLI: "aws ssm describe-compliance-resources --resource-id <instance_id>"
+    Other: "https://aws.amazon.com/blogs/compute/introducing-aws-systems-manager-parameter-store-for-secure-management-of-secrets/"
+  Recommendation:
+    Text: "Ensure that EC2 instances are compliant with the SSM patching policy to avoid security risks."
+    Url: "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager.html"
+Categories: []
+DependsOn: []
+RelatedTo: []
+
+ 

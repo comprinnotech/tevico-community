@@ -1,0 +1,26 @@
+Provider: aws
+CheckID: ssm_ec2instance_automatic_protection_check
+CheckTitle: Ensure EC2 instances managed by SSM have termination protection enabled
+CheckType: []
+ServiceName: ssm
+SubServiceName: ec2
+ResourceIdTemplate: arn:aws:ec2:region:account-id:instance/<INSTANCE_ID>
+Severity: ""
+ResourceType: AwsEc2Instance
+Description: Ensure EC2 instances managed by SSM have termination protection enabled to prevent accidental termination.
+Risk: If termination protection is not enabled, EC2 instances can be accidentally terminated, leading to data loss or downtime.
+RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
+Remediation:
+  Code:
+    CLI: aws ec2 modify-instance-attribute --instance-id <INSTANCE_ID> --no-disable-api-termination
+    Other: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
+    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
+  Recommendation:
+    Text: Enable termination protection for EC2 instances managed by SSM.
+    Url: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
+Categories:
+  - security
+  - instance-management
+DependsOn: []
+RelatedTo: []
+Notes: ""

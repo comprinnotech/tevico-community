@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: ssm_patch_manager_enabled
+CheckTitle: Ensure SSM Patch Manager is enabled on all instances
+CheckType: []
+ServiceName: ssm
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:ec2:region:account-id:instance/instance-id
+Severity: ""
+ResourceType: AwsEc2Instance
+Description: Ensure that AWS Systems Manager (SSM) Patch Manager is enabled on all managed instances.
+Risk: Instances without SSM Patch Manager enabled may not have automated patching, leading to security vulnerabilities.
+RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-patch-patchgroup.html
+Remediation:
+  Code:
+    CLI: aws ssm register-managed-instance --instance-id <INSTANCE_ID>
+    Other: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-managed-instance-activation.html
+    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_patch_baseline
+  Recommendation:
+    Text: Enable AWS Systems Manager Patch Manager for automated patching and compliance checks.
+    Url: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-patch-patchgroup.html
+Categories:
+  - patch-management
+DependsOn: []
+RelatedTo: []
+Notes: ""

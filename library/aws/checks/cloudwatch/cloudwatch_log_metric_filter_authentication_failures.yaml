@@ -1,0 +1,28 @@
+Provider: aws
+CheckID: cloudwatch_log_metric_filter_authentication_failures
+CheckTitle: Ensure CloudWatch has metric filters for authentication failure events
+CheckType:
+  - Security Best Practices
+  - Logging & Monitoring
+ServiceName: cloudwatch
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name
+Severity: medium
+ResourceType: AwsLogsLogGroup
+Description: Ensure that CloudWatch has metric filters in place to detect authentication failure events, such as failed login attempts.
+Risk: Authentication failures are a key indicator of potential unauthorized access attempts. Without monitoring these failures, it can lead to unnoticed security breaches or compromised credentials.
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogDataWithCloudWatchLogs.html
+Remediation:
+  Code:
+    CLI: aws logs describe-metric-filters --log-group-name <log-group-name>
+    NativeIaC: ""
+    Other: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs-MetricFilters.html
+    Terraform: ""
+  Recommendation:
+    Text: Ensure that there are metric filters in CloudWatch that capture failed authentication attempts for any log groups that track user login activities.
+    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogDataWithCloudWatchLogs.html
+Categories:
+  - security
+DependsOn: []
+RelatedTo: []
+Notes: ""

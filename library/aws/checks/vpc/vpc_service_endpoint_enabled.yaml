@@ -1,0 +1,26 @@
+Provider: aws
+CheckID:  vpc_service_endpoint_enabled
+CheckTitle: Check if VPC has enabled service endpoints.
+CheckType: []
+ServiceName: ec2
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc/vpc-id
+Severity: ""
+ResourceType: AwsVpc
+Description: Ensure that VPC has enabled service endpoints (e.g., S3, DynamoDB, etc.). This check verifies that VPC endpoints are available and functional for services within the VPC.
+Risk: If a VPC does not have any enabled service endpoints, resources in the VPC may not have direct access to the services they need, which can hinder functionality and performance.
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+Remediation:
+  Code:
+    CLI:
+      aws ec2 describe-vpc-endpoints --filters "Name=vpc-id,Values=vpc-id" --query "VpcEndpoints[].[VpcEndpointId,State]"
+    NativeIaC: ""
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/vpc-endpoint-best-practices/
+  Recommendation:
+    Text:
+      Ensure that necessary VPC endpoints are enabled for services such as S3, DynamoDB, and others required by your VPC's resources.
+    Url: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+Categories: [networking, vpc]
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that VPC has enabled service endpoints that are required for communication with specific AWS services. If service endpoints are not enabled, certain functionalities within the VPC may be impaired."

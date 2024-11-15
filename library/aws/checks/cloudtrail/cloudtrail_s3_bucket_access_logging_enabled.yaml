@@ -1,0 +1,33 @@
+Provider: aws
+CheckID: "cloudtrail_s3_bucket_access_logging_enabled"
+CheckTitle: Ensure CloudTrail logs are delivered to an S3 bucket with access logging enabled
+CheckType:
+  - Software and Configuration Checks
+  - Security and Compliance
+  - CIS AWS Foundations Benchmark
+ServiceName: cloudtrail
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: high
+ResourceType: AwsCloudTrailTrail
+Description: Ensure that CloudTrail logs are delivered to an S3 bucket that has access logging enabled. This helps in tracking access to the log files, providing an audit trail for security and compliance purposes.
+Risk:
+  CloudTrail logs must be protected and tracked to prevent unauthorized access. If the S3 bucket storing CloudTrail logs does not have logging enabled, it may expose sensitive trail data to unauthorized users without detection.
+RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation.html
+Remediation:
+  Code:
+    CLI:
+      aws cloudtrail update-trail --name <trail_name> --s3-bucket-name <s3_bucket_name>
+    NativeIaC: ""
+    Other: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-trail.html
+    Terraform: ""
+  Recommendation:
+    Text:
+      Verify that CloudTrail logs are delivered to S3 buckets with logging enabled to track access to your log files.
+    Url: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-trail.html
+Categories:
+  - forensics-ready
+  - security
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures CloudTrail logs are securely stored in an S3 bucket with access logging enabled to prevent unauthorized access and track any activity on the log files."

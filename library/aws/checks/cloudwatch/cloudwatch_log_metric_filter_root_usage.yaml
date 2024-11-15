@@ -1,0 +1,32 @@
+Provider: aws
+CheckID: "cloudwatch_log_metric_filter_security_group_changes"
+CheckTitle: Ensure CloudWatch Logs are monitoring root user activity
+CheckType:
+  - Security Monitoring
+  - Logging and Monitoring Best Practices
+  - Regulatory Standards
+ServiceName: cloudwatch
+SubServiceName: logs
+ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name
+Severity: ""
+ResourceType: AwsCloudWatchLogGroup
+Description: Ensure CloudWatch Logs have metric filters set up to monitor root user activity and other sensitive events
+Risk: 
+  Root user activity is critical to monitor for any suspicious or unauthorized actions. If metric filters are not in place to monitor root user activity, it increases the risk of undetected malicious activity.
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogDataWithMetricFilters.html
+Remediation:
+  Code:
+    CLI:
+      aws logs describe-metric-filters --log-group-name <log-group-name>
+    NativeIaC: ""
+    Other: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs-UsingMetricFilters.html
+    Terraform: ""
+  Recommendation:
+    Text:
+      Ensure metric filters are set up to detect and alert on suspicious root user activity by monitoring event patterns that involve root user actions.
+    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs-UsingMetricFilters.html
+Categories:
+  - forensics-ready
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that CloudWatch Logs are set up to monitor root user activity and potentially trigger alarms if needed."

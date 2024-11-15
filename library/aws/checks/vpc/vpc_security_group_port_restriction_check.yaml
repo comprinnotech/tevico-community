@@ -1,0 +1,26 @@
+Provider: aws
+CheckID: vpc_security_group_port_restriction_check
+CheckTitle: Check if VPC Security Groups restrict access to specific ports.
+CheckType: []
+ServiceName: ec2
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:ec2:region:account-id:security-group/security-group-id
+Severity: ""
+ResourceType: AwsSecurityGroup
+Description: Ensure VPC Security Groups restrict access to specific ports (e.g., SSH, HTTP, HTTPS).
+Risk: If security groups allow unrestricted access to sensitive ports like SSH, HTTP, or HTTPS, it could expose resources to unauthorized access, increasing the risk of exploitation.
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+Remediation:
+  Code:
+    CLI:
+      aws ec2 describe-security-groups --query "SecurityGroups[].[GroupName, IpPermissions, IpPermissionsEgress]"
+    NativeIaC: ""
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/security-groups-best-practices/
+  Recommendation:
+    Text:
+      Ensure that VPC security groups restrict access to only the necessary ports. Avoid allowing public access to sensitive ports such as 22 (SSH), 80 (HTTP), or 443 (HTTPS) unless absolutely necessary.
+    Url: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+Categories: [security]
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that VPC Security Groups only allow necessary and restricted access to certain ports. Unrestricted access could lead to unauthorized entry or attacks on sensitive services."

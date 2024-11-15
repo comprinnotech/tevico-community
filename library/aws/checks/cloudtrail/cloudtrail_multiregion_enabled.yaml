@@ -1,0 +1,32 @@
+Provider: aws
+CheckID: "cloudtrail_multiregion_enabled"
+CheckTitle: Ensure CloudTrail is enabled for multi-region logging
+CheckType:
+  - Security Best Practices
+  - Compliance Checks
+  - AWS CloudTrail Configuration
+ServiceName: cloudtrail
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:cloudtrail:region:account-id:trail/trail-name
+Severity: ""
+ResourceType: AwsCloudTrailTrail
+Description: Ensure CloudTrail is configured to capture logs from all AWS regions to ensure multi-region coverage.
+Risk: If CloudTrail is not enabled for multi-region logging, logs might be missed for regions where CloudTrail is not set up. This can lead to gaps in security logging and auditing, increasing the risk of undetected malicious activity.
+RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-a-multi-region-trail.html
+Remediation:
+  Code:
+    CLI:
+      aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail
+    NativeIaC: ""
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/multi-region-cloudtrail-trail/
+    Terraform: ""
+  Recommendation:
+    Text:
+      Ensure that CloudTrail is configured to capture logs from all regions by enabling multi-region logging for your trails.
+    Url: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-a-multi-region-trail.html
+Categories:
+  - security
+  - forensics-ready
+DependsOn: []
+RelatedTo: []
+Notes: "This check verifies that CloudTrail is set up to log events across all regions. CloudTrail multi-region logging ensures that events from all regions are captured for security auditing and compliance."

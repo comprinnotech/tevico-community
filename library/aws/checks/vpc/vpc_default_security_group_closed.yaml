@@ -1,0 +1,27 @@
+Provider: aws
+CheckID: vpc_default_security_group_closed
+CheckTitle: Ensure default security groups are closed for all VPCs.
+CheckType: []
+ServiceName: ec2
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc/vpc-id
+Severity: ""
+ResourceType: AwsEc2SecurityGroup
+Description: Check that the default security groups for all VPCs do not allow inbound or outbound traffic.
+Risk: Open default security groups allow unrestricted network access, posing a security risk by potentially exposing resources to unauthorized access.
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html#DefaultSecurityGroup
+Remediation:
+  Code:
+    CLI:
+      aws ec2 revoke-security-group-ingress --group-id <security_group_id> --protocol all --port all --cidr 0.0.0.0/0
+      aws ec2 revoke-security-group-egress --group-id <security_group_id> --protocol all --port all --cidr 0.0.0.0/0
+    NativeIaC: ""
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/default-security-group-closed/
+  Recommendation:
+    Text:
+      Ensure that the default security group for each VPC has no inbound or outbound rules, leaving it effectively closed.
+    Url: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html#DefaultSecurityGroup
+Categories: [security, networking]
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that default security groups in VPCs are closed. Open default security groups could expose resources to unauthorized access."

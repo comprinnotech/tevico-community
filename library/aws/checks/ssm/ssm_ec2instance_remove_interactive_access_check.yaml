@@ -1,0 +1,26 @@
+Provider: aws
+CheckID: ssm_ec2instance_remove_interactive_access_check
+CheckTitle: Ensure EC2 instances managed by SSM have interactive access removed
+CheckType: []
+ServiceName: ssm
+SubServiceName: ec2
+ResourceIdTemplate: arn:aws:ec2:region:account-id:instance/<INSTANCE_ID>
+Severity: high
+ResourceType: AwsEc2Instance
+Description: Ensure EC2 instances managed by SSM have interactive access (SSH or SSM Session Manager) removed to prevent unauthorized access.
+Risk: If interactive access is not removed, EC2 instances could be accessed by unauthorized users, leading to security vulnerabilities.
+RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html
+Remediation:
+  Code:
+    CLI: aws ec2 modify-instance-attribute --instance-id <INSTANCE_ID> --no-enable-ssm-interactive-access
+    Other: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html
+    Terraform: ""
+  Recommendation:
+    Text: Remove interactive access (SSH or SSM Session Manager) from EC2 instances managed by SSM.
+    Url: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html
+Categories:
+  - security
+  - access-control
+DependsOn: []
+RelatedTo: []
+Notes: ""

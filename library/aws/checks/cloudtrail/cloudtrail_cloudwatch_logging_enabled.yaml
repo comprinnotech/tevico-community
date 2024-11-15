@@ -1,5 +1,5 @@
 Provider: aws
-CheckID: cloudtrail_cloudwatch_logging_enabled
+CheckID: "cloudtrail_cloudwatch_logging_enabled"
 CheckTitle: Ensure CloudTrail trails are integrated with CloudWatch Logs
 CheckType:
   - Software and Configuration Checks
@@ -8,29 +8,23 @@ CheckType:
 ServiceName: cloudtrail
 SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: low
+Severity: ""
 ResourceType: AwsCloudTrailTrail
-Description: Ensure CloudTrail trails are integrated with CloudWatch Logs
-Risk:
-  Sending CloudTrail logs to CloudWatch Logs will facilitate real-time and historic
-  activity logging based on user, API, resource, and IP address, and provides opportunity
-  to establish alarms and notifications for anomalous or sensitivity account activity.
-RelatedUrl: ""
+Description: Ensure that CloudTrail trails are integrated with CloudWatch Logs for monitoring and logging.
+Risk: CloudTrail logs are critical for auditing and monitoring API activity. Without CloudWatch integration, CloudTrail logs cannot be monitored in real-time, reducing the ability to respond to potential security incidents or audit requirements.
+RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html
 Remediation:
   Code:
     CLI:
-      aws cloudtrail update-trail --name <trail_name> --cloudwatch-logs-log-group-
-      arn <cloudtrail_log_group_arn> --cloudwatch-logs-role-arn <cloudtrail_cloudwatchLogs_role_arn>
+      aws cloudtrail update-trail --name <trail_name> --cloudwatch-logs-log-group-arn <cloudwatch_log_group_arn> --cloudwatch-logs-role-arn <cloudtrail_cloudwatch_logs_role_arn>
     NativeIaC: ""
-    Other: https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/cloudtrail-cloudwatch-logs/
     Terraform: ""
   Recommendation:
-    Text:
-      Validate that the trails in CloudTrail have an arn set in the CloudWatchLogsLogGroupArn
-      property.
+    Text: Ensure that CloudTrail trails are configured to send logs to CloudWatch Logs for centralized log collection and monitoring.
     Url: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html
 Categories:
-  - forensics-ready
+  - monitoring
 DependsOn: []
 RelatedTo: []
-Notes: ""
+Notes: This check ensures that CloudTrail trails are integrated with CloudWatch Logs, enabling better monitoring and auditing of API activity.

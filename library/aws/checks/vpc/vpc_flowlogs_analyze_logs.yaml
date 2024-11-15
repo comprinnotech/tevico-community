@@ -1,0 +1,26 @@
+Provider: aws
+CheckID: vpc_flowlogs_analyze_logs
+CheckTitle: Check if VPC Flow Logs are being analyzed in CloudWatch Logs.
+CheckType: []
+ServiceName: ec2
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc/vpc-id
+Severity: ""
+ResourceType: AwsVpc
+Description: Ensure VPC Flow Logs are being delivered to CloudWatch Logs for analysis.
+Risk: Without proper analysis of flow logs in CloudWatch, it's difficult to monitor and troubleshoot network traffic, which could lead to undetected security issues.
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
+Remediation:
+  Code:
+    CLI:
+      aws ec2 create-flow-logs --resource-type VPC --resource-id <vpc_id> --traffic-type ALL --log-group-name <log_group_name> --deliver-logs-permission-arn <role_arn>
+    NativeIaC: ""
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/vpc-flow-logs-cloudwatch/
+  Recommendation:
+    Text:
+      Ensure that VPC Flow Logs are configured to deliver logs to a CloudWatch Logs group for all VPCs.
+    Url: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
+Categories: [security, monitoring]
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that flow logs are delivered to CloudWatch for analysis. Without this, monitoring of network traffic and potential security incidents is compromised."

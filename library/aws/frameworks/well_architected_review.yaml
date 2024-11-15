@@ -144,6 +144,41 @@ sections:
      - iam_password_policy_reuse_24
      - iam_password_policy_symbol
      - iam_password_policy_uppercase
-     - iam_root_hardware_mfa_enabled
-     - iam_root_mfa_enabled
-     - organizations_account_part_of_organizations
+     - iam_password_policy_reuse_24
+     - rds_instance_storage_encrypted
+     - rds_instance_integration_cloudwatch_logging_enabled
+     - networkfirewall_multi_az_enabled
+     - rds_instance_minor_version_upgrade_enabled
+     - route53_domains_privacy_protection_enabled
+     - s3_bucket_default_encryption
+     - s3_bucket_object_versioning
+     - s3_bucket_secure_transport_policy
+     - s3_bucket_no_mfa_delete
+     - secrets_manager_automatic_rotation_enabled
+     - securityhub_enabled
+     - sns_topics_kms_encryption_at_rest_enabled
+     - ssm_document_secrets_present
+     - ssm_managed_compliant_patching
+     - ssm_patch_manager_enabled
+     - ssm_ec2instance_automatic_protection_check
+     - ssm_ec2instance_remove_interactive_access_check
+     - vpc_flowlogs_enable_logging
+     - vpc_flowlogs_analyze_logs
+     - vpc_default_security_group_closed
+     - vpc_endpoint_services_allowed_principals_trust_boundaries
+     - vpc_security_group_port_restriction_check
+     - vpc_service_endpoint_enabled
+     - vpc_flowlogs_traffic_inspection
+     - wellarchitected_workload_no_high_or_medium_risks
+     - cloudfront_waf_protection_enabled
+     - cloudtrail_s3_bucket_access_logging_enabled
+     - cloudtrail_enabled
+     - cloudtrail_cloudwatch_logging_enabled
+     - cloudtrail_multiregion_enabled
+     - cloudwatch_log_metric_filter_root_usage
+     - cloudwatch_log_metric_filter_security_group_changes
+     - cloudwatch_log_metric_filter_unauthorized_api_calls
+     - cloudwatch_log_metric_filter_policy_changes
+     - cloudwatch_log_metric_filter_vpc_alarm_configured
+     - cloudwatch_log_metric_filter_authentication_failures
+     - config_recorder_all_regions_enabled

@@ -1,0 +1,26 @@
+Provider: aws
+CheckID: "cloudfront_waf_protection_enabled"
+CheckTitle: Check if CloudFront distributions have WAF protection enabled.
+CheckType: []
+ServiceName: cloudfront
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:cloudfront::account-id:distribution/distribution-id
+Severity: ""
+ResourceType: AwsCloudFrontDistribution
+Description: Ensure that AWS CloudFront distributions are protected by AWS WAF to prevent unwanted traffic and potential attacks.
+Risk: Without WAF protection, CloudFront distributions are vulnerable to common web exploits, which could compromise security and expose resources to unauthorized access.
+RelatedUrl: https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-protection.html
+Remediation:
+  Code:
+    CLI:
+      aws cloudfront get-distribution-config --id distribution-id
+    NativeIaC: ""
+    Other: https://aws.amazon.com/premiumsupport/knowledge-center/cloudfront-waf-setup/
+  Recommendation:
+    Text:
+      Enable AWS WAF for CloudFront distributions to protect against common web exploits and improve security. Attach a web ACL to your CloudFront distribution for enhanced protection.
+    Url: https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-protection.html
+Categories: [security]
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that all CloudFront distributions have AWS WAF enabled to protect against potential web-based attacks. Enabling WAF helps secure CloudFront distributions by filtering malicious traffic."

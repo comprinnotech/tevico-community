@@ -1,0 +1,32 @@
+Provider: aws
+CheckID: config_recorder_all_regions_enabled
+CheckTitle: Ensure AWS Config recorder is enabled in all regions
+CheckType:
+  - Software and Configuration Checks
+  - Industry and Regulatory Standards
+  - CIS AWS Foundations Benchmark
+ServiceName: config
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:config:region:account-id:configuration-recorder/recorder-name
+Severity: medium
+ResourceType: AwsConfigConfigurationRecorder
+Description: Ensure that AWS Config recorder is enabled in all regions to ensure continuous recording of resource configuration changes.
+Risk:
+  AWS Config is a key service for auditing and compliance. If AWS Config is not enabled across all regions, you might miss critical changes in your resources, potentially impacting governance and compliance audits.
+RelatedUrl: https://docs.aws.amazon.com/config/latest/developerguide/easy-setup.html
+Remediation:
+  Code:
+    CLI:
+      aws config describe-configuration-recorder-status
+    NativeIaC: ""
+    Other: https://docs.aws.amazon.com/config/latest/developerguide/easy-setup.html
+    Terraform: ""
+  Recommendation:
+    Text: Ensure that AWS Config is enabled across all regions for resource configuration tracking.
+    Url: https://docs.aws.amazon.com/config/latest/developerguide/easy-setup.html
+Categories:
+  - security
+  - compliance
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that AWS Config recorder is active in every AWS region to track configuration changes for governance and compliance."
