@@ -17,24 +17,16 @@ class root_mfa_enabled(Check):
         client = connection.client('iam')
 
         try:
-            
             account_summary = client.get_account_summary()
-            
-           
             root_mfa_enabled = account_summary['SummaryMap']['AccountMFAEnabled']
 
-            
             if root_mfa_enabled == 1:
-                print("pass")
                 report.passed = True
                 report.resource_ids_status['root_account'] = True
-                
             else:
                 report.passed = False
                 report.resource_ids_status['root_account'] = False
-                print("MFA Is Disabled")
-        except Exception as e:
-            print("MFA Is Disabled")
-            print(str(e))  
+        except Exception:
+            report.passed = False
 
         return report
