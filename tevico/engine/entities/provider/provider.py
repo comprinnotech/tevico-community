@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import yaml
 
@@ -87,6 +87,7 @@ class Provider(ABC):
         
         if section.sections is not None:
             for sub_section in section.sections:
+                sub_section.name = f'{section.name} > {sub_section.name}'
                 result.extend(self.execute_checks_in_section(sub_section, thread_pool, framework))
         
         return result
@@ -96,13 +97,29 @@ class Provider(ABC):
         check_reports: List[CheckReport] = []
         futures: List[Future[CheckReport]] = []
 
+        check_ids: Set[str] = set()
+        check_list: List[Check] = []
+
         for framework in self.frameworks:
             print(f'\t* Load Framework ✅: {framework.name}')
             
-            if framework.sections is not None:
-                for section in framework.sections:
-                    res = self.execute_checks_in_section(section, thread_pool, framework)
-                    futures.extend(res)
+            if framework.sections is None:
+                continue
+
+            for section in framework.sections:
+                if section.checks is None:
+                    continue
+
+                check_ids.update([check.metadata.check_id for check in section.checks])
+
+            for check_id in check_ids:
+                check = self.utils.load_check(check_id, self.provider_path)
+                if check is not None:
+                    check_list.append(check)
+
+            for check in check_list:
+                res = thread_pool.submit(self.handle_check_execution, check, 'All', framework.name)
+                futures.append(res)
             
             check_reports = [f.result() for f in futures]
             
