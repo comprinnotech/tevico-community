@@ -55,6 +55,7 @@ class CheckMetadata(BaseModel):
 class CheckReport(BaseModel):
     passed: bool = True
     name: str
+    execution_time: float = 0.0
     check_metadata: Optional[CheckMetadata] = None
     dimensions: List[FrameworkDimension] = []
     framework: Optional[str] = None

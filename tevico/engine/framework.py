@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import time
 import traceback
 from typing import Dict, List, Union
 
@@ -256,6 +257,10 @@ class TevicoFramework():
             Exception: If an error occurs during the check execution process.
         """
         
+        print('\n🚀 Starting Tevico Framework Execution\n\n')
+
+        start_time = time.time()
+
         providers = self.__get_providers()
         checks: List[CheckReport] = []
         
@@ -288,10 +293,6 @@ class TevicoFramework():
                 check_reports=data,
                 check_analytics=analytics_report.model_dump()
             ))
-    
-        
-        # with open(CHECK_ANALYTICS_PATH, 'w') as file:
-        #     json.dump(analytics_report.model_dump(), file, indent=2)
         
         print('\nReport Overview:')
         print(f'#️⃣ Total    : {analytics_report.check_status.total}')
@@ -302,4 +303,5 @@ class TevicoFramework():
         
         self.__build_report()
         
+        print(f'\n🕒 Execution Time: {round(time.time() - start_time, 2)} seconds\n')
         print('\n👋👋👋 Bye!')

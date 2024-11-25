@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: ec2
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc/vpc-id
-Severity: ""
+Severity: medium
 ResourceType: AwsVpc
 Description: Ensure VPC Flow Logs are being delivered to CloudWatch Logs for analysis.
 Risk: Without proper analysis of flow logs in CloudWatch, it's difficult to monitor and troubleshoot network traffic, which could lead to undetected security issues.

@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: "ssm"
 SubServiceName: ""
 ResourceIdTemplate: "arn:aws:ec2:region:account-id:instance/<instance_id>"
-Severity: ""
+Severity: medium
 ResourceType: "AwsEc2Instance"
 Description: "Ensure EC2 instances managed by SSM are compliant with patching policies."
 Risk: "Non-compliant instances might not be receiving the latest patches, leading to potential security vulnerabilities."

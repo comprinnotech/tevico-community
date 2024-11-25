@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: ec2
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc:endpoint-service/endpoint-service-id
-Severity: ""
+Severity: medium
 ResourceType: AwsVpcEndpointService
 Description: Ensure VPC Endpoint Services only allow principals from trusted AWS accounts.
 Risk: If VPC endpoint services allow principals from untrusted accounts, it could lead to unauthorized access to resources, increasing the risk of data exposure or compromise.

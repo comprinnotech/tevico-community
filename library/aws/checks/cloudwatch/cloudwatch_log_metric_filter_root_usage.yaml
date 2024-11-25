@@ -8,7 +8,7 @@ CheckType:
 ServiceName: cloudwatch
 SubServiceName: logs
 ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name
-Severity: ""
+Severity: medium
 ResourceType: AwsCloudWatchLogGroup
 Description: Ensure CloudWatch Logs have metric filters set up to monitor root user activity and other sensitive events
 Risk: 

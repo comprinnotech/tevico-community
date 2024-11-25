@@ -8,7 +8,7 @@ CheckType:
 ServiceName: cloudtrail
 SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: ""
+Severity: medium
 ResourceType: AwsCloudTrailTrail
 Description: Ensure that CloudTrail trails are integrated with CloudWatch Logs for monitoring and logging.
 Risk: CloudTrail logs are critical for auditing and monitoring API activity. Without CloudWatch integration, CloudTrail logs cannot be monitored in real-time, reducing the ability to respond to potential security incidents or audit requirements.

@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: ssm
 SubServiceName: ec2
 ResourceIdTemplate: arn:aws:ec2:region:account-id:instance/<INSTANCE_ID>
-Severity: ""
+Severity: medium
 ResourceType: AwsEc2Instance
 Description: Ensure EC2 instances managed by SSM have termination protection enabled to prevent accidental termination.
 Risk: If termination protection is not enabled, EC2 instances can be accidentally terminated, leading to data loss or downtime.

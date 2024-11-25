@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: "route53"
 SubServiceName: ""
 ResourceIdTemplate: ""
-Severity: ""
+Severity: medium
 ResourceType: "Other"
 Description: "Enable Privacy Protection for a Route53 Domain."
 Risk: "Without privacy protection enabled, one's personal information is published to the public WHOIS database."

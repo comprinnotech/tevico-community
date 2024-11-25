@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: ec2
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:security-group/security-group-id
-Severity: ""
+Severity: medium
 ResourceType: AwsSecurityGroup
 Description: Ensure VPC Security Groups restrict access to specific ports (e.g., SSH, HTTP, HTTPS).
 Risk: If security groups allow unrestricted access to sensitive ports like SSH, HTTP, or HTTPS, it could expose resources to unauthorized access, increasing the risk of exploitation.

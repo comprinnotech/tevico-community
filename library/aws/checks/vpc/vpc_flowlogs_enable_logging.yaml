@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: ec2
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc/vpc-id
-Severity: ""
+Severity: medium
 ResourceType: AwsVpc
 Description: Ensure VPC Flow Logs are enabled for all VPCs to monitor network traffic.
 Risk: Without VPC Flow Logs enabled, there is no visibility into the network traffic, making it difficult to detect unauthorized or malicious activity.

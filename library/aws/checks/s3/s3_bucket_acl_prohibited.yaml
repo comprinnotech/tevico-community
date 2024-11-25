@@ -6,7 +6,7 @@ CheckType:
 ServiceName: "s3"
 SubServiceName: ""
 ResourceIdTemplate: "arn:partition:s3:::bucket_name"
-Severity: ""
+Severity: medium
 ResourceType: "AwsS3Bucket"
 Description: "Check if S3 buckets have ACLs enabled"
 Risk: "S3 ACLs are a legacy access control mechanism that predates IAM. IAM and bucket policies are currently the preferred methods."

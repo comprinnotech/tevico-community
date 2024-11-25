@@ -5,7 +5,7 @@ CheckType: []
 ServiceName: ssm
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:instance/instance-id
-Severity: ""
+Severity: medium
 ResourceType: AwsEc2Instance
 Description: Ensure that AWS Systems Manager (SSM) Patch Manager is enabled on all managed instances.
 Risk: Instances without SSM Patch Manager enabled may not have automated patching, leading to security vulnerabilities.

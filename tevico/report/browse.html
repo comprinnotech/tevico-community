@@ -250,7 +250,7 @@
         <div class="collapse navbar-collapse" id="sidebar-menu">
           <ul class="navbar-nav pt-lg-3">
             <li class="nav-item">
-              <a class="nav-link" href="./">
+              <a class="nav-link" href="./index.html">
                 <span
                   class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
@@ -323,10 +323,27 @@
       <!-- Page body -->
       <div class="page-body">
         <div class="container-xl">
-          <div id="table-default" class="table-responsive">
+          <div id="table-default">
             <div class="card">
               <div class="card-body border-bottom py-3">
-                <div class="d-flex">
+                <div class="d-flex gap-3">
+                  <div class="dropdown">
+                    <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">Select Section</a>
+                    <div class="dropdown-menu" id="sectionDropdown" style="max-height: 15rem; overflow: auto;"></div>
+                  </div>
+
+                  <div class="dropdown">
+                    <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">Select Service</a>
+                    <div class="dropdown-menu" id="serviceDropdown" style="max-height: 15rem; overflow: auto;"></div>
+                  </div>
+
+                  <div class="dropdown">
+                    <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">Select Severity</a>
+                    <div class="dropdown-menu" id="severityDropdown" style="max-height: 15rem; overflow: auto;"></div>
+                  </div>
+
+                  <button class="btn btn-secondary" onclick="clearAllFilters()">Clear All Filters</button>
+
                   <div class="ms-auto text-secondary">
                     Search:
                     <div class="ms-2 d-inline-block">
@@ -338,7 +355,7 @@
               <div id="tableContainer">
               </div>
               <div class="card-footer d-flex align-items-center">
-                <p class="m-0 text-secondary">Showing <span class="pagination-info"> entries</p>
+                <p class="m-0 text-secondary"><span class="pagination-info"> entries</p>
                 <ul class="pagination m-0 ms-auto">
                   <li class="page-item">
                     <a class="page-link prev" href="#" tabindex="-1">

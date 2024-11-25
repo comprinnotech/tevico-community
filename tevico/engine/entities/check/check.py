@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+import time
 from typing import Any
 
 
@@ -15,7 +16,9 @@ class Check(ABC):
         super().__init__()
         
     def get_report(self, framework: str, section: str, connection: Any) -> CheckReport:
+        check_start_time = time.time()
         check_report = self.execute(connection=connection)
+        check_report.execution_time = time.time() - check_start_time
         check_report.check_metadata = self.metadata
         check_report.framework = framework
         check_report.section = section

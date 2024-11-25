@@ -47,7 +47,7 @@ function updateUI(reportsData, analyticsData) {
                     medium: 2,
                     low: 1,
                 };
-                return acc + scores[check.check_metadata.severity];
+                return acc + scores[check.check_metadata.severity] || 0;
             }, 0) / reportsData.length).toFixed(2)}%`
         };
 

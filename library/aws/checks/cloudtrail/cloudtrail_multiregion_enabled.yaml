@@ -8,7 +8,7 @@ CheckType:
 ServiceName: cloudtrail
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:cloudtrail:region:account-id:trail/trail-name
-Severity: ""
+Severity: medium
 ResourceType: AwsCloudTrailTrail
 Description: Ensure CloudTrail is configured to capture logs from all AWS regions to ensure multi-region coverage.
 Risk: If CloudTrail is not enabled for multi-region logging, logs might be missed for regions where CloudTrail is not set up. This can lead to gaps in security logging and auditing, increasing the risk of undetected malicious activity.
