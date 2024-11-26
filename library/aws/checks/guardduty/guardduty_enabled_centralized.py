@@ -43,11 +43,8 @@ class guardduty_enabled_centralized(Check):
                 else:
                     return False
 
-            except ClientError as error:
-                if error.response['Error']['Code'] == 'UnrecognizedClientException':
+            except Exception as error:
                     return False
-                else:
-                    raise
 
             return True
         
