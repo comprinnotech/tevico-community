@@ -225,7 +225,7 @@ function createDynamicTable({ reportsData }) {
                     break;
                 case 'check_metadata.check_title':
                     td.className = `sort-${header.key} text-truncate`;
-                    td.style.maxWidth = '250px'
+                    td.style.maxWidth = '250px';
                     td.setAttribute('title', header.key.split('.').reduce((obj, key) => obj && obj[key], item) || '');
                     td.textContent = header.key.split('.').reduce((obj, key) => obj && obj[key], item) || '';
                     break;
@@ -428,24 +428,39 @@ function initializeDropdowns(reportsData) {
 }
 
 function clearAllFilters() {
-    Object.keys(activeFilters).forEach(key => {
-        activeFilters[key] = null;
-    });
-
     const dropdownIds = ['sectionDropdown', 'serviceDropdown', 'severityDropdown', 'statusDropdown'];
-    dropdownIds.forEach(id => {
-        const dropdown = document.querySelector(`#${id}`).closest('.dropdown');
-        const dropdownButton = dropdown.querySelector('.dropdown-toggle');
-        const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
 
-        if (dropdownButton) {
-            dropdownButton.textContent = getDefaultTextForDropdown(id);
-            dropdownButton.classList.remove('active');
-        }
-        dropdownItems.forEach(item => {
-            item.classList.remove('active');
+    const hadActiveFilters = Object.values(activeFilters).some(Boolean);
+
+    if (hadActiveFilters) {
+
+        Object.keys(activeFilters).forEach(key => {
+            activeFilters[key] = null;
         });
-    });
 
-    list.filter();
+        dropdownIds.forEach(id => {
+            const dropdown = document.querySelector(`#${id}`).closest('.dropdown');
+            const dropdownButton = dropdown.querySelector('.dropdown-toggle');
+            const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+
+            if (dropdownButton) {
+                dropdownButton.textContent = getDefaultTextForDropdown(id);
+                dropdownButton.classList.remove('active');
+            }
+            dropdownItems.forEach(item => {
+                item.classList.remove('active');
+            });
+        });
+        console.log("Executed");
+        currentPage = 1;
+        list.filter();
+
+        const url = new URL(window.location.href);
+        const newUrl = `${url.pathname}${url.hash}`;
+        window.history.pushState({}, '', newUrl);
+
+        updatePaginationInfo();
+        updatePaginationButtons();
+        updateRowNumbers();
+    } 
 }

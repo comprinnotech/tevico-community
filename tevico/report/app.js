@@ -147,6 +147,9 @@ function createDynamicTable({ reportsData, passed, limit, containerId }) {
         headersArray.forEach(header => {
             const td = document.createElement('td');
             td.textContent = header.key.split('.').reduce((obj, key) => obj && obj[key], item) || '';
+            if (header.key === 'check_metadata.severity') {
+                td.classList.add('text-capitalize');
+            }
             row.appendChild(td);
         });
         tbody.appendChild(row);
