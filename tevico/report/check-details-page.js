@@ -38,14 +38,22 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function displayCheckDetails(report) {
+    const { check_metadata: meta = {}, resource_ids_status } = report;
+
+    updateMetadataElements(meta, report);
+
+    if (Object.entries(resource_ids_status).length) {
+        createResourceStatusTable(resource_ids_status);
+    }
+}
+
+function updateMetadataElements(meta, report) {
     const updateElement = (id, value) => {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value || '-';
         }
     };
-
-    const { check_metadata: meta = {}, resource_ids_status } = report;
 
     const updates = [
         { elementId: 'page_title', value: meta.check_id },
@@ -60,80 +68,109 @@ function displayCheckDetails(report) {
         { elementId: 'severity_text', value: meta.severity }
     ];
 
-    updates.forEach(({ elementId, value }) => {
-        updateElement(elementId, value);
-    });
+    updates.forEach(({ elementId, value }) => updateElement(elementId, value));
+}
 
-    const headersArray = [
+function createResourceStatusTable(resource_ids_status) {
+    const headers = [
         { label: '#', key: '#' },
         { label: 'Resource', key: 'resource' },
-        { label: 'Status', key: 'status' },
-    ]
+        { label: 'Status', key: 'status' }
+    ];
 
-    const tableContainer = document.getElementById('tableContainer');
+    const table = createTableStructure(headers);
+    const tbody = createTableBody(resource_ids_status, headers);
+    table.appendChild(tbody);
 
+    const container = document.getElementById("tableContainer");
+    container.innerHTML = '';
+    container.appendChild(wrapInCard(table));
+}
+
+function createTableStructure(headers) {
     const table = document.createElement('table');
     table.className = 'table table-vcenter';
 
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
 
-    headersArray.forEach(header => {
+    headers.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header.label;
         headerRow.appendChild(th);
     });
+
     thead.appendChild(headerRow);
     table.appendChild(thead);
+    return table;
+}
 
+function createTableBody(resource_ids_status, headers) {
     const tbody = document.createElement('tbody');
     tbody.className = 'table-tbody';
 
-    Object.entries(resource_ids_status).forEach((item, i) => {
+    Object.entries(resource_ids_status).forEach((item, index) => {
         const [resource, status] = item;
-
         const row = document.createElement('tr');
-        headersArray.forEach(header => {
-            const td = document.createElement('td');
 
-            switch (header.key) {
-                case 'status':
-                    let content;
-                    if (typeof status === 'boolean') {
-                        const statusValue = status ? 'Passed' : 'Failed';
-                        const badgeClass = status ? 'bg-softer-success' : 'bg-softer-danger';
-                        content = `<span class="badge ${badgeClass}">${statusValue}</span>`;
-                    } else if (typeof status === 'string') {
-                        const urlPattern = /^(https?:\/\/)/i;
-                        if (urlPattern.test(status)) {
-                            content = `<a href="${status}" class="status-link" target="_blank" rel="noopener noreferrer">${status}</a>`;
-                        } else {
-                            content = `<span class="status-text">${status}</span>`;
-                        }
-                    } else {
-                        content = `<span class="status-text">${String(status)}</span>`;
-                    }
-                    td.innerHTML = content;
-                    break;
-                case '#':
-                    td.className = 'row-index';
-                    td.textContent = i + 1;
-                    td.style.width = '15px';
-                    td.style.minWidth = '15px';
-                    break;
-                case 'resource':
-                    td.textContent = resource;
-                    break;
-                default:
-                    td.textContent = header.key.split('.').reduce((obj, key) => obj && obj[key], item) || '';
+        headers.forEach(header => {
+            const td = document.createElement('td');
+            td.innerHTML = getCellContent(header.key, { resource, status, index });
+
+            if (header.key === '#') {
+                td.className = 'row-index';
+                td.style.width = '15px';
+                td.style.minWidth = '15px';
             }
+
             row.appendChild(td);
         });
+
         tbody.appendChild(row);
     });
-    table.appendChild(tbody);
 
-    const container = document.getElementById("tableContainer");
-    container.innerHTML = '';
-    container.appendChild(table);
+    return tbody;
+}
+
+function getCellContent(key, { resource, status, index }) {
+    switch (key) {
+        case 'status':
+            return formatStatus(status);
+        case '#':
+            return index + 1;
+        case 'resource':
+            return resource;
+        default:
+            return '';
+    }
+}
+
+function formatStatus(status) {
+    if (typeof status === 'boolean') {
+        const statusValue = status ? 'Passed' : 'Failed';
+        const badgeClass = status ? 'bg-softer-success' : 'bg-softer-danger';
+        return `<span class="badge ${badgeClass}">${statusValue}</span>`;
+    }
+
+    if (typeof status === 'string') {
+        const urlPattern = /^(https?:\/\/)/i;
+        return urlPattern.test(status)
+            ? `<a href="${status}" class="status-link" target="_blank" rel="noopener noreferrer">${status}</a>`
+            : `<span class="status-text">${status}</span>`;
+    }
+
+    return `<span class="status-text">${String(status)}</span>`;
+}
+
+function wrapInCard(element) {
+    const card = document.createElement('div');
+    card.classList.add('card');
+
+    const cardBody = document.createElement('div');
+    cardBody.classList.add('card-body', 'px-0');
+
+    cardBody.appendChild(element);
+    card.appendChild(cardBody);
+
+    return card;
 }
