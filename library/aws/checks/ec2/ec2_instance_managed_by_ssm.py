@@ -42,6 +42,7 @@ class ec2_instance_managed_by_ssm(Check):
             # Check the state of the instance
             if instance['State']['Name'] in ["pending", "terminated", "stopped"]:
                 report.resource_ids_status[instance_id] = False  # Mark as unmanaged due to state
+                report.passed = False
                 continue  # Skip to next instance
 
             # Check if the instance is managed by SSM
