@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
-    <title>Tevico Community | Check Details</title>
+    <title>Tevico Community | Well-Architected Review</title>
     <!-- CSS files -->
     <link href="./lib/css/tabler.min.css?1692870487" rel="stylesheet" />
     <link href="./lib/css/tabler-flags.min.css?1692870487" rel="stylesheet" />
@@ -37,6 +37,7 @@
 
 <body>
     <div class="page">
+        <!-- Sidebar -->
         <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
             <div class="container-fluid">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
@@ -108,94 +109,75 @@
             </div>
         </aside>
         <div class="page-wrapper">
+            <!-- Page header -->
             <div class="page-header d-print-none">
                 <div class="container-xl">
-                    <div class="row">
-                        <div class="col-auto">
-                            <a href="" class="link-dark" id="backButton">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M5 12l14 0" />
-                                    <path d="M5 12l6 6" />
-                                    <path d="M5 12l6 -6" />
-                                </svg>
-                            </a>
-                        </div>
-                        <div class="col-auto">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <!-- Page pre-title -->
                             <div class="page-pretitle">
-                                Check Details
+                                Explore
                             </div>
-                            <h2 class="page-title mb-1" id="page_title"></h2>
-                            <ol class="breadcrumb" aria-label="breadcrumbs">
-                                <li class="breadcrumb-item"><a href=""></a></li>
-                                <li class="breadcrumb-item active" aria-current="page">
-                                    <a href="#">Check Details</a>
-                                </li>
-                            </ol>
+                            <h2 class="page-title">
+                                Well-Architected Review
+                            </h2>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- Page body -->
             <div class="page-body">
                 <div class="container-xl">
-                    <div class="card mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" id="pillar_tabs">
+                            </ul>
+                        </div>
                         <div class="card-body">
-                            <div class="datagrid">
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Check Title</div>
-                                    <div class="datagrid-content" id="check_title_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Check ID</div>
-                                    <div class="datagrid-content" id="check_id_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Framework</div>
-                                    <div class="datagrid-content" id="framework_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Description</div>
-                                    <div class="datagrid-content" id="description_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Resource ID Template</div>
-                                    <div class="datagrid-content" id="resource_id_template_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Resource Type</div>
-                                    <div class="datagrid-content" id="resource_type_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Risk</div>
-                                    <div class="datagrid-content" id="risk_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Service Name</div>
-                                    <div class="datagrid-content" id="service_name_text"></div>
-                                </div>
-                                <div class="datagrid-item">
-                                    <div class="datagrid-title">Severity Text</div>
-                                    <div class="datagrid-content text-capitalize" id="severity_text"></div>
-                                </div>
+                            <div class="tab-content" id="tabs_content">
                             </div>
                         </div>
-                    </div>
-                    <div id="tableContainer">
                     </div>
                 </div>
             </div>
         </div>
+
+        <template id="section-table-template">
+            <div style="overflow: auto; max-height: 16.25rem; min-height: 16.25rem;">
+                <table class="table table-vcenter mb-0">
+                    <thead>
+                        <tr>
+                            <th class="sticky-top bg-info text-light">#</th>
+                            <th class="sticky-top bg-info text-light">check</th>
+                            <th class="sticky-top bg-info text-light">severity</th>
+                            <th class="sticky-top bg-info text-light">service</th>
+                            <th class="sticky-top bg-info text-light">section</th>
+                            <th class="sticky-top bg-info text-light">status</th>
+                            <th class="sticky-top bg-info text-light">action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </template>
+
+        <template id="section-content-template">
+            <div class="card">
+                <div class="card-body">
+                    <h3></h3>
+                    <p></p>
+                </div>
+            </div>
+        </template>
     </div>
-    <script src="./lib/libs/apexcharts/dist/apexcharts.min.js" defer></script>
     <script src="./lib/js/tabler.min.js?1692870487" defer></script>
 
     <script src="./lib/libs/list.js/dist/list.min.js" defer></script>
+
     <script src="./data/check_report.js"></script>
     <script src="./utils/utils.js"></script>
-    <script src="./check-details-page.js"></script>
+    <script src="./well-architected-review.js"></script>
 </body>
 
 </html>

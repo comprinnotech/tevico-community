@@ -21,7 +21,7 @@ curl https://raw.githubusercontent.com/comprinnotech/tevico-community/refs/heads
 
 ## CLI Examples
 
-Following CLI params will help you to get an idea about the project and its capabilitites. 
+Following CLI params will help you to get an idea about the project and its capabilitites.
 
 ### `run`: Run the project with given configuration
 
@@ -45,7 +45,7 @@ Following CLI params will help you to get an idea about the project and its capa
 
 ## Community Code of Conduct
 
-Tevico current follows the CNCF Code of Conduct. You can get the details of the code of conduct [here](https://github.com/cncf/foundation/blob/master/code-of-conduct.md). For any violations of this code of conduct you can connect with us over an [email](mailto:test@email.com).
+Tevico current follows the CNCF Code of Conduct. You can get the details of the code of conduct [here](https://github.com/cncf/foundation/blob/master/code-of-conduct.md). For any violations of this code of conduct you can connect with us over an [email](mailto:community@tevi.co).
 
 ## License
 

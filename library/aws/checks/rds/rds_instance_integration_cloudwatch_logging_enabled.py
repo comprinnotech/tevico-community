@@ -14,23 +14,23 @@ class rds_instance_integration_cloudwatch_logging_enabled(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        client = connection.client('rds')
-        instances = client.describe_db_instances()['DBInstances']
         
-        all_logging_enabled = True  
+        try:
+            client = connection.client('rds')
+            instances = client.describe_db_instances()['DBInstances']
+            report.passed = True  
 
-        for instance in instances:
-            instance_name = instance['DBInstanceIdentifier']
-            logging_enabled = instance.get('CloudwatchLogsExportConfiguration', {}).get('LogTypes', [])
-
-
-            if logging_enabled:
-                report.resource_ids_status[instance_name] = True
-            else:
-                report.resource_ids_status[instance_name] = False
-                all_logging_enabled = False  
-        
-        
-        report.passed = all_logging_enabled
+            for instance in instances:
+                instance_name = instance['DBInstanceIdentifier']
+                logging_enabled = instance.get('EnabledCloudwatchLogsExports', [])
+                if logging_enabled:
+                    report.resource_ids_status[instance_name] = True
+                else:
+                    report.resource_ids_status[instance_name] = False
+                    report.passed = False  
+                     
+        except Exception as e:
+            report.passed = False
+            return report
 
         return report

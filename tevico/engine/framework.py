@@ -1,11 +1,11 @@
-import json
 import os
 import subprocess
 import time
 import traceback
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from jinja2 import Environment, FileSystemLoader
+import yaml
 from tevico.engine.configs.config import CreateParams
 from tevico.engine.core.enums import EntitiesEnum
 from tevico.engine.core.utils import CoreUtils
@@ -246,8 +246,19 @@ class TevicoFramework():
             os._exit(1)
 
         print(f'\n📦 Report zipped successfully: {os.path.abspath(zip_file_path)}')
+    
+    def __get_war_structure(self, provider: str) -> Optional[Dict[str, Any]]:
+        war_raw_path = f'./library/{provider}/frameworks/well_architected_review.yaml'
         
+        if not os.path.exists(war_raw_path):
+            print(f'\n❌ WAR structure file does not exist: {war_raw_path}')
+            return None
         
+        with open(war_raw_path, 'r') as file:
+            war_structure = yaml.safe_load(file)
+        
+        return war_structure
+    
     def run(self):
         """
         Executes the checks for all providers and generates a report.
@@ -257,15 +268,12 @@ class TevicoFramework():
             Exception: If an error occurs during the check execution process.
         """
         
-        print('\n🚀 Starting Tevico Framework Execution\n\n')
+        print('\n🚀 Starting Tevico Framework Execution\n')
 
         start_time = time.time()
 
         providers = self.__get_providers()
         checks: List[CheckReport] = []
-        
-        # CHECK_REPORTS_PATH = './tevico/report/data/check_reports.json'
-        # CHECK_ANALYTICS_PATH = './tevico/report/data/check_analytics.json'
         
         for p in providers:
             try:
@@ -291,7 +299,8 @@ class TevicoFramework():
         with open(data_file_path, 'w') as file:
             file.write(check_data_template.render(
                 check_reports=data,
-                check_analytics=analytics_report.model_dump()
+                check_analytics=analytics_report.model_dump(),
+                war_report=self.__get_war_structure('aws'),
             ))
         
         print('\nReport Overview:')
