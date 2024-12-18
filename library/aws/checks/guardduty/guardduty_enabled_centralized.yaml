@@ -5,10 +5,10 @@ CheckType: [Infrastructure Protection]
 ServiceName: guardduty
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:guardduty:region:account-id/detector-id
-Severity: high
+Severity: medium
 ResourceType: AwsGuardDutyDetector
 Description: Ensure GuardDuty is enabled in all regions and findings are centralized to a master account for unified threat detection.
-Risk: Without centralized GuardDuty, it’s challenging to achieve unified visibility into potential threats across multiple accounts and regions, increasing the risk of undetected security incidents.
+Risk: Without centralized GuardDuty, it's challenging to achieve unified visibility into potential threats across multiple accounts and regions, increasing the risk of undetected security incidents.
 RelatedUrl: ""
 Remediation: 
   Code:

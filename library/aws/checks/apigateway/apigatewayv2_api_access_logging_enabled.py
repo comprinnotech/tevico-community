@@ -29,12 +29,12 @@ class apigatewayv2_api_access_logging_enabled(Check):
             for stage in stages.get('Items', []):
                 if 'AccessLogSettings' not in stage or not stage['AccessLogSettings'].get('DestinationArn'):
                     # Logging is not enabled for this stage
-                    report.resource_ids_status[f"{api_name}-{stage['StageName']}"] = False
+                    report.resource_ids_status[f"{api_name}/{stage['StageName']}"] = False
                     stage_passed = False
                     report.passed = False
                 else:
                     # Logging is enabled for this stage
-                    report.resource_ids_status[f"{api_name}-{stage['StageName']}"] = True
+                    report.resource_ids_status[f"{api_name}/{stage['StageName']}"] = True
             
             # If any stage is missing logging, mark the API check as failed
             if not stage_passed:
