@@ -5,11 +5,8 @@ DATE: 2024-11-12
 """
 
 import boto3
-
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
-
-
 
 class vpc_default_security_group_closed(Check):
 
@@ -31,6 +28,7 @@ class vpc_default_security_group_closed(Check):
                 )
 
                 for sg in response['SecurityGroups']:
+                   
                     if sg['IpPermissions'] or sg['IpPermissionsEgress']:
                         all_closed = False
                         break
@@ -39,7 +37,11 @@ class vpc_default_security_group_closed(Check):
                     break
 
             report.passed = all_closed
+            report.resource_ids_status['VPC_DEFAULT_SECURITY_GROUP'] = all_closed
+
         except Exception as e:
             report.passed = False
+            report.resource_ids_status['VPC_DEFAULT_SECURITY_GROUP'] = False
 
         return report
+

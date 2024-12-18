@@ -46,6 +46,9 @@ class vpc_flowlogs_analyze_logs(Check):
             report.passed = logs_analyzed
             report.resource_ids_status['VPC_FLOW_LOGS'] = logs_analyzed
 
+            if not any(status for status in report.resource_ids_status.values()):
+                report.passed = False
+
         except Exception:
             report.passed = False
             report.resource_ids_status['VPC_FLOW_LOGS'] = False

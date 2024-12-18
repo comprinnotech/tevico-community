@@ -14,10 +14,10 @@ class iam_no_root_access_keys(Check):
         client = connection.client('iam')
 
         try:
-            # Check if there are any active access keys for the root account
+           
             response = client.list_access_keys()
 
-            # Check for active keys
+           
             has_active_root_keys = any(
                 access_key['Status'] == 'Active' for access_key in response['AccessKeyMetadata']
             )
@@ -28,6 +28,9 @@ class iam_no_root_access_keys(Check):
             else:
                 report.passed = True
                 report.resource_ids_status['root_account'] = True
+
+            if not any(status for status in report.resource_ids_status.values()):
+                report.passed = False
 
         except Exception:
             report.passed = False

@@ -4,7 +4,6 @@ EMAIL: supriyo.bhakat@comprinno.net
 DATE: 2024-11-15
 """
 import boto3
-
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
@@ -34,6 +33,9 @@ class cloudwatch_log_metric_filter_security_group_changes(Check):
             if not filter_found:
                 report.passed = False
                 report.resource_ids_status['No relevant filters'] = False
+
+            if not any(status for status in report.resource_ids_status.values()):
+                report.passed = False
 
         except logs_client.exceptions.ResourceNotFoundException:
             report.passed = False

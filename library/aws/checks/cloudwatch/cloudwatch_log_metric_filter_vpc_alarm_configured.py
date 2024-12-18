@@ -43,6 +43,9 @@ class cloudwatch_log_metric_filter_vpc_alarm_configured(Check):
                         report.passed = False
                         report.resource_ids_status[filter_name] = False
 
+            if not any(status for status in report.resource_ids_status.values()):
+                report.passed = False
+
         except Exception:
             report.passed = False
 

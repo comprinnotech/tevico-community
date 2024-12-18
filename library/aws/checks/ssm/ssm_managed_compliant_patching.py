@@ -44,8 +44,12 @@ class ssm_managed_compliant_patching(Check):
             report.passed = all_compliant
             report.resource_ids_status['SSM_COMPLIANT_PATCHING'] = all_compliant
 
+            if not any(status for status in report.resource_ids_status.values()):
+                report.passed = False
+
         except Exception:
             report.passed = False
             report.resource_ids_status['SSM_COMPLIANT_PATCHING'] = False
 
         return report
+

@@ -15,11 +15,11 @@ class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
         cloudwatch_client = connection.client('logs')
-        
+
         try:
             filters = []
             paginator = cloudwatch_client.get_paginator('describe_metric_filters')
-            
+
             for page in paginator.paginate():
                 filters.extend(page.get('metricFilters', []))
 
@@ -38,6 +38,9 @@ class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
                 else:
                     report.passed = False
                     report.resource_ids_status[filter_name] = False
+
+            if not any(status for status in report.resource_ids_status.values()):
+                report.passed = False
 
         except Exception:
             report.passed = False
