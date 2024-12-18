@@ -9,7 +9,7 @@ from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 
-class CloudWatchLogMetricFilterSecurityGroupChanges(Check):
+class cloudwatch_log_metric_filter_security_group_changes(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
