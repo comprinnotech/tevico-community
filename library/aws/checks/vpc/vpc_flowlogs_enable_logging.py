@@ -5,7 +5,6 @@ DATE: 2024-11-12
 """
 
 import boto3
-
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
@@ -31,7 +30,10 @@ class vpc_flowlogs_enable_logging(Check):
                     break  
 
             report.passed = flow_logs_enabled
+            report.resource_ids_status['VPC_FLOW_LOGS'] = flow_logs_enabled
+
         except Exception as e:
             report.passed = False
-        
+            report.resource_ids_status['VPC_FLOW_LOGS'] = False
+
         return report
