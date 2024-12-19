@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
     renderDOM({ warDetails: war_report, reportsData: check_reports })
-    sessionStorage.clear();
-    localStorage.clear();
     setActiveNavLink();
 });
 

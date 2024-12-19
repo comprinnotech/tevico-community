@@ -38,20 +38,27 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function displayCheckDetails(report) {
-    const { check_metadata: meta = {}, resource_ids_status } = report;
+    const { check_metadata: meta = {}, resource_ids_status, passed } = report;
 
-    updateMetadataElements(meta, report);
+    const status = passed ? 'Passed' : 'Failed';
+
+    updateMetadataElements({ meta, report, status });
 
     if (Object.entries(resource_ids_status).length) {
         createResourceStatusTable(resource_ids_status);
     }
 }
 
-function updateMetadataElements(meta, report) {
+function updateMetadataElements({ meta, report, status }) {
     const updateElement = (id, value) => {
         const element = document.getElementById(id);
-        if (element) {
+        if (element && id !== "status_text") {
             element.textContent = value || '-';
+        }
+        if (element && id === "status_text") {
+            const statusValue = status ? 'Passed' : 'Failed';
+            const badgeClass = status ? 'bg-softer-success' : 'bg-softer-danger';
+            element.innerHTML = `<span class="badge ${badgeClass}">${statusValue}</span>`;
         }
     };
 
@@ -65,7 +72,8 @@ function updateMetadataElements(meta, report) {
         { elementId: 'resource_type_text', value: meta.resource_type },
         { elementId: 'risk_text', value: meta.risk },
         { elementId: 'service_name_text', value: meta.service_name },
-        { elementId: 'severity_text', value: meta.severity }
+        { elementId: 'severity_text', value: meta.severity },
+        { elementId: 'status_text', value: status }
     ];
 
     updates.forEach(({ elementId, value }) => updateElement(elementId, value));
