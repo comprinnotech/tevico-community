@@ -35,7 +35,7 @@ class apigateway_rest_api_client_certificate_enabled(Check):
                             has_cert = stage.get('clientCertificateId') is not None
                             
                             # Use formatted string for resource ID
-                            resource_id = f"{api_name}-{stage_name}"
+                            resource_id = f"{api_name}/{stage_name}"
                             report.resource_ids_status[resource_id] = has_cert
                             
                             if not has_cert:
