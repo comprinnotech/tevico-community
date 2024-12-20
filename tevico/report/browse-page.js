@@ -108,7 +108,7 @@ function initializeListJS() {
 
     list = new List('table-default', options);
 
-    const defaultSortColumn = 'sort-check_metadata.check_title'; // or whatever column you want as default
+    const defaultSortColumn = 'sort-check_metadata.check_title';
     const defaultSortOrder = 'asc';
 
     const referrer = document.referrer;
@@ -205,6 +205,20 @@ function initializeListJS() {
     return list;
 }
 
+function updatePagination(pageNumber) {
+    const totalPages = Math.ceil(list.matchingItems.length / list.page);
+
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+        currentPage = pageNumber;
+        list.show((currentPage - 1) * list.page + 1, list.page);
+
+        saveTableState();
+        updatePaginationInfo();
+        updatePaginationButtons();
+        updateRowNumbers();
+    }
+}
+
 function handlePaginationClick(e) {
     const target = e.target.closest('a');
     if (!target) return;
@@ -246,7 +260,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.addEventListener('beforeunload', function (e) {
-        const currentPath = window.location.pathname;
         if (!e.target.activeElement?.href?.includes('check-details.html')) {
             clearTableState();
         }
@@ -425,7 +438,7 @@ function applyDefaultFilters() {
     }
 }
 
-function applyFilters() {
+function applyFilters(scenario = "default") {
     list.filter(item => {
         const sectionMatch = !activeFilters.section ||
             item.values()['sort-section'] === activeFilters.section;
@@ -441,11 +454,25 @@ function applyFilters() {
 
         return sectionMatch && serviceMatch && severityMatch && statusMatch;
     });
+
+    saveFiltersToLocalStorage();
+
     setTimeout(() => {
-        currentPage = 1;
+        const savedState = sessionStorage.getItem('tableState') || {};
+        let savedPage = 1;
+        if (Object.keys(savedState).length) {
+            const { currentPage: page = 1 } = JSON.parse(savedState) || {};
+            savedPage = page;
+        }
+        currentPage = scenario === "default" ? 1 : savedPage;
         list.sort(currentSortColumn, { order: currentSortOrder });
-        updateRowNumbers();
+
+        updatePagination(currentPage);
     }, 0);
+}
+
+function saveFiltersToLocalStorage() {
+    localStorage.setItem('tevico-filters', JSON.stringify(activeFilters));
 }
 
 const populateDropdown = (data, dropdownId, valueAccessor, filterType) => {
@@ -518,19 +545,20 @@ function initializeDropdowns(reportsData) {
         }
     });
 
+    restoreFiltersFromLocalStorage();
     applyDefaultFilters();
 }
 
 function clearAllFilters() {
     const dropdownIds = ['sectionDropdown', 'serviceDropdown', 'severityDropdown', 'statusDropdown'];
-
     const hadActiveFilters = Object.values(activeFilters).some(Boolean);
 
     if (hadActiveFilters) {
-
         Object.keys(activeFilters).forEach(key => {
             activeFilters[key] = null;
         });
+
+        localStorage.removeItem('tevico-filters');
 
         dropdownIds.forEach(id => {
             const dropdown = document.querySelector(`#${id}`).closest('.dropdown');
@@ -545,7 +573,7 @@ function clearAllFilters() {
                 item.classList.remove('active');
             });
         });
-        console.log("Executed");
+
         currentPage = 1;
         list.filter();
 
@@ -556,5 +584,32 @@ function clearAllFilters() {
         updatePaginationInfo();
         updatePaginationButtons();
         updateRowNumbers();
+    }
+}
+
+function restoreFiltersFromLocalStorage() {
+    const savedFilters = localStorage.getItem('tevico-filters');
+    if (savedFilters) {
+        const filters = JSON.parse(savedFilters);
+        Object.keys(filters).forEach(filterType => {
+            if (filters[filterType]) {
+                const dropdownId = `${filterType}Dropdown`;
+                const dropdown = document.getElementById(dropdownId);
+                const dropdownToggle = dropdown.closest('.dropdown').querySelector('.dropdown-toggle');
+                const filterItem = Array.from(dropdown.querySelectorAll('.dropdown-item'))
+                    .find(item => item.textContent === filters[filterType]);
+
+                if (filterItem && dropdownToggle) {
+                    activeFilters[filterType] = filters[filterType];
+                    dropdownToggle.textContent = filters[filterType];
+                    dropdownToggle.classList.add('active');
+                    filterItem.classList.add('active');
+                }
+            }
+        });
+
+        if (Object.values(filters).some(Boolean)) {
+            applyFilters("redirect");
+        }
     }
 }

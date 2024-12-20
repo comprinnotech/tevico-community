@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
     updateUI(check_reports, check_analytics);
     setActiveNavLink();
+    sessionStorage.clear();
+    localStorage.clear();
 });
 
 function updateUI(reportsData, analyticsData) {
