@@ -2,10 +2,10 @@ Provider: aws
 CheckID: acl_bidirectional_traffic_restriction_check
 CheckTitle: Ensure bidirectional traffic restrictions are enforced in Network ACLs.
 CheckType: [Infrastructure Protection]
-ServiceName: ec2
+ServiceName: acl
 SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: medium
+Severity: low
 ResourceType: AwsEc2NetworkAcl
 Description: Checks if Network ACLs (NACLs) enforce restrictions on bidirectional traffic to prevent unintended access.
 Risk: Allowing unrestricted bidirectional traffic can expose resources to unauthorized access and compromise security.
