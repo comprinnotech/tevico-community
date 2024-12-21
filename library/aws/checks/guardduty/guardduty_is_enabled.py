@@ -21,13 +21,14 @@ class guardduty_is_enabled(Check):
                 try:
                     regional_client = connection.client('guardduty', region_name=region)
                     detectors = regional_client.list_detectors()
+                    resource_key = region
 
                     if not detectors.get('DetectorIds', []):
                         report.passed = False
+                        report.resource_ids_status[resource_key] = False
                         continue
 
                     for detector_id in detectors['DetectorIds']:
-                        resource_key = f"{region}-{detector_id}"
                         try:
                             detector = regional_client.get_detector(DetectorId=detector_id)
                             if detector.get('Status') is None or not detector.get('Status'):
@@ -40,6 +41,7 @@ class guardduty_is_enabled(Check):
                             report.passed = False
 
                 except ClientError:
+                    report.resource_ids_status[region] = False
                     report.passed = False
 
         except Exception:
