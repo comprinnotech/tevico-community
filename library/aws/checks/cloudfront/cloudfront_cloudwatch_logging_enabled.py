@@ -4,31 +4,45 @@ EMAIL: deepak.puri@comprinno.net
 DATE: 2024-11-15
 """
 import boto3
+from botocore.exceptions import ClientError, BotoCoreError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 class cloudfront_cloudwatch_logging_enabled(Check):
+    def _get_distributions(self, client):
+        response = client.list_distributions()
+        return response.get('DistributionList', {}).get('Items', [])
+
+    def _check_logging_enabled(self, distribution):
+        distribution_id = distribution['Id']
+        logging_config = distribution.get('Logging', {})
+        return distribution_id, logging_config.get('Enabled', False)
+
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudfront')
         report = CheckReport(name=__name__)
         report.passed = True
-        distributions = client.list_distributions()
-        
-        if distributions.get('DistributionList', {}).get('Items'):
-            for distribution in distributions['DistributionList']['Items']:
-                dist_id = distribution['Id']
 
+        try:
+            distributions = self._get_distributions(client)
+
+            if not distributions:
+                return report
+
+            for distribution in distributions:
                 try:
-                    monitoring_config = client.get_monitoring_subscription(DistributionId=dist_id)
-                    if monitoring_config.get('MonitoringSubscription', {}).get('RealtimeMetricsSubscriptionConfig', {}).get('RealtimeMetricsSubscriptionStatus') == 'Enabled':
-                        report.resource_ids_status[dist_id] = True
-                    else:
-                        report.resource_ids_status[dist_id] = False
+                    dist_id, logging_enabled = self._check_logging_enabled(distribution)
+                    report.resource_ids_status[dist_id] = logging_enabled
+
+                    if not logging_enabled:
                         report.passed = False
-                except client.exceptions.NoSuchMonitoringSubscription:
-                    report.resource_ids_status[dist_id] = False
+
+                except KeyError:
                     report.passed = False
-        else:
-            report.passed = True  
-            
+                    return report
+
+        except (ClientError, BotoCoreError, Exception):
+            report.passed = False
+            return report
+
         return report

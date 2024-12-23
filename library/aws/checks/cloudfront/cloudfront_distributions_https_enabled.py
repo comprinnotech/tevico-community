@@ -7,28 +7,48 @@ DATE: 2024-11-15
 import boto3
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
+from botocore.exceptions import ClientError, BotoCoreError
 
 class cloudfront_distributions_https_enabled(Check):
+    def _get_distributions(self, client):
+        response = client.list_distributions()
+        return response.get('DistributionList', {}).get('Items', [])
+
+    def _check_https_enabled(self, distribution):
+        distribution_id = distribution['Id']
+        default_cache_behavior = distribution.get('DefaultCacheBehavior', {})
+        viewer_protocol_policy = default_cache_behavior.get('ViewerProtocolPolicy', '')
+        if viewer_protocol_policy not in ['redirect-to-https', 'https-only']:
+            return distribution_id, False
+        return distribution_id, True
+
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudfront')
         report = CheckReport(name=__name__)
         report.passed = True
-        distributions = client.list_distributions()
-        
-        if ('DistributionList' in distributions and 
-            'Items' in distributions['DistributionList'] and 
-            distributions['DistributionList']['Items']):
-            
-            for distribution in distributions['DistributionList']['Items']:
-                distribution_id = distribution['Id']
-                default_cache_behavior = distribution.get('DefaultCacheBehavior', {})
-                viewer_protocol_policy = default_cache_behavior.get('ViewerProtocolPolicy', '')
-                if viewer_protocol_policy != 'redirect-to-https' and viewer_protocol_policy != 'https-only':
-                    report.resource_ids_status[distribution_id] = False
+
+        try:
+            distributions = self._get_distributions(client)
+
+            if not distributions:
+                report.resource_ids_status['NoDistributions'] = True
+                return report
+
+            for distribution in distributions:
+                try:
+                    dist_id, https_enabled = self._check_https_enabled(distribution)
+                    report.resource_ids_status[dist_id] = https_enabled
+
+                    if not https_enabled:
+                        report.passed = False
+
+                except KeyError:
                     report.passed = False
-                else:
-                    report.resource_ids_status[distribution_id] = True
-        else:
-            report.resource_ids_status['NoDistributions'] = True
+                    return report
+
+        except (ClientError, BotoCoreError, Exception):
+            report.passed = False
+            return report
 
         return report
+
