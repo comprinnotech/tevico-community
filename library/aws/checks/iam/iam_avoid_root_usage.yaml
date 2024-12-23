@@ -1,29 +1,62 @@
 Provider: aws
 CheckID: iam_avoid_root_usage
-CheckTitle: Ensure Root Account Usage is Avoided
-CheckType: []
+CheckTitle: Ensure root account has not been used in the last 24 hours
+CheckType: ["Security", "IAM"]
 ServiceName: iam
-SubServiceName: ''
-ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
+SubServiceName: 'users'
+ResourceIdTemplate: 'arn:aws:iam::${AccountId}:root'
 Severity: critical
 ResourceType: AwsIamUser
-Description: Ensure that the root account is not used for everyday tasks. The root user has unrestricted access to all resources in the AWS account, and its usage should be avoided for security reasons. MFA should be enabled to secure the root account, adding an extra layer of protection to prevent unauthorized access.
+Description: This check monitors root account activity within the last 24 hours by analyzing the AWS credential report. It tracks root account usage through password logins and access key usage. The check fails if the root account has been accessed within the past day, as root account usage should be minimal and only for specific administrative tasks that cannot be performed by IAM users.
+
 Risk: >-
-  The root account has the highest level of privileges in an AWS account. If compromised, it could lead to complete control of the AWS environment, causing severe damage or data breaches. By avoiding the use of the root account for everyday tasks and enabling MFA, the risk of unauthorized access is significantly reduced. Additionally, enabling MFA for the root account ensures that even if the root credentials are compromised, an attacker would still need access to the MFA device.
+  The root account has unrestricted access to all AWS resources and settings. Recent usage of the root account indicates:
+  - Potential security policy violations
+  - Increased risk of accidental privileged operations
+  - Possible compromise of root credentials
+  - Deviation from AWS security best practices
+  - Lack of proper IAM role delegation
+  - Difficulty in tracking and auditing specific actions
+
 RelatedUrl: ''
 Remediation:
   Code:
-    CLI: ''
+    CLI: |
+      # Generate credential report
+      aws iam generate-credential-report
+      
+      # Get credential report
+      aws iam get-credential-report
+      
+      # List root access keys (if any exist)
+      aws iam list-access-keys --user-name root
     NativeIaC: ''
-    Other: ''
-    Terraform: ''
+    Other: |
+      1. Review CloudTrail logs for root account activity
+      2. Remove root access keys if present
+      3. Enable MFA for root account
+      4. Create IAM admin users for daily tasks
+    Terraform: |
+      # Example of creating admin user instead of using root
+      resource "aws_iam_user" "admin" {
+        name = "admin_user"
+      }
+
+      resource "aws_iam_user_policy_attachment" "admin_policy" {
+        user       = aws_iam_user.admin.name
+        policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Immediately cease using the root account for daily operations
+      2. Create IAM users with appropriate permissions for administrative tasks
+      3. Store root account credentials securely and use only for tasks that explicitly require root access
+      4. Enable CloudTrail logging to monitor root account usage
+      5. Set up alerts for root account activity
+      6. Review and document any legitimate root account usage
     Url: >-
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html
+Categories: ["Security", "Identity", "Compliance"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_root_mfa_enabled", "iam_root_access_key_check"]
+Notes: 'This check specifically monitors root account activity within the last 24 hours by analyzing password and access key usage through the AWS credential report. The check considers both console login and API access via access keys.'

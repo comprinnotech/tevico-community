@@ -1,29 +1,102 @@
 Provider: aws
 CheckID: iam_support_role_created
-CheckTitle: Ensure a support role is created within the AWS account. The support role is essential for enabling AWS support to assist with issues that require specific access, such as troubleshooting or resolving service disruptions.
-CheckType: []
+CheckTitle: Ensure AWS support role exists
+CheckType: ["Security", "Support", "IAM"]
 ServiceName: iam
-SubServiceName: ''
-ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
+SubServiceName: 'roles'
+ResourceIdTemplate: 'arn:aws:iam::${AccountId}:role/*'
 Severity: critical
-ResourceType: AwsIamUser
-Description: Ensure MFA is enabled for the user's account
+ResourceType: AwsIamRole
+Description: This check verifies the existence of an IAM support role within the AWS account by examining all IAM roles and identifying those with 'support' in their name. A support role is crucial for AWS Support to effectively assist with account issues, troubleshooting, and incident resolution. The check fails if no support role is found in the account.
+
 Risk: >-
- If a support role is not created, AWS support may not be able to efficiently access or assist with issues within your account. This can delay the resolution of critical incidents, leading to prolonged outages or misconfigurations. Having a dedicated support role ensures that AWS support can quickly intervene when necessary, providing the right level of access without compromising security.
+  Absence of a support role creates several operational risks:
+  - Delayed incident response times due to limited AWS Support access
+  - Inability to effectively troubleshoot critical service issues
+  - Potential service disruptions lasting longer than necessary
+  - Restricted ability for AWS Support to assist with technical problems
+  - Compromised disaster recovery capabilities
+  - Limited access to advanced support features
+  - Inefficient problem resolution processes
+  - Increased mean time to resolution (MTTR)
+
 RelatedUrl: ''
 Remediation:
   Code:
-    CLI: ''
-    NativeIaC: ''
-    Other: ''
-    Terraform: ''
+    CLI: |
+      # Create AWS Support role
+      aws iam create-role \
+        --role-name AWSSupportRole \
+        --assume-role-policy-document '{
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "support.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }]
+        }'
+      
+      # Attach AWS Support policy
+      aws iam attach-role-policy \
+        --role-name AWSSupportRole \
+        --policy-arn arn:aws:iam::aws:policy/AWSSupportAccess
+    NativeIaC: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "support.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      }
+    Other: |
+      Steps to create support role:
+      1. Navigate to IAM console
+      2. Create new role
+      3. Select AWS Service as trusted entity
+      4. Choose AWS Support as the service
+      5. Attach AWSSupportAccess policy
+      6. Review and create role
+    Terraform: |
+      resource "aws_iam_role" "support_role" {
+        name = "AWSSupportRole"
+        
+        assume_role_policy = jsonencode({
+          Version = "2012-10-17"
+          Statement = [
+            {
+              Action = "sts:AssumeRole"
+              Effect = "Allow"
+              Principal = {
+                Service = "support.amazonaws.com"
+              }
+            }
+          ]
+        })
+      }
+
+      resource "aws_iam_role_policy_attachment" "support_policy" {
+        role       = aws_iam_role.support_role.name
+        policy_arn = "arn:aws:iam::aws:policy/AWSSupportAccess"
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Create a dedicated IAM role for AWS Support
+      2. Attach the AWSSupportAccess managed policy
+      3. Configure appropriate trust relationships
+      4. Verify role permissions and access
+      5. Document role creation and purpose
+      6. Implement regular role access reviews
+      7. Monitor role usage through CloudTrail
     Url: >-
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+      https://docs.aws.amazon.com/awssupport/latest/user/accessing-support.html
+Categories: ["Security", "Operations", "Support"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_role_permissions_check", "iam_support_policy_check"]
+Notes: 'This check specifically looks for the existence of an IAM role containing "support" in its name, which is essential for enabling AWS Support to assist with account issues. The role should be properly configured with the AWSSupportAccess policy.'

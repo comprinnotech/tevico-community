@@ -1,30 +1,50 @@
 Provider: aws
 CheckID: iam_user_mfa_enabled_console_access
-CheckTitle: Ensure MFA is enabled for the user's account
-CheckType: []
+CheckTitle: Ensure MFA is enabled for all IAM users
+CheckType: ["Security", "Authentication"]
 ServiceName: iam
 SubServiceName: ''
 ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
 Severity: critical
 ResourceType: AwsIamUser
-Description: Ensure MFA (Multi-Factor Authentication) is enabled for all IAM users with console access. Enabling MFA provides an additional layer of security beyond just username and password, making it harder for unauthorized users to gain access.
+Description: Checks whether IAM users have Multi-Factor Authentication (MFA) devices configured. The check lists all IAM users and verifies if each user has at least one MFA device associated with their account.
 
 Risk: >-
- Without MFA enabled, accounts with console access are more vulnerable to unauthorized access. MFA ensures that even if a password is compromised, an attacker would still need a second authentication factor (such as an MFA device) to gain access. Failure to enable MFA increases the risk of unauthorized access, potentially leading to data breaches or privilege misuse. Additionally, using a non-personal MFA device reduces risks associated with device loss or employee turnover.
-RelatedUrl: ''
+  Without MFA enabled, IAM user accounts are more vulnerable to unauthorized access through:
+  - Compromised passwords
+  - Brute force attacks
+  - Credential theft
+  Lack of MFA significantly increases the risk of unauthorized access to AWS resources and potential security breaches.
+
 Remediation:
   Code:
-    CLI: ''
+    CLI: |
+      # List MFA devices for a user
+      aws iam list-mfa-devices --user-name <username>
+      
+      # Enable virtual MFA device
+      aws iam enable-mfa-device --user-name <username> --serial-number <device-arn> --authentication-code1 <code-1> --authentication-code2 <code-2>
     NativeIaC: ''
     Other: ''
-    Terraform: ''
+    Terraform: |
+      resource "aws_iam_user_login_profile" "example" {
+        user    = aws_iam_user.example.name
+        pgp_key = "keybase:username"
+      }
+
+      resource "aws_iam_virtual_mfa_device" "example" {
+        virtual_mfa_device_name = "example"
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Navigate to IAM in AWS Console
+      2. Select the user requiring MFA
+      3. Choose Security credentials tab
+      4. In Multi-factor authentication (MFA) section, click Assign MFA device
+      5. Follow the wizard to set up either a virtual MFA device, security key, or hardware MFA token
     Url: >-
       https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+Categories: ["Security", "Identity"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_user_console_access"]
+Notes: 'This check verifies MFA configuration for all IAM users regardless of their console access status'

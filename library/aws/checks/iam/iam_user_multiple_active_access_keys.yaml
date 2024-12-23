@@ -1,29 +1,61 @@
 Provider: aws
 CheckID: iam_user_multiple_active_access_keys
-CheckTitle: Ensure Multiple active access key for the users
-CheckType: []
+CheckTitle: Ensure IAM users do not have multiple active access keys
+CheckType: ["Security", "Access Management"]
 ServiceName: iam
 SubServiceName: ''
 ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
 Severity: critical
 ResourceType: AwsIamUser
-Description: Ensure no IAM user has multiple active access keys. AWS recommends having only one active access key per user to reduce the potential attack surface. Multiple active access keys can increase the risk of unauthorized access or compromise, as it becomes harder to manage and track which keys are being used.
+Description: This check identifies IAM users who have more than one active access key. It enumerates all users and their access keys, counting the number of active keys per user. The check fails if any user has more than one active access key, as this violates security best practices for access key management.
+
 Risk: >-
- Having multiple active access keys can lead to security risks, such as difficulty in key rotation and potential unauthorized access. If one key gets compromised, an attacker could gain access to the user's account without the organization's knowledge. It also makes it harder to monitor and audit key usage. To mitigate these risks, limit the number of active access keys to one per user and regularly rotate them.
+  Multiple active access keys per user present several security risks:
+  - Increased difficulty in tracking key usage and identifying the source of potential security incidents
+  - Complicated key rotation processes
+  - Higher risk of key exposure due to multiple credentials in circulation
+  - Challenges in access key management and auditing
+  - Potential violation of compliance requirements for access key management
+  - Increased attack surface for credential compromise
+
 RelatedUrl: ''
 Remediation:
   Code:
-    CLI: ''
+    CLI: |
+      # List access keys for a user
+      aws iam list-access-keys --user-name <username>
+      
+      # Deactivate unnecessary access key
+      aws iam update-access-key --access-key-id <access-key-id> --status Inactive --user-name <username>
+      
+      # Delete unnecessary access key
+      aws iam delete-access-key --access-key-id <access-key-id> --user-name <username>
     NativeIaC: ''
-    Other: ''
-    Terraform: ''
+    Other: |
+      # Best practices for access key rotation:
+      1. Create new access key
+      2. Update applications with new key
+      3. Deactivate old key
+      4. Verify applications still work
+      5. Delete old key
+    Terraform: |
+      # Example of limiting to one access key
+      resource "aws_iam_access_key" "example" {
+        user = aws_iam_user.example.name
+        status = "Active"
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Review all IAM users and identify those with multiple active access keys
+      2. For each affected user:
+         - Identify which access key is currently in use
+         - Deactivate unused or unnecessary access keys
+         - Delete old or unused access keys
+         - Implement a key rotation policy
+         - Monitor access key usage with AWS CloudTrail
     Url: >-
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html
+Categories: ["Security", "Identity", "Compliance"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_user_access_key_rotation", "iam_user_unused_credentials"]
+Notes: 'This check helps maintain security best practices by ensuring users have only one active access key at a time, making key management and rotation more manageable and secure.'

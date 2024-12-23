@@ -1,30 +1,97 @@
 Provider: aws
 CheckID: iam_policy_allows_privilege_escalation
-CheckTitle: Ensure No IAM Policies Allow Privilege Escalation
-CheckType: []
+CheckTitle: Ensure IAM policies do not allow privilege escalation
+CheckType: ["Security", "IAM", "Compliance"]
 ServiceName: iam
-SubServiceName: ''
-ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
+SubServiceName: 'policies'
+ResourceIdTemplate: 'arn:aws:iam::${AccountId}:policy/${PolicyName}'
 Severity: critical
-ResourceType: AwsIamUser
-Description: Ensure no IAM policies within the account allow privilege escalation. Privilege escalation occurs when a user can gain access to resources or perform actions beyond their intended permissions, which poses a significant security risk.
+ResourceType: AwsIamPolicy
+Description: This check examines IAM policies to identify potential privilege escalation paths. It analyzes both attached and inline policies for each IAM user, focusing specifically on custom policies (non-AWS managed). The check evaluates policy statements and their actions to detect permissions that could allow users to escalate their privileges beyond their intended access level.
 
 Risk: >-
- Allowing privilege escalation through IAM policies can lead to unauthorized users obtaining higher-level privileges or full administrative access. This can result in data breaches, unauthorized resource usage, or complete control over the AWS environment. Restricting privilege escalation ensures the principle of least privilege is enforced, minimizing security vulnerabilities and potential misuse.
+  Policies allowing privilege escalation present several critical security risks:
+  - Users could gain unauthorized administrative access
+  - Potential for lateral movement within the AWS environment
+  - Ability to create or modify IAM policies and roles
+  - Possibility of creating new IAM users with elevated permissions
+  - Risk of compromising the entire AWS account
+  - Violation of the principle of least privilege
+
 RelatedUrl: ''
 Remediation:
   Code:
-    CLI: ''
-    NativeIaC: ''
-    Other: ''
-    Terraform: ''
+    CLI: |
+      # List attached policies for a user
+      aws iam list-attached-user-policies --user-name <username>
+      
+      # Get policy version
+      aws iam get-policy-version --policy-arn <policy-arn> --version-id <version-id>
+      
+      # List inline policies
+      aws iam list-user-policies --user-name <username>
+      
+      # Remove policy attachment
+      aws iam detach-user-policy --user-name <username> --policy-arn <policy-arn>
+    NativeIaC: |
+      # Example of policy with restricted permissions
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:GetObject",
+              "s3:ListBucket"
+            ],
+            "Resource": [
+              "arn:aws:s3:::example-bucket",
+              "arn:aws:s3:::example-bucket/*"
+            ]
+          }
+        ]
+      }
+    Other: |
+      Review steps:
+      1. Identify all custom IAM policies
+      2. Review policy actions and resources
+      3. Remove unnecessary permissions
+      4. Implement least privilege access
+      5. Document required permissions
+    Terraform: |
+      resource "aws_iam_policy" "example" {
+        name = "restricted_policy"
+        path = "/"
+        description = "Restricted access policy"
+        policy = jsonencode({
+          Version = "2012-10-17"
+          Statement = [
+            {
+              Effect = "Allow"
+              Action = [
+                "s3:GetObject",
+                "s3:ListBucket"
+              ]
+              Resource = [
+                "arn:aws:s3:::example-bucket",
+                "arn:aws:s3:::example-bucket/*"
+              ]
+            }
+          ]
+        })
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Review all custom IAM policies for privilege escalation risks
+      2. Remove or modify policies that grant excessive permissions
+      3. Implement least privilege access model
+      4. Use AWS managed policies where possible
+      5. Regular audit of IAM policies and permissions
+      6. Document and justify any required elevated permissions
+      7. Implement policy validation checks in CI/CD pipeline
     Url: >-
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+      https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html
+Categories: ["Security", "Identity", "Compliance", "Access Control"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_policy_no_full_access", "iam_policy_no_star_star"]
+Notes: 'This check specifically examines custom IAM policies (non-AWS managed) for potential privilege escalation paths by analyzing policy actions and their combinations. It helps maintain the principle of least privilege and prevents unauthorized privilege elevation.'
