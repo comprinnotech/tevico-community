@@ -1,30 +1,90 @@
 Provider: aws
 CheckID: iam_policy_attached_to_only_group_or_roles
-CheckTitle: Ensure IAM Policies Are Only Attached to Groups or Roles
-CheckType: []
+CheckTitle: Ensure IAM policies are only attached to groups or roles
+CheckType: ["Security", "IAM", "Best Practice"]
 ServiceName: iam
-SubServiceName: ''
+SubServiceName: 'policies'
 ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
-Severity: critical
+Severity: high
 ResourceType: AwsIamUser
-Description: Ensure IAM policies are only attached to groups or roles, and not directly to individual users. This helps to simplify the management of permissions and maintain better security practices by applying policies through roles and groups rather than individual users.
+Description: This check examines all IAM users to identify any directly attached policies. It verifies that IAM policies are attached to groups or roles rather than individual users. The check fails if any user has policies directly attached to them, as this violates AWS security best practices for IAM policy management and the principle of centralized access control.
 
 Risk: >-
- Attaching policies directly to users increases the complexity of managing permissions and the risk of accidentally assigning excessive permissions. It bypasses the principle of least privilege and makes it difficult to audit and manage access control effectively. Policies should be attached to groups or roles, which can then be assigned to users, ensuring more controlled and scalable permission management across the AWS environment.
+  Direct policy attachment to users presents several risks:
+  - Increased complexity in permission management
+  - Difficulty in maintaining consistent access controls
+  - Higher risk of permission sprawl
+  - Challenges in access review and audit
+  - Inefficient policy updates and maintenance
+  - Potential for inconsistent security policies
+  - Harder to implement the principle of least privilege
+  - Complicated user permission tracking
+
 RelatedUrl: ''
 Remediation:
   Code:
-    CLI: ''
-    NativeIaC: ''
-    Other: ''
-    Terraform: ''
+    CLI: |
+      # List attached policies for a user
+      aws iam list-attached-user-policies --user-name <username>
+      
+      # Create a group
+      aws iam create-group --group-name <groupname>
+      
+      # Attach policy to group
+      aws iam attach-group-policy --group-name <groupname> --policy-arn <policy-arn>
+      
+      # Add user to group
+      aws iam add-user-to-group --group-name <groupname> --user-name <username>
+      
+      # Detach policy from user
+      aws iam detach-user-policy --user-name <username> --policy-arn <policy-arn>
+    NativeIaC: |
+      # Group-based access control structure
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": ["iam:AddUserToGroup"],
+            "Resource": ["arn:aws:iam::*:group/*"]
+          }
+        ]
+      }
+    Other: |
+      Migration steps:
+      1. Identify users with direct policy attachments
+      2. Create appropriate groups
+      3. Move policies to groups
+      4. Add users to groups
+      5. Remove direct policy attachments
+    Terraform: |
+      # Create group and attach policy
+      resource "aws_iam_group" "example" {
+        name = "example_group"
+      }
+
+      resource "aws_iam_group_policy_attachment" "example" {
+        group      = aws_iam_group.example.name
+        policy_arn = "arn:aws:iam::aws:policy/example"
+      }
+
+      resource "aws_iam_group_membership" "example" {
+        name  = "example-membership"
+        users = [aws_iam_user.example.name]
+        group = aws_iam_group.example.name
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Review all IAM users for directly attached policies
+      2. Create appropriate IAM groups based on job functions
+      3. Move policies from users to groups
+      4. Assign users to appropriate groups
+      5. Remove direct policy attachments from users
+      6. Implement regular policy attachment audits
+      7. Document group-based access control strategy
     Url: >-
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+      https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#use-groups-for-permissions
+Categories: ["Security", "Identity", "Compliance", "Operations"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_group_policy_check", "iam_role_policy_check"]
+Notes: 'This check specifically looks for IAM policies directly attached to users, promoting the use of group-based access control for better security management and operational efficiency.'

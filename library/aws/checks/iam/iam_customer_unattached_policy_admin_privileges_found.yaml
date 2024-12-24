@@ -2,52 +2,114 @@ Provider: aws
 
 CheckID: iam_customer_unattached_policy_admin_privileges_found
 
-CheckTitle: Ensure IAM policies that allow full "*:*" administrative privileges are not created
+CheckTitle: Detect unattached IAM customer policies with full administrative privileges
 
 CheckType: 
   - Software and Configuration Checks
-  - Industry and Regulatory Standards
+  - Identity and Access Management
+  - Security Best Practices
   - CIS AWS Foundations Benchmark
+  - Compliance Validation
 
 ServiceName: iam
 
-SubServiceName: ""
+SubServiceName: "iam_policy"
 
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+ResourceIdTemplate: arn:aws:iam::${AccountId}:policy/${PolicyName}
 
 Severity: high
 
 ResourceType: AwsIamPolicy
 
-Description: Ensure IAM policies that allow full "*:*" administrative privileges are not created, may be eventual consistent if an ephemeral resource is using it.
+Description: |
+  This check identifies customer-managed IAM policies that are both unattached (not associated with any IAM users, 
+  groups, or roles) and contain full administrative privileges ("*:*"). These policies pose a security risk as they 
+  could be attached to IAM entities in the future, potentially granting excessive permissions.
 
 Risk: |
-  IAM policies are the means by which privileges are granted to users, groups, or roles. 
-  It is recommended and considered standard security advice to grant least privilege—that is, 
-  granting only the permissions required to perform a task. Determine what users need to do 
-  and then craft policies for them that let the users perform only those tasks instead of 
-  allowing full administrative privileges. Providing full administrative privileges instead of 
-  restricting to the minimum set of permissions exposes the resources to potentially unwanted actions.
+  Unattached IAM policies with full administrative privileges present several security risks:
+  1. Potential for privilege escalation if attached to IAM entities
+  2. Risk of unauthorized access if policies are misused
+  3. Violation of least privilege principle
+  4. Increased attack surface in case of credential compromise
+  5. Difficulty in tracking and auditing policy usage
+  6. Non-compliance with security best practices
+  7. Potential for accidental attachment to wrong IAM entities
 
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
 
 Remediation:
   Code:
-    CLI: "aws iam list-policies --scope Local"
-    NativeIaC: ""
-    Other: "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/iam-unattached-policies.html"
-    Terraform: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+    CLI: |
+      # List unattached customer managed policies
+      aws iam list-policies --scope Local --only-attached false
+      
+      # Delete unattached policy
+      aws iam delete-policy --policy-arn arn:aws:iam::account-id:policy/policy-name
+    NativeIaC: |
+      Review and modify policy documents to remove "*:*" permissions and implement least privilege
+    Other: |
+      1. Navigate to IAM in AWS Console
+      2. Select Policies
+      3. Filter for customer managed policies
+      4. Review and delete or modify unattached policies with full admin access
+    Terraform: |
+      # Example of proper policy with specific permissions
+      resource "aws_iam_policy" "example" {
+        name = "specific_permissions_policy"
+        policy = jsonencode({
+          Version = "2012-10-17"
+          Statement = [
+            {
+              Effect = "Allow"
+              Action = [
+                "s3:ListBucket",
+                "s3:GetObject"
+              ]
+              Resource = [
+                "arn:aws:s3:::specific-bucket",
+                "arn:aws:s3:::specific-bucket/*"
+              ]
+            }
+          ]
+        })
+      }
   Recommendation:
     Text: |
-      It is more secure to start with a minimum set of permissions and grant additional permissions 
-      as necessary, rather than starting with permissions that are too lenient and then trying to tighten 
-      them later. List policies and analyze if permissions are the least possible to conduct business activities.
-    Url: "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      1. Regularly audit unattached customer-managed policies
+      2. Delete unused policies that grant excessive permissions
+      3. For required policies:
+         - Replace "*:*" with specific service and resource permissions
+         - Document business justification for each policy
+         - Implement regular review cycles
+         - Use AWS managed policies where possible
+         - Apply tags for better policy management
+      4. Implement policy governance and approval processes
+      5. Monitor policy attachment activities
+    Url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
 
-Categories: []
+Categories: 
+  - security
+  - compliance
+  - identity_and_access_management
+  - least_privilege
+  - policy_management
 
-DependsOn: []
+DependsOn: 
+  - iam_policy_exists
+  - iam_policy_no_star_star
 
-RelatedTo: []
+RelatedTo: 
+  - iam_policy_no_full_access
+  - iam_unused_credentials
+  - iam_policy_no_admin_access
+  - iam_policy_attached_to_groups_only
 
-Notes: Infrastructure Protection
+Notes: |
+  Infrastructure Protection - Critical Security Control
+  This check is essential for:
+  - Maintaining least privilege principle
+  - Preventing privilege escalation
+  - Ensuring compliance with security standards
+  - Regular policy hygiene and maintenance
+  - Risk mitigation in IAM policy management

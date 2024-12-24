@@ -4,65 +4,138 @@
 
 Provider: aws
 
-# Check ID
 CheckID: iam_attached_policy_admin_privileges_found
 
-# Short title/description of the check
-CheckTitle: "Ensure no IAM user or role has AdministratorAccess policy attached"
+CheckTitle: "Detect  IAM Users with Administrative Access Privileges"
 
-# Check Type
 CheckType: 
   - Software and Configuration Checks
   - Security Best Practices
+  - Identity and Access Management
+  - Compliance Validation
+  - Privilege Management
 
-# Service Name
 ServiceName: iam
 
-# Sub Service Name
-SubServiceName: ""
+SubServiceName: "policy_management"
 
-# Resource Template
-ResourceIdTemplate: arn:aws:iam::{account-id}:{resource-type}/{resource-name}
+ResourceIdTemplate: arn:aws:iam::{account-id}:user/{user-name}
 
-# Severity of the check. Allowed values: critical, high, medium, low
-Severity: high
+Severity: critical
 
-# Resource Type
-ResourceType: AwsIamUser, AwsIamRole
+ResourceType: AwsIamUser
 
-# Description of the check
-Description: "This check ensures that no IAM user or role has an AdministratorAccess policy attached, as such policies grant excessive privileges and can pose security risks."
+Description: |
+  This security check examines all IAM users for potentially dangerous administrative privileges by:
+  1. Identifying users with AWS-managed AdministratorAccess policy
+  2. Detecting policies that grant full access rights (*:*)
+  3. Analyzing policy statements for excessive permissions
+  4. Reporting users with high-risk access levels
 
-# Explanation of the risk associated with the check
-Risk: "Attaching AdministratorAccess policy to IAM users or roles grants full administrative privileges, increasing the risk of unintentional or malicious changes to your AWS account."
+Risk: |
+  Excessive administrative privileges pose several critical risks:
+  1. Unauthorized access to all AWS services and resources
+  2. Potential for accidental system-wide changes
+  3. Increased attack surface for security breaches
+  4. Violation of least privilege principle
+  5. Difficulty in tracking unauthorized actions
+  6. Potential compliance violations
+  7. Risk of catastrophic system changes
 
-# Related URL for the check
-RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege
 
-# Help section on how to fix the issue
 Remediation:
   Code:
     CLI: |
-      aws iam detach-user-policy --user-name <user_name> --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
-    NativeIaC: ""
-    Other: https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/iam/iam-users-no-admin-access.html
-    Terraform: https://docs.prowler.com/checks/aws/general-policies/ensure-that-iam-users-do-not-have-administrator-access
+      # List users with AdministratorAccess policy
+      aws iam list-attached-user-policies --user-name USER_NAME
+      
+      # Remove AdministratorAccess policy
+      aws iam detach-user-policy \
+        --user-name USER_NAME \
+        --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+      
+      # List all attached policies
+      aws iam list-attached-user-policies --user-name USER_NAME
+    
+    NativeIaC: |
+      # Example of proper IAM policy with limited scope
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:ListBucket",
+              "s3:GetObject"
+            ],
+            "Resource": [
+              "arn:aws:s3:::specific-bucket",
+              "arn:aws:s3:::specific-bucket/*"
+            ]
+          }
+        ]
+      }
+
+    Other: |
+      1. Review IAM users in AWS Console
+      2. Check attached policies
+      3. Remove AdministratorAccess policy
+      4. Replace with specific permission sets
+      5. Document all changes
+      6. Implement regular access reviews
+
+    Terraform: |
+      # Remove administrative access
+      resource "aws_iam_user_policy_attachment" "admin_access" {
+        user       = aws_iam_user.user.name
+        policy_arn = "arn:aws:iam::aws:policy/specific-limited-policy"
+      }
+
   Recommendation:
     Text: |
-      Review IAM users and roles, and detach any AdministratorAccess policies. 
-      Implement the principle of least privilege by assigning only necessary permissions.
+      1. Immediately identify and review all users with administrative access
+      2. Remove AdministratorAccess policy where not absolutely necessary
+      3. Implement least privilege access:
+         - Grant only required permissions
+         - Use specific service-level policies
+         - Implement role-based access control
+      4. Regular access reviews:
+         - Monthly policy audits
+         - Quarterly privilege assessments
+         - Documentation of necessary admin access
+      5. Implement preventive controls:
+         - Policy guardrails
+         - Access request workflows
+         - Regular compliance checks
     Url: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
 
-# Categories for the check. Eg: forensics-ready, security, etc.
 Categories: 
   - security
-  - least privilege
+  - compliance
+  - identity_and_access_management
+  - least_privilege
+  - privilege_management
+  - access_control
+  - risk_management
 
-# Dependencies on other checks
-DependsOn: []
+DependsOn: 
+  - iam_user_exists
+  - iam_policy_exists
 
-# Related checks
-RelatedTo: []
+RelatedTo: 
+  - iam_role_admin_access_check
+  - iam_policy_no_full_access
+  - iam_user_mfa_enabled
+  - iam_user_no_inline_policies
+  - iam_policy_no_star_star
 
-# Side notes
-Notes: "It's a best practice to avoid granting full administrative privileges unless absolutely necessary."
+Notes: |
+  Critical Security Control
+  - Essential for maintaining secure AWS environment
+  - Required for compliance with security standards
+  - Key component of least privilege principle
+  - Regular monitoring and review required
+  - Part of AWS security best practices
+  - Important for audit requirements
+  - Necessary for risk management

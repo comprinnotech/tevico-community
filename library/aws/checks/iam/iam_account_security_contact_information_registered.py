@@ -1,51 +1,99 @@
 """
-AUTHOR: 
-DATE: 
+AUTHOR: RONIT CHAUHAN 
+DATE: 2024-10-17
 """
 
 import boto3
+import logging
+from botocore.exceptions import (
+    BotoCoreError,
+    ClientError,
+    ParamValidationError
+)
 
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
+# Set up logging for tracking code execution
+logger = logging.getLogger(__name__)
 
 class iam_account_security_contact_information_registered(Check):
+    """
+    This check verifies if AWS account has security contact information registered.
+    It's a critical security requirement to have proper contact details set up.
+    """
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
-
-        # Initialize the Account client
-        account_client = connection.client('account')
+        """
+        Executes the security contact information check.
         
+        Args:
+            connection: AWS session for making API calls
+            
+        Returns:
+            CheckReport: Results of the security contact check
+        """
+        # Initialize our report
         report = CheckReport(name=__name__)
 
-        # Check if SECURITY contact is registered
         try:
-            security_contact = account_client.get_alternate_contact(AlternateContactType='SECURITY')
-            # print(security_contact['AlternateContact'])
-            
-            if 'AlternateContact' in security_contact and security_contact['AlternateContact']:
-                report.passed = True
-                # print("Security contact information is registered.")
-                report.resource_ids_status['SECURITY_CONTACT'] = True
-            else:
+            # Step 1: Create AWS Account client
+            try:
+                account_client = connection.client('account')
+            except (BotoCoreError, ClientError) as e:
+                logger.error(f"Failed to create AWS Account client: {str(e)}")
                 report.passed = False
-                # print("Security contact information is NOT registered.")
+                report.resource_ids_status['SECURITY_CONTACT'] = False
+                return report
+
+            # Step 2: Check if security contact is registered
+            try:
+                # Get security contact information from AWS
+                security_contact = account_client.get_alternate_contact(
+                    AlternateContactType='SECURITY'
+                )
+                
+                # Step 3: Validate the contact information
+                if 'AlternateContact' in security_contact and security_contact['AlternateContact']:
+                    # Contact exists and has information
+                    logger.info("Security contact information found")
+                    report.passed = True
+                    report.resource_ids_status['SECURITY_CONTACT'] = True
+                else:
+                    # Contact exists but information is incomplete
+                    logger.warning("Security contact information is incomplete")
+                    report.passed = False
+                    report.resource_ids_status['SECURITY_CONTACT'] = False
+
+            except account_client.exceptions.ResourceNotFoundException:
+                # No security contact is registered
+                logger.warning("No security contact found")
+                report.passed = False
                 report.resource_ids_status['SECURITY_CONTACT'] = False
 
-        except account_client.exceptions.ResourceNotFoundException:
-            # Raised if the security contact is not set
-            report.passed = False
-            # print("Security contact information is NOT registered.")
-            report.resource_ids_status['SECURITY_CONTACT'] = False
+            except ParamValidationError as e:
+                # Invalid parameters in the request
+                logger.error(f"Parameter validation error: {str(e)}")
+                report.passed = False
+                report.resource_ids_status['SECURITY_CONTACT'] = False
+
+            except ClientError as e:
+                # AWS API error
+                logger.error(f"AWS API error: {str(e)}")
+                report.passed = False
+                report.resource_ids_status['SECURITY_CONTACT'] = False
 
         except Exception as e:
-            # Catch any other unexpected exceptions
+            # Catch any unexpected errors
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             report.passed = False
-            # print(f"An unexpected error occurred: {str(e)}")
             report.resource_ids_status['SECURITY_CONTACT'] = False
 
         return report
 
-# The check will return **True (passed)** if all required fields (`FullName`, `Title`, `EmailAddress`, and `PhoneNumber`) are present and not empty in Security Contact .
-# The check will return **False (failed)** if any of these fields are missing or empty, or if an error occurs while fetching the contact information.
+# What this check does:
+# 1. Passes (True) if security contact is registered and has complete information
+# 2. Fails (False) if:
+#    - No security contact is registered
+#    - Contact information is incomplete
+#    - Any errors occur during the check

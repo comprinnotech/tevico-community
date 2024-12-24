@@ -1,30 +1,64 @@
 Provider: aws
 CheckID: iam_rotate_access_keys_90_days
-CheckTitle: Ensure IAM Access Keys Are Rotated Every 90 Days
-CheckType: []
+CheckTitle: Ensure IAM access keys are rotated every 90 days
+CheckType: ["Security", "Access Management"]
 ServiceName: iam
 SubServiceName: ''
 ResourceIdTemplate: 'arn:partition:service:region:account-id:resource-id'
 Severity: critical
 ResourceType: AwsIamUser
-Description: Ensure that IAM access keys are rotated every 90 days. Regular key rotation reduces the potential risk of compromised access keys by limiting the time window in which a key can be exploited.
+Description: This check examines all active IAM access keys to ensure they are not older than 90 days. It identifies users with active access keys that were created more than 90 days ago, indicating a need for key rotation. The check evaluates each user's access keys individually and fails if any active key exceeds the 90-day threshold.
 
 Risk: >-
- If access keys are not rotated regularly, they can become vulnerable to unauthorized use, especially if exposed or compromised. Stale access keys increase the likelihood of security breaches, as long-standing keys could potentially fall into malicious hands. Regular rotation of access keys ensures a more secure environment by reducing the risk of long-term exposure.
+  Long-lived access keys pose several security risks:
+  - Increased exposure window for compromised credentials
+  - Greater difficulty in tracking potential security breaches
+  - Higher risk of unauthorized access if keys are leaked
+  - Reduced ability to revoke access from compromised keys
+  - Non-compliance with security best practices
+  - Potential violation of organizational security policies
+
 RelatedUrl: ''
 Remediation:
   Code:
-    CLI: ''
+    CLI: |
+      # List access keys and their creation dates
+      aws iam list-access-keys --user-name <username>
+      
+      # Create new access key
+      aws iam create-access-key --user-name <username>
+      
+      # Deactivate old access key
+      aws iam update-access-key --access-key-id <old-key-id> --status Inactive --user-name <username>
+      
+      # Delete old access key after confirming new key works
+      aws iam delete-access-key --access-key-id <old-key-id> --user-name <username>
     NativeIaC: ''
-    Other: ''
-    Terraform: ''
+    Other: |
+      Key rotation process:
+      1. Create new access key
+      2. Update applications with new key
+      3. Test new key functionality
+      4. Deactivate old key
+      5. Monitor for issues
+      6. Delete old key
+    Terraform: |
+      resource "aws_iam_user_access_key" "example" {
+        user    = aws_iam_user.example.name
+        status  = "Active"
+        pgp_key = "keybase:username"
+      }
   Recommendation:
     Text: >-
-      Using IAM console navigate to Dashboard and expand Activate MFA on your
-      user's account.
+      1. Identify all IAM users with access keys older than 90 days
+      2. Implement automated key rotation using AWS Secrets Manager
+      3. Create new access keys before deactivating old ones
+      4. Update application configurations with new keys
+      5. Deactivate and remove old access keys
+      6. Monitor access key age using AWS Config
     Url: >-
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
-Categories: []
+      https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html
+Categories: ["Security", "Compliance", "Operations"]
 DependsOn: []
-RelatedTo: []
-Notes: ''
+RelatedTo: ["iam_user_multiple_active_access_keys", "iam_user_unused_credentials"]
+Notes: 'This check evaluates the creation date of active IAM access keys against a 90-day threshold. It helps maintain security by ensuring regular key rotation and compliance with security best practices.'
