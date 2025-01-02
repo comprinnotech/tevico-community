@@ -17,7 +17,6 @@ description: |
 
   https://aws.amazon.com/architecture/well-architected/
 
-
 sections:
   - name: Cost Optimization
     description: |
@@ -32,213 +31,211 @@ sections:
 
           This section checks for the presence of a Well Architected Review in the AWS account.
         checks:
-          # - cloudfront_waf_protection_enabled
-          # - cloudtrail_enabled
-          # - cloudfront_cloudwatch_logging_enabled
-          # - cloudfront_access_logging_enabled
-          # - cloudfront_distributions_using_deprecated_ssl_protocols
-          # - cloudfront_distributions_https_enabled
-            - cloudtrail_cloudwatch_logging_enabled
+          - ec2_instance_managed_by_ssm
+          - ec2_managed_instance_patch_compliance_status
+          - ec2_microsoft_sql_server_end_of_support
+          - ssm_managed_compliant_patching
+          - ssm_patch_manager_enabled
 
-  # - name: Security
-  #   description: |
-  #     The Security pillar includes the ability to protect information, systems, and assets while delivering business
-  #     value through risk assessments and mitigation strategies.
+  - name: Security
+    description: |
+      The Security pillar includes the ability to protect information, systems, and assets while delivering business
+      value through risk assessments and mitigation strategies.
 
-  #     This section checks for the presence of a Well Architected Review in the AWS account.
-  #   sections:
-  #     - name: Identity and Access Management
-  #       description: |
-  #         The Identity and Access Management section includes the ability to manage access to resources securely and
-  #         effectively.
+      This section checks for the presence of a Well Architected Review in the AWS account.
+    sections:
+      - name: Identity and Access Management
+        description: |
+          The Identity and Access Management section includes the ability to manage access to resources securely and
+          effectively.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - iam_account_maintain_current_contact_details
-  #         - iam_account_security_contact_information_registered
-  #         - iam_attached_policy_admin_privileges_found
-  #         - iam_avoid_root_usage
-  #         - iam_customer_attached_policy_admin_privileges_found
-  #         - iam_customer_unattached_policy_admin_privileges_found
-  #         - iam_inline_policy_admin_privileges_found
-  #         - iam_no_root_access_keys
-  #         - iam_password_policy_lowercase
-  #         - iam_password_policy_minimum_length_14
-  #         - iam_password_policy_number
-  #         - iam_password_policy_reuse_24
-  #         - iam_password_policy_symbol
-  #         - iam_password_policy_uppercase
-  #         - iam_policy_allows_privilege_escalation
-  #         - iam_policy_attached_to_only_group_or_roles
-  #         - iam_root_hardware_mfa_enabled
-  #         - iam_root_mfa_enabled
-  #         - iam_rotate_access_keys_90_days
-  #         - iam_support_role_created
-  #         - iam_user_mfa_enabled_console_access
-  #         - iam_user_multiple_active_access_keys
-  #         - organizations_account_part_of_organizations
-  #     - name: Data Protection
-  #       description: |
-  #         The Data Protection section includes the ability to protect data at rest and in transit.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - iam_account_maintain_current_contact_details
+          - iam_account_security_contact_information_registered
+          - iam_attached_policy_admin_privileges_found
+          - iam_avoid_root_usage
+          - iam_customer_attached_policy_admin_privileges_found
+          - iam_customer_unattached_policy_admin_privileges_found
+          - iam_inline_policy_admin_privileges_found
+          - iam_no_root_access_keys
+          - iam_password_policy_lowercase
+          - iam_password_policy_minimum_length_14
+          - iam_password_policy_number
+          - iam_password_policy_reuse_24
+          - iam_password_policy_symbol
+          - iam_password_policy_uppercase
+          - iam_policy_allows_privilege_escalation
+          - iam_policy_attached_to_only_group_or_roles
+          - iam_root_hardware_mfa_enabled
+          - iam_root_mfa_enabled
+          - iam_rotate_access_keys_90_days
+          - iam_support_role_created
+          - iam_user_mfa_enabled_console_access
+          - iam_user_multiple_active_access_keys
+          - organizations_account_part_of_organizations
+      - name: Data Protection
+        description: |
+          The Data Protection section includes the ability to protect data at rest and in transit.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - efs_encryption_at_rest_enabled
-  #         - eks_cluster_kms_cmk_encryption_in_secrets_enabled
-  #         - dynamodb_tables_kms_cmk_encryption_enabled
-  #         - rds_instance_storage_encrypted
-  #         - s3_bucket_default_encryption
-  #         - sns_topics_kms_encryption_at_rest_enabled
-  #         - secrets_manager_automatic_rotation_enabled
-  #         - kms_cmk_rotation_enabled
-  #         - kms_cmk_are_used
-  #         - ec2_ebs_volume_encryption
-  #         - ec2_ebs_default_encryption
-  #         - ec2_ebs_snapshot_encrypted
-  #         - ec2_instance_secrets_user_data
-  #         - ec2_launch_template_no_secrets
-  #         - ec2_instance_profile_attached
-  #         - ec2_imdsv2_enabled
-  #     - name: Network Security
-  #       description: |
-  #         The Network Security section includes the ability to protect network traffic and resources from unauthorized
-  #         access.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - efs_encryption_at_rest_enabled
+          - eks_cluster_kms_cmk_encryption_in_secrets_enabled
+          - dynamodb_tables_kms_cmk_encryption_enabled
+          - rds_instance_storage_encrypted
+          - s3_bucket_default_encryption
+          - sns_topics_kms_encryption_at_rest_enabled
+          - secrets_manager_automatic_rotation_enabled
+          - kms_cmk_rotation_enabled
+          - kms_cmk_are_used
+          - ec2_ebs_volume_encryption
+          - ec2_ebs_default_encryption
+          - ec2_ebs_snapshot_encrypted
+          - ec2_instance_secrets_user_data
+          - ec2_launch_template_no_secrets
+          - ec2_instance_profile_attached
+          - ec2_imdsv2_enabled
+      - name: Network Security
+        description: |
+          The Network Security section includes the ability to protect network traffic and resources from unauthorized
+          access.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - acl_bidirectional_traffic_restriction_check
-  #         - apigateway_rest_api_waf_acl_attached
-  #         - apigateway_rest_api_client_certificate_enabled
-  #         - apigateway_waf_protection_enabled
-  #         - cloudfront_distributions_https_enabled
-  #         - ec2_network_acl_allow_ingress_any_port
-  #         - ec2_network_acl_allow_ingress_tcp_port_22
-  #         - ec2_security_group_default_restrict_traffic
-  #         - elb_ssl_listeners_enabled
-  #         - elb_waf_acl_attached
-  #         - networkfirewall_multi_az_enabled
-  #         - vpc_default_security_group_closed
-  #         - vpc_endpoint_services_allowed_principals_trust_boundaries
-  #         - vpc_security_group_port_restriction_check
-  #         - vpc_service_endpoint_enabled
-  #         - vpc_flowlogs_traffic_inspection
-  #         - cloudfront_waf_protection_enabled
-  #     - name: Security Tools
-  #       description: |
-  #         The Security Tools section includes the ability to use security tools and services to protect resources and
-  #         data.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - acl_bidirectional_traffic_restriction_check
+          - apigateway_rest_api_waf_acl_attached
+          - apigateway_rest_api_client_certificate_enabled
+          - apigateway_waf_protection_enabled
+          - cloudfront_distributions_https_enabled
+          - ec2_network_acl_allow_ingress_any_port
+          - ec2_network_acl_allow_ingress_tcp_port_22
+          - ec2_security_group_default_restrict_traffic
+          - elb_ssl_listeners_enabled
+          - elb_waf_acl_attached
+          - networkfirewall_multi_az_enabled
+          - vpc_default_security_group_closed
+          - vpc_endpoint_services_allowed_principals_trust_boundaries
+          - vpc_security_group_port_restriction_check
+          - vpc_service_endpoint_enabled
+          - vpc_flowlogs_traffic_inspection
+          - cloudfront_waf_protection_enabled
+      - name: Security Tools
+        description: |
+          The Security Tools section includes the ability to use security tools and services to protect resources and
+          data.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - guardduty_enabled_centralized
-  #         - guardduty_is_enabled
-  #         - macie_auto_sensitive_data_discovery_check
-  #         - macie_status_check
-  #         - securityhub_enabled
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - guardduty_enabled_centralized
+          - guardduty_is_enabled
+          - macie_auto_sensitive_data_discovery_check
+          - macie_status_check
+          - securityhub_enabled
 
-  # - name: Performance Efficiency
-  #   description: |
-  #     The Performance Efficiency pillar includes the ability to use computing resources efficiently to meet system
-  #     requirements and to maintain that efficiency as demand changes and technologies evolve.
+  - name: Performance Efficiency
+    description: |
+      The Performance Efficiency pillar includes the ability to use computing resources efficiently to meet system
+      requirements and to maintain that efficiency as demand changes and technologies evolve.
 
-  #     This section checks for the presence of a Well Architected Review in the AWS account.
-  #   sections:
-  #     - name: Elasticity
-  #       description: |
-  #         The Elasticity section includes the ability to provision resources to meet demand and to scale resources
-  #         dynamically to maintain performance.
+      This section checks for the presence of a Well Architected Review in the AWS account.
+    sections:
+      - name: Elasticity
+        description: |
+          The Elasticity section includes the ability to provision resources to meet demand and to scale resources
+          dynamically to maintain performance.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - ec2_image_builder_enabled
-  #     - name: Performance Optimization
-  #       description: |
-  #         The Performance Optimization section includes the ability to use resources efficiently to meet system
-  #         requirements and to maintain that efficiency as demand changes and technologies evolve.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - ec2_image_builder_enabled
+      - name: Performance Optimization
+        description: |
+          The Performance Optimization section includes the ability to use resources efficiently to meet system
+          requirements and to maintain that efficiency as demand changes and technologies evolve.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - rds_instance_minor_version_upgrade_enabled
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - rds_instance_minor_version_upgrade_enabled
 
-  # - name: Reliability
-  #   description: |
-  #     The Reliability pillar includes the ability of a system to recover from infrastructure or service disruptions,
-  #     dynamically acquire computing resources to meet demand, and mitigate disruptions such as misconfigurations or transient
-  #     network issues.
+  - name: Reliability
+    description: |
+      The Reliability pillar includes the ability of a system to recover from infrastructure or service disruptions,
+      dynamically acquire computing resources to meet demand, and mitigate disruptions such as misconfigurations or transient
+      network issues.
 
-  #     This section checks for the presence of a Well Architected Review in the AWS account.
-  #   sections:
-  #     - name: Fault Tolerance
-  #       description: |
-  #         The Fault Tolerance section includes the ability to recover from failures and disruptions in a timely manner.
+      This section checks for the presence of a Well Architected Review in the AWS account.
+    sections:
+      - name: Fault Tolerance
+        description: |
+          The Fault Tolerance section includes the ability to recover from failures and disruptions in a timely manner.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - networkfirewall_multi_az_enabled
-  #         - dynamodb_tables_pitr_enabled
-  #     - name: Recovery Planning
-  #       description: |
-  #         The Recovery Planning section includes the ability to recover from failures and disruptions in a timely manner.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - networkfirewall_multi_az_enabled
+          - dynamodb_tables_pitr_enabled
+      - name: Recovery Planning
+        description: |
+          The Recovery Planning section includes the ability to recover from failures and disruptions in a timely manner.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - ssm_ec2instance_automatic_protection_check
-  #         - ssm_ec2instance_remove_interactive_access_check
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - ssm_ec2instance_automatic_protection_check
+          - ssm_ec2instance_remove_interactive_access_check
 
-  # - name: Operational Excellence
-  #   description: |
-  #     The Security pillar includes the ability to protect information, systems, and assets while delivering business
-  #     value through risk assessments and mitigation strategies.
+  - name: Operational Excellence
+    description: |
+      The Security pillar includes the ability to protect information, systems, and assets while delivering business
+      value through risk assessments and mitigation strategies.
 
-  #     This section checks for the presence of a Well Architected Review in the AWS account.
-  #   sections:
-  #     - name: Logging and Monitoring
-  #       description: |
-  #         The Logging and Monitoring section includes the ability to capture, monitor, and analyze logs and metrics to
-  #         identify and respond to issues in real-time.
+      This section checks for the presence of a Well Architected Review in the AWS account.
+    sections:
+      - name: Logging and Monitoring
+        description: |
+          The Logging and Monitoring section includes the ability to capture, monitor, and analyze logs and metrics to
+          identify and respond to issues in real-time.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - apigateway_execution_logging_enabled
-  #         - apigateway_restapi_logging_enabled
-  #         - apigatewayv2_api_access_logging_enabled
-  #         - cloudfront_access_logging_enabled
-  #         - cloudfront_cloudwatch_logging_enabled
-  #         - elb_v2_logging_enabled
-  #         - rds_instance_integration_cloudwatch_logging_enabled
-  #         - vpc_flowlogs_enable_logging
-  #         - vpc_flowlogs_analyze_logs
-  #         - cloudtrail_s3_bucket_access_logging_enabled
-  #         - cloudtrail_enabled
-  #         - cloudtrail_cloudwatch_logging_enabled
-  #         - cloudtrail_multiregion_enabled
-  #         - cloudwatch_log_metric_filter_root_usage
-  #         - cloudwatch_log_metric_filter_security_group_changes
-  #         - cloudwatch_log_metric_filter_unauthorized_api_calls
-  #         - cloudwatch_log_metric_filter_policy_changes
-  #         - cloudwatch_log_metric_filter_vpc_alarm_configured
-  #         - cloudwatch_log_metric_filter_authentication_failures
-  #         - config_recorder_all_regions_enabled
-  #         - inspector_ec2_scan_enabled
-  #         - inspector_lambda_standard_scan_enabled
-  #         - networkfirewall_logging_enabled
-  #         - opensearch_service_domains_audit_logging_enabled
-  #         - opensearch_service_domains_cloudwatch_logging_enabled
-  #         - elb_logging_enabled
-  #     - name: Backup and Recovery
-  #       description: |
-  #         The Backup and Recovery section includes the ability to recover data and systems in the event of a failure or
-  #         disaster.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - apigateway_execution_logging_enabled
+          - apigateway_restapi_logging_enabled
+          - apigatewayv2_api_access_logging_enabled
+          - cloudfront_access_logging_enabled
+          - cloudfront_cloudwatch_logging_enabled
+          - elb_v2_logging_enabled
+          - rds_instance_integration_cloudwatch_logging_enabled
+          - vpc_flowlogs_enable_logging
+          - vpc_flowlogs_analyze_logs
+          - cloudtrail_s3_bucket_access_logging_enabled
+          - cloudtrail_enabled
+          - cloudtrail_cloudwatch_logging_enabled
+          - cloudtrail_multiregion_enabled
+          - cloudwatch_log_metric_filter_root_usage
+          - cloudwatch_log_metric_filter_security_group_changes
+          - cloudwatch_log_metric_filter_unauthorized_api_calls
+          - cloudwatch_log_metric_filter_policy_changes
+          - cloudwatch_log_metric_filter_vpc_alarm_configured
+          - cloudwatch_log_metric_filter_authentication_failures
+          - config_recorder_all_regions_enabled
+          - inspector_ec2_scan_enabled
+          - inspector_lambda_standard_scan_enabled
+          - networkfirewall_logging_enabled
+          - opensearch_service_domains_audit_logging_enabled
+          - opensearch_service_domains_cloudwatch_logging_enabled
+          - elb_logging_enabled
+      - name: Backup and Recovery
+        description: |
+          The Backup and Recovery section includes the ability to recover data and systems in the event of a failure or
+          disaster.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-  #         - dynamodb_tables_pitr_enabled
-  #         - rds_instance_minor_version_upgrade_enabled
-  #     - name: Change Management
-  #       description: |
-  #         The Change Management section includes the ability to manage changes to the environment in a controlled and
-  #         predictable manner.
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - dynamodb_tables_pitr_enabled
+          - rds_instance_minor_version_upgrade_enabled
+      - name: Change Management
+        description: |
+          The Change Management section includes the ability to manage changes to the environment in a controlled and
+          predictable manner.
 
-  #         This section checks for the presence of a Well Architected Review in the AWS account.
-  #       checks:
-          # - cloudformation_stacks_termination_protection_enabled
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        checks:
+          - cloudformation_stacks_termination_protection_enabled

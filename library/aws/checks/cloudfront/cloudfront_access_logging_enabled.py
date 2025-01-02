@@ -1,3 +1,4 @@
+
 """
 AUTHOR: deepak-puri-comprinno
 EMAIL: deepak.puri@comprinno.net
@@ -10,6 +11,7 @@ from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 class cloudfront_access_logging_enabled(Check):
+
     # Helper method to fetch the list of CloudFront distributions
     def _get_distributions(self, client):
         response = client.list_distributions()
@@ -29,9 +31,11 @@ class cloudfront_access_logging_enabled(Check):
         report.passed = True  # Default assumption is that all distributions pass the check
 
         try:
-            distributions = self._get_distributions(client)  # Fetch all CloudFront distributions
+            # Fetch all CloudFront distributions
+            distributions = self._get_distributions(client)
 
             if not distributions:  # If no distributions exist, return the report as passed
+                report.resource_ids_status['NoDistributions'] = True
                 return report
 
             for distribution in distributions:

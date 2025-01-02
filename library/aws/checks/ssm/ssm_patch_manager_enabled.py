@@ -5,38 +5,56 @@ DATE: 2024-11-12
 """
 
 import boto3
-
+from botocore.exceptions import ClientError, BotoCoreError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 
 class ssm_patch_manager_enabled(Check):
+    def _get_instances(self, ec2_client):
+        try:
+            response = ec2_client.describe_instances()
+            instances = [
+                instance['InstanceId']
+                for reservation in response.get('Reservations', [])
+                for instance in reservation.get('Instances', [])
+            ]
+            return instances
+        except (ClientError, BotoCoreError):
+            return []
+
+    def _check_patch_manager_status(self, ssm_client, instance_id):
+        try:
+            response = ssm_client.describe_instance_patch_states(
+                InstanceIds=[instance_id]
+            )
+            return bool(response.get('InstancePatchStates', []))
+        except (ClientError, BotoCoreError):
+            return False
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        ssm_client = connection.client('ssm')
-        ec2_client = connection.client('ec2')
+        report.passed = True  # Default to True, will be set to False if any check fails
+        
+        try:
+            ec2_client = connection.client('ec2')
+            ssm_client = connection.client('ssm')
 
-        instances = ec2_client.describe_instances()['Reservations']
+            instance_ids = self._get_instances(ec2_client)
 
-        for reservation in instances:
-            for instance in reservation['Instances']:
-                instance_id = instance['InstanceId']
-                
-                try:
-                    compliance_info = ssm_client.describe_instance_patch_states(InstanceIds=[instance_id])
+            if not instance_ids:
+                report.resource_ids_status['No instances found'] = False
+                report.passed = False
+                return report
 
-                    if compliance_info['InstancePatchStates']:
-                        report.resource_ids_status[instance_id] = True
-                    else:
-                        report.resource_ids_status[instance_id] = False
-                        report.passed = False
-
-                except ssm_client.exceptions.InvalidInstanceId:
-                    report.resource_ids_status[instance_id] = False
+            for instance_id in instance_ids:
+                status = self._check_patch_manager_status(ssm_client, instance_id)
+                report.resource_ids_status[instance_id] = status
+                if not status:
                     report.passed = False
 
-        if all(report.resource_ids_status.values()):
-            report.passed = True
+        except (ClientError, BotoCoreError):
+            report.resource_ids_status['Error checking Patch Manager status'] = False
+            report.passed = False
 
         return report

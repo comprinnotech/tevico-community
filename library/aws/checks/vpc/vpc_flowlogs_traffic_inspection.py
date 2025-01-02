@@ -5,32 +5,62 @@ DATE: 2024-11-13
 """
 
 import boto3
-
+from botocore.exceptions import ClientError, BotoCoreError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
-
 class vpc_flowlogs_traffic_inspection(Check):
+    def _get_vpcs(self, ec2_client):
+        try:
+            response = ec2_client.describe_vpcs()
+            return response.get('Vpcs', [])
+        except (ClientError, BotoCoreError, Exception):
+            return []
+
+    def _get_flow_logs(self, ec2_client, vpc_id):
+        try:
+            response = ec2_client.describe_flow_logs(
+                Filters=[{
+                    'Name': 'resource-id',
+                    'Values': [vpc_id]
+                }]
+            )
+            return response.get('FlowLogs', [])
+        except (ClientError, BotoCoreError, Exception):
+            return []
+
+    def _check_flow_log_status(self, flow_logs):
+        for flow_log in flow_logs:
+            if flow_log.get('FlowLogStatus') == 'ACTIVE':
+                return True
+        return False
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        client = connection.client('ec2')
-        vpcs = client.describe_vpcs()
+        report.passed = True
         
-        for vpc in vpcs['Vpcs']:
-            vpc_id = vpc['VpcId']
-            flow_logs_enabled = False
-            flow_logs = client.describe_flow_logs(Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}])
+        try:
+            ec2_client = connection.client('ec2')
+            vpcs = self._get_vpcs(ec2_client)
             
-            for flow_log in flow_logs['FlowLogs']:
-                if flow_log['FlowLogStatus'] == 'ACTIVE':
-                    flow_logs_enabled = True
-                    break
-            
-            if flow_logs_enabled:
-                report.resource_ids_status[vpc_id] = True
-            else:
-                report.passed = False
-                report.resource_ids_status[vpc_id] = False
-        
+            if not vpcs:
+                report.resource_ids_status['NO_VPCS_FOUND'] = True
+                return report
+
+            for vpc in vpcs:
+                vpc_id = vpc.get('VpcId')
+                if not vpc_id:
+                    continue
+
+                flow_logs = self._get_flow_logs(ec2_client, vpc_id)
+                has_active_flow_logs = self._check_flow_log_status(flow_logs)
+                report.resource_ids_status[vpc_id] = has_active_flow_logs
+                
+                if not has_active_flow_logs:
+                    report.passed = False
+
+        except (ClientError, BotoCoreError, Exception):
+            report.passed = False
+            report.resource_ids_status['ERROR'] = False
+
         return report

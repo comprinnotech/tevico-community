@@ -10,21 +10,27 @@ from tevico.engine.entities.check.check import Check
 from botocore.exceptions import ClientError, BotoCoreError
 
 class cloudfront_distributions_https_enabled(Check):
+
     # Helper method to fetch the list of CloudFront distributions
     def _get_distributions(self, client):
         response = client.list_distributions()
+        
         return response.get('DistributionList', {}).get('Items', [])
 
     # Helper method to check if HTTPS is enforced for a distribution
     def _check_https_enabled(self, distribution):
         distribution_id = distribution['Id']
+
         # Retrieve the default cache behavior configuration
         default_cache_behavior = distribution.get('DefaultCacheBehavior', {})
+
         # Check the ViewerProtocolPolicy setting
         viewer_protocol_policy = default_cache_behavior.get('ViewerProtocolPolicy', '')
+
         # If policy is not 'redirect-to-https' or 'https-only', HTTPS is not enforced
         if viewer_protocol_policy not in ['redirect-to-https', 'https-only']:
             return distribution_id, False
+
         return distribution_id, True
 
     # Main method to execute the check for HTTPS enforcement

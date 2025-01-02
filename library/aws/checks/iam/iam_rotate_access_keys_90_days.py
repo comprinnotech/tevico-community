@@ -5,44 +5,69 @@ DATE: 2024-10-10
 
 
 import boto3
+from botocore.exceptions import ClientError, BotoCoreError
 from datetime import datetime, timedelta, timezone
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 class iam_rotate_access_keys_90_days(Check):
+    def _list_users(self, client):
+        try:
+            return client.list_users().get('Users', [])
+        except (ClientError, BotoCoreError):
+            return []
+
+    def _list_access_keys(self, client, username):
+        try:
+            return client.list_access_keys(UserName=username).get('AccessKeyMetadata', [])
+        except (ClientError, BotoCoreError):
+            return []
+
+    def _check_key_age(self, key, ninety_days_ago):
+        if key['Status'] == 'Active':
+            key_age = datetime.now(timezone.utc) - key['CreateDate']
+            return key_age.days >= 90
+        return False
+
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
+        report.passed = True
         client = connection.client('iam')
 
         try:
-            # Get the current date and time as an aware datetime object
             current_time = datetime.now(timezone.utc)
-            # Define the 90-day threshold
             ninety_days_ago = current_time - timedelta(days=90)
 
-            # List all IAM users
-            users = client.list_users()['Users']
+            users = self._list_users(client)
+            if not users:
+                report.passed = False
+                return report
+
             for user in users:
-                username = user['UserName']
-                # List access keys for each user
-                access_keys = client.list_access_keys(UserName=username)['AccessKeyMetadata']
-                
-                for key in access_keys:
-                    create_date = key['CreateDate']  # AWS returns this as a timezone-aware datetime
-                    
-                    # Compare access key creation date to the 90-day threshold
-                    if key['Status'] == 'Active' and create_date < ninety_days_ago:
+                try:
+                    username = user['UserName']
+                    access_keys = self._list_access_keys(client, username)
 
+                    if not access_keys:
                         report.resource_ids_status[username] = True
-                    else:
+                        continue
 
-                        report.resource_ids_status[username] = False
+                    has_old_key = False
+                    for key in access_keys:
+                        if self._check_key_age(key, ninety_days_ago):
+                            has_old_key = True
+                            break
 
-            # Check if any users have access keys older than 90 days
-            report.passed = not any(report.resource_ids_status.values())
-        except Exception as e:
+                    report.resource_ids_status[username] = not has_old_key
+                    if has_old_key:
+                        report.passed = False
 
+                except KeyError:
+                    report.passed = False
+                    return report
+
+        except (ClientError, BotoCoreError, Exception):
             report.passed = False
-        
-        return report
+            return report
 
+        return report
