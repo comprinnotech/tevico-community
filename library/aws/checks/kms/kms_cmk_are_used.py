@@ -1,3 +1,4 @@
+
 """
 AUTHOR: deepak-puri-comprinno
 EMAIL: deepak.puri@comprinno.net
@@ -33,20 +34,17 @@ class kms_cmk_are_used(Check):
                         if key_manager != 'CUSTOMER':
                             continue
                         
-                        # Check if the key is enabled
-                        is_enabled = (key_state == 'Enabled')
-                        report.resource_ids_status[key_id] = is_enabled
-                        
-                        if is_enabled:
+                        # Only add enabled keys to the report
+                        if key_state == 'Enabled':
+                            report.resource_ids_status[key_id] = True
                             customer_managed_keys_found = True
                             
                     except ClientError:
-                        # If we can't get key details, mark it as non-compliant
-                        report.resource_ids_status[key_id] = False
                         continue
                         
             # Set overall check status based on finding at least one enabled CMK
             report.passed = customer_managed_keys_found
+            
                         
         except (ClientError, Exception):
             report.passed = False

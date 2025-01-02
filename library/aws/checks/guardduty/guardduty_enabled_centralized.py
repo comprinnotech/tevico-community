@@ -29,7 +29,7 @@ class guardduty_enabled_centralized(Check):
                     
                     # Check if GuardDuty is active
                     if detector_info['Status'] != 'ENABLED':
-                        report.resource_ids_status[f"{region}-{detector_id}"] = False
+                        report.resource_ids_status[region] = False
                         report.passed = False
                         continue
                     
@@ -37,23 +37,20 @@ class guardduty_enabled_centralized(Check):
                     try:
                         admin_account = regional_client.get_master_account(DetectorId=detector_id)
                         if 'Master' in admin_account and admin_account['Master']['RelationshipStatus'] == 'Enabled':
-                            report.resource_ids_status[f"{region}-{detector_id}"] = True
+                            report.resource_ids_status[region] = True
                         else:
-                            report.resource_ids_status[f"{region}-{detector_id}"] = False
+                            report.resource_ids_status[region] = False
                             report.passed = False
                     except regional_client.exceptions.BadRequestException:
-                        report.resource_ids_status[f"{region}-{detector_id}"] = False
+                        report.resource_ids_status[region] = False
                         report.passed = False
                 else:
                     # No detectors found in this region, mark check as failed for centralization purposes
                     report.passed = False
+                    report.resource_ids_status[region] = False
             
             except ClientError as error:
                 # Handle access errors
-                if error.response['Error']['Code'] == 'UnrecognizedClientException':
-                    report.passed = False
-                    continue
-                else:
-                    raise
+                report.passed = False
 
         return report

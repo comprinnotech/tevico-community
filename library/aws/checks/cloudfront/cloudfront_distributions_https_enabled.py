@@ -28,7 +28,5 @@ class cloudfront_distributions_https_enabled(Check):
                     report.passed = False
                 else:
                     report.resource_ids_status[distribution_id] = True
-        else:
-            report.resource_ids_status['NoDistributions'] = True
 
         return report
