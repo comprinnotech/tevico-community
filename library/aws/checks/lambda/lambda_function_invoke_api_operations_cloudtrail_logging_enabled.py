@@ -1,7 +1,7 @@
 """
-AUTHOR: deepak-puri-comprinno
-EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-14
+AUTHOR: SUPRIYO BHAKAT
+EMAIL: supriyo.bhakat@comprinno.net
+DATE: 2025-03-01
 """
 
 import boto3

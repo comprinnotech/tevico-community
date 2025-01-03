@@ -1,7 +1,7 @@
 """
-AUTHOR: Supriyo Bhakat
+AUTHOR: SUPRIYO BHAKAT
 EMAIL: supriyo.bhakat@comprinno.net
-DATE: 2024-11-15
+DATE: 2025-03-01
 """
 
 import boto3
@@ -12,7 +12,6 @@ from tevico.engine.entities.check.check import Check
 
 class cloudtrail_multiregion_enabled(Check):
     
-    # Retrieve the list of CloudTrail trails for the account
     def _get_trails(self, client):
         try:
             response = client.describe_trails()
@@ -20,46 +19,43 @@ class cloudtrail_multiregion_enabled(Check):
         except (ClientError, BotoCoreError):
             return []
 
-    # Check if multi-region is enabled for a specific trail
     def _check_multiregion_enabled(self, trail):
         trail_name = trail['Name']
         is_multiregion = trail.get('IsMultiRegionTrail', False)
         return trail_name, is_multiregion
 
-    # Main execution method for running the check
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.passed = False  # Start with False for security-first approach
         client = connection.client('cloudtrail')
 
         try:
-            # Fetch all trails from the CloudTrail service
             trails = self._get_trails(client)
 
-            # If no trails are found, mark the check as failed
             if not trails:
-                report.passed = False
+                report.resource_ids_status['NoTrails'] = False
                 return report
 
-            # Iterate over each trail and check if multi-region is enabled
+            # Track if at least one multi-region trail exists
+            has_multiregion_trail = False
+
             for trail in trails:
                 try:
                     trail_name, is_multiregion = self._check_multiregion_enabled(trail)
                     report.resource_ids_status[trail_name] = is_multiregion
 
-                    # If multi-region is not enabled for any trail, mark the check as failed
-                    if not is_multiregion:
-                        report.passed = False
+                    if is_multiregion:
+                        has_multiregion_trail = True
 
                 except KeyError:
-                    # If there's a KeyError, mark the check as failed and stop further processing
-                    report.passed = False
-                    return report
+                    report.resource_ids_status[trail.get('Name', 'Unknown')] = False
 
-        # Catch all exceptions related to CloudTrail and boto3 operations
+            # Set final status based on having at least one multi-region trail
+            report.passed = has_multiregion_trail
+
         except (ClientError, BotoCoreError, Exception):
+            # Handle AWS API errors or other exceptions that occur during execution
             report.passed = False
             return report
 
-        # Return the final check report with the result
         return report
