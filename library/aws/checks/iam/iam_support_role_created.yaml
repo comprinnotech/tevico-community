@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: iam_support_role_created
-CheckTitle: Ensure a support role is created within the AWS account. The support role is essential for enabling AWS support to assist with issues that require specific access, such as troubleshooting or resolving service disruptions.
+CheckTitle: Ensure a support role is created within the AWS accountand the support role is essential for enabling aws  support to assist with issues that require specific access, such as troubleshooting or resolving service disruptions.
 CheckType: []
 ServiceName: iam
 SubServiceName: ''

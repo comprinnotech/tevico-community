@@ -47,16 +47,14 @@ class securityhub_enabled(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True  # Default to True, will be set to False if any region fails
+        report.passed = True  # Start with True
         
         try:
             ec2_client = connection.client('ec2')
             regions = self._get_regions(ec2_client)
 
             if not regions:
-                report.passed = False
-                report.resource_ids_status['No regions found'] = False
-                return report
+                return report  # No regions = pass (no resources to check)
 
             # Use ThreadPoolExecutor for parallel execution
             with ThreadPoolExecutor(max_workers=31) as executor:
@@ -68,13 +66,13 @@ class securityhub_enabled(Check):
                 for future in future_to_region:
                     try:
                         region, status = future.result()
-                        if not status:
-                            report.passed = False
                         report.resource_ids_status[region] = status
+                        if not status:
+                            report.passed = False  # Fail if any region is not compliant
                     except Exception:
                         region = future_to_region[future]
-                        report.passed = False
                         report.resource_ids_status[region] = False
+                        report.passed = False
 
         except (ClientError, BotoCoreError, Exception):
             report.passed = False

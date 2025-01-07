@@ -13,18 +13,14 @@ from tevico.engine.entities.check.check import Check
 class sns_topics_kms_encryption_at_rest_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = False  # Start with False
+        report.passed = True  # Start with True
 
         try:
             sns_client = connection.client('sns')
             topics = sns_client.list_topics().get('Topics', [])
 
             if not topics:
-                report.resource_ids_status['NoSNSTopics'] = False
                 return report
-
-            # Track if all topics are encrypted
-            all_topics_encrypted = True
 
             for topic in topics:
                 topic_arn = topic['TopicArn']
@@ -35,14 +31,11 @@ class sns_topics_kms_encryption_at_rest_enabled(Check):
                     report.resource_ids_status[topic_arn] = is_encrypted
 
                     if not is_encrypted:
-                        all_topics_encrypted = False
+                        report.passed = False  # Fail if any topic is not encrypted
 
                 except KeyError:
                     report.resource_ids_status[topic_arn] = False
-                    all_topics_encrypted = False
-
-            # Set final status based on all topics
-            report.passed = all_topics_encrypted
+                    report.passed = False
 
         except (ClientError, BotoCoreError, Exception):
             # Handle AWS API errors or other exceptions that occur during execution
@@ -50,3 +43,4 @@ class sns_topics_kms_encryption_at_rest_enabled(Check):
             return report
 
         return report
+

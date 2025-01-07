@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: iam_policy_allows_privilege_escalation
-CheckTitle: Ensure No IAM Policies Allow Privilege Escalation
+CheckTitle: Ensure no iam policies allow privilege escalation
 CheckType: []
 ServiceName: iam
 SubServiceName: ''
