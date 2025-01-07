@@ -39,10 +39,12 @@ class iam_inline_policy_admin_privileges_found(Check):
     def _validate_statement_format(self, statement):
         """
         Validate the format of a policy statement.
+        Returns True if statement has valid format, False otherwise.
         """
         return (isinstance(statement, dict) and 
                 'Effect' in statement and 
-                ('Action' in statement or 'Resource' in statement))
+                'Action' in statement and 
+                ('Resource' in statement or 'NotResource' in statement))
 
     def _normalize_policy_elements(self, actions, resources):
         """
@@ -66,16 +68,18 @@ class iam_inline_policy_admin_privileges_found(Check):
     def check_policy_for_admin_access(self, policy_document: dict) -> tuple:
         """
         Analyze policy document for administrative privileges.
+        Returns (has_admin_access: bool, access_type: str)
         """
         try:
             if not policy_document or 'Statement' not in policy_document:
                 return False, ""
 
-            policy_statement = policy_document['Statement']
-            if isinstance(policy_statement, list):
-                statements = policy_statement
-            else:
-                statements = [policy_statement]
+            # Convert statement to list if it's a single statement
+            statements = policy_document['Statement']
+            if isinstance(statements, dict):
+                statements = [statements]
+            elif not isinstance(statements, list):
+                return False, ""
 
             for statement in statements:
                 if not self._validate_statement_format(statement):
@@ -85,13 +89,14 @@ class iam_inline_policy_admin_privileges_found(Check):
                     continue
 
                 actions = statement.get('Action', [])
-                resources = statement.get('Resource', [])
+                resources = statement.get('Resource', statement.get('NotResource', []))
 
-                if actions == "*" and resources == "*":
-                    return True, "FullAdminAccess"
+                # Normalize to lists
+                actions = [actions] if isinstance(actions, str) else actions
+                resources = [resources] if isinstance(resources, str) else resources
 
-                norm_actions, norm_resources = self._normalize_policy_elements(actions, resources)
-                if "*" in norm_actions and "*" in norm_resources:
+                # Check for admin access
+                if '*' in actions and '*' in resources:
                     return True, "FullAdminAccess"
 
             return False, ""
@@ -108,7 +113,8 @@ class iam_inline_policy_admin_privileges_found(Check):
             inline_policies = policy_response.get('PolicyNames', [])
 
             if not inline_policies:
-                return True, f"{user_name}: No inline policies found"
+                # Return just the user name instead of "No inline policies found"
+                return True, f"{user_name}"
 
             admin_policies = []
             non_admin_policies = []
@@ -133,15 +139,16 @@ class iam_inline_policy_admin_privileges_found(Check):
                 except ClientError:
                     continue
 
+            # Return just the user name regardless of policy status
             if admin_policies:
-                return False, f"{user_name}: policies {', '.join(admin_policies)}"
+                return False, f"{user_name}"
             elif non_admin_policies:
-                return True, f"{user_name}: policies {', '.join(non_admin_policies)} none of them having Administrative Privileges"
+                return True, f"{user_name}"
             
-            return True, f"{user_name}: No inline policies found"
+            return True, f"{user_name}"
 
         except ClientError:
-            return False, f"{user_name}: Error checking policies"
+            return False, f"{user_name}"
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         """
