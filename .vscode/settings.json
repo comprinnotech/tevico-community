@@ -1,5 +1,6 @@
 {
     "python.analysis.autoImportCompletions": true,
     "python.analysis.typeCheckingMode": "basic",
-    "sequence.replaceSelection": true
+    "sequence.replaceSelection": true,
+    "liveServer.settings.port": 5501
 }

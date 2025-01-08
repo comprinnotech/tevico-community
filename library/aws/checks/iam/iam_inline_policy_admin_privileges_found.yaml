@@ -4,62 +4,99 @@
 
 Provider: aws
 
-# Eg: cloudformation_stacks_termination_protection_enabled
 CheckID: iam_inline_policy_admin_privileges_found
 
-# Short title/description of the check
-CheckTitle: Ensure IAM inline policies with administrative privileges are not attached
+CheckTitle: Detect IAM users with administrative privileges in inline policies
 
-# Check Type
 CheckType: 
   - Software and Configuration Checks
   - Security Checks
+  - Identity and Access Management
+  - Compliance Validation
 
-# Service Name. Eg: cloudformation, ec2, s3, etc.
 ServiceName: iam
 
-# Sub Service Name. Eg: ec2_instance, s3_bucket, etc.
-SubServiceName: ""
+SubServiceName: "iam_user"
 
-# Resource Template
-ResourceIdTemplate: arn:aws:iam::account-id:user/username
+ResourceIdTemplate: arn:aws:iam::${AccountId}:user/${UserName}
 
-# Severity of the check. Allowed values: critical, high, medium, low
 Severity: high
 
-# Resource Type. Eg: AwsCloudFormationStack, AwsEC2Instance, AwsS3Bucket, etc.
-ResourceType: AwsIamPolicy
+ResourceType: AwsIamUser
 
-# Description of the check
-Description: Ensure IAM inline policies with full administrative privileges (`*:*`) are not attached to any IAM user.
+Description: This check identifies IAM users who have inline policies granting full administrative privileges (Action:"*" and Resource:"*"). Such policies violate the principle of least privilege and pose significant security risks. The check examines all inline policies attached to IAM users and alerts when overly permissive administrative access is detected.
 
-# Explanation of the risk associated with the check
-Risk: Attaching full administrative privileges to IAM users exposes the account to significant risk, as the user can perform unrestricted actions across all AWS services.
+Risk: |
+  Granting full administrative privileges through inline policies creates several critical risks:
+  1. Unlimited access to all AWS services and resources
+  2. Potential for accidental resource deletion or modification
+  3. Increased attack surface if credentials are compromised
+  4. Violation of security best practices and compliance requirements
+  5. Difficulty in tracking and auditing user actions
 
-# Related URL for the check
-RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege
 
-# Help section on how to fix the issue
 Remediation:
   Code:
-    CLI: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#cli-command"
-    NativeIaC: ""
-    Other: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#aws-console"
-    Terraform: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+    CLI: |
+      aws iam list-user-policies --user-name USERNAME
+      aws iam delete-user-policy --user-name USERNAME --policy-name POLICY_NAME
+    NativeIaC: |
+      Remove "*:*" permissions from inline policies and replace with specific required permissions
+    Other: |
+      1. Navigate to IAM in AWS Console
+      2. Select the user
+      3. Remove or modify inline policies with full administrative access
+    Terraform: |
+      # Replace overly permissive policies with specific permissions
+      resource "aws_iam_user_policy" "example" {
+        name = "specific_permissions"
+        user = aws_iam_user.example.name
+        policy = jsonencode({
+          Version = "2012-10-17"
+          Statement = [
+            {
+              Effect = "Allow"
+              Action = [
+                "s3:ListBucket",
+                "s3:GetObject"
+              ]
+              Resource = [
+                "arn:aws:s3:::example-bucket",
+                "arn:aws:s3:::example-bucket/*"
+              ]
+            }
+          ]
+        })
+      }
   Recommendation:
-    Text: "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that are too lenient and then trying to tighten them later. List policies an analyze if permissions are the least possible to conduct business activities."
-    Url: "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+    Text: |
+      1. Review all IAM users with inline policies
+      2. Remove any policies granting full administrative access ("*:*")
+      3. Replace with policies following least-privilege principle
+      4. Document and justify any required administrative access
+      5. Consider using AWS managed policies instead of inline policies
+      6. Implement regular policy reviews and audits
+    Url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#use-managed-policies"
 
-# Categories for the check. Eg: forensics-ready, security, etc.
 Categories: 
   - security
   - privilege_management
+  - compliance
+  - access_control
+  - identity_management
 
-# Dependencies on other checks
-DependsOn: []
+DependsOn: 
+  - iam_user_exists
+  - iam_policy_no_star_star
 
-# Related checks
-RelatedTo: []
+RelatedTo: 
+  - iam_policy_no_full_access
+  - iam_user_no_admin_access
+  - iam_policy_attached_to_groups_only
+  - iam_user_mfa_enabled
 
-# Side notes
-Notes: Infrastructure Protection
+Notes: |
+  Infrastructure Protection - Critical Security Control
+  This check is essential for maintaining secure access control and complying with the principle of least privilege.
+  Regular monitoring and remediation of findings is crucial for maintaining security posture.
