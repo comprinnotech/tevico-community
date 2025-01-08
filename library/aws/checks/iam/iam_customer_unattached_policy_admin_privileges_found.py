@@ -63,7 +63,7 @@ class iam_customer_unattached_policy_admin_privileges_found(Check):
                 findings.append(report_entry)
 
         # Determine report status based on findings
-        report.passed = all(entry['status'] == "PASS" for entry in findings)  # Indicate that the check passed only if all reports are "PASS"
+        report.status = all(entry['status'] == "PASS" for entry in findings)  # Indicate that the check passed only if all reports are "PASS"
         report.resource_ids_status = {entry['resource_id']: (entry['status'] == "PASS") for entry in findings}  # Mark policies as having issues or not
         report.report_metadata = {"findings": findings}  # Store findings in report metadata
 

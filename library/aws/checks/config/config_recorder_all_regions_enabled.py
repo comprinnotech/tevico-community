@@ -20,7 +20,7 @@ class config_recorder_all_regions_enabled(Check):
         recorders = response.get('ConfigurationRecordersStatus', [])
 
         if not recorders:
-            report.passed = False
+            report.status = False
             return report
 
         all_regions_enabled = True
@@ -30,12 +30,12 @@ class config_recorder_all_regions_enabled(Check):
 
             if not is_enabled:
                 all_regions_enabled = False
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[recorder_name] = False
             else:
                 report.resource_ids_status[recorder_name] = True
 
         if all_regions_enabled:
-            report.passed = True
+            report.status = True
 
         return report

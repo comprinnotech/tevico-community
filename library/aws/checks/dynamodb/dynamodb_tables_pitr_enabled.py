@@ -15,7 +15,7 @@ class dynamodb_tables_pitr_enabled(Check):
 
         for table in tables:
             response = client.describe_continuous_backups(TableName=table)
-            report.passed = response['ContinuousBackupsDescription']['PointInTimeRecoveryDescription']['PointInTimeRecoveryStatus'] == 'ENABLED'
-            report.resource_ids_status[table] = report.passed
+            report.status = response['ContinuousBackupsDescription']['PointInTimeRecoveryDescription']['PointInTimeRecoveryStatus'] == 'ENABLED'
+            report.resource_ids_status[table] = report.status
 
         return report

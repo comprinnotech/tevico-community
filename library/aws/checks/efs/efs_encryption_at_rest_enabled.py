@@ -16,7 +16,7 @@ class efs_encryption_at_rest_enabled(Check):
         paginator = client.get_paginator('describe_file_systems')
         
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # Paginate through all EFS file systems
         for page in paginator.paginate():
@@ -33,6 +33,6 @@ class efs_encryption_at_rest_enabled(Check):
                 else:
                     # Encryption is not enabled; fail the check for this file system
                     report.resource_ids_status[fs_id] = False
-                    report.passed = False
+                    report.status = False
 
         return report

@@ -13,7 +13,7 @@ class apigateway_waf_protection_enabled(Check):
         client = connection.client('apigateway')
         waf_client = connection.client('waf-regional')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         try:
             # Retrieve all REST APIs
@@ -46,9 +46,9 @@ class apigateway_waf_protection_enabled(Check):
                 
                 report.resource_ids_status[api_name] = api_protected
                 if not api_protected:
-                    report.passed = False
+                    report.status = False
                     
         except Exception as e:
-            report.passed = False
+            report.status = False
             
         return report

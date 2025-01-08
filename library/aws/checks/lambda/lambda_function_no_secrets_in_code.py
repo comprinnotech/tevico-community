@@ -17,7 +17,7 @@ class lambda_function_no_secrets_in_code(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('lambda')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
 
         # List all Lambda functions
         paginator = client.get_paginator('list_functions')
@@ -38,16 +38,16 @@ class lambda_function_no_secrets_in_code(Check):
                     secrets_found = self.detect_secrets_scan(data=code)
                     if secrets_found:
                         report.resource_ids_status[function_name] = False
-                        report.passed = False
+                        report.status = False
                     else:
                         report.resource_ids_status[function_name] = True
 
                 except client.exceptions.ResourceNotFoundException:
                     report.resource_ids_status[function_name] = False
-                    report.passed = False
+                    report.status = False
                 except Exception as e:
                     report.resource_ids_status[function_name] = False
-                    report.passed = False
+                    report.status = False
 
         return report
 

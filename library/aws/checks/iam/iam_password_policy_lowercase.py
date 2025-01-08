@@ -24,8 +24,8 @@ class iam_password_policy_lowercase(Check):
         
       
         if lowercase_required:
-            report.passed = True
+            report.status = True
         else:
-            report.passed = False
+            report.status = False
 
         return report

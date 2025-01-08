@@ -26,11 +26,11 @@ class root_mfa_enabled(Check):
             
             if root_mfa_enabled == 1:
                 print("pass")
-                report.passed = True
+                report.status = True
                 report.resource_ids_status['root_account'] = True
                 
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status['root_account'] = False
                 print("MFA Is Disabled")
         except Exception as e:

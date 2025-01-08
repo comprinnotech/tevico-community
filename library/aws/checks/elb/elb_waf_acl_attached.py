@@ -12,7 +12,7 @@ class elb_waf_acl_attached(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('elbv2')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # Get all ALBs
         paginator = client.get_paginator('describe_load_balancers')
@@ -30,10 +30,10 @@ class elb_waf_acl_attached(Check):
                         report.resource_ids_status[lb_arn] = True
                     else:
                         report.resource_ids_status[lb_arn] = False
-                        report.passed = False
+                        report.status = False
                 except waf_client.exceptions.WAFNonexistentItemException:
                     # No WAF ACL attached
                     report.resource_ids_status[lb_arn] = False
-                    report.passed = False
+                    report.status = False
 
         return report

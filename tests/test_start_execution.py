@@ -2,6 +2,8 @@ from typing import List
 import pytest
 from library.aws.provider import AWSProvider
 from tevico.engine.entities.provider.provider import CheckReport
+from tevico.engine.core.enums import CheckStatus
+
 
 def get_check_reports() -> List[CheckReport]:
     """Fetches check reports by executing the provider.
@@ -34,7 +36,7 @@ def test_check_report(report: CheckReport):
     
     # For non-empty resource_ids_status, perform the regular checks
     if any(value is False for value in report.resource_ids_status.values()):
-        assert report.passed is False
+        assert report.status is CheckStatus.FAILED
     else:
-        assert report.passed is True
+        assert report.status is CheckStatus.PASSED
 

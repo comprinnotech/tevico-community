@@ -20,9 +20,9 @@ class cloudformation_stacks_termination_protection_enabled(Check):
                 continue
             
             if stack_details['EnableTerminationProtection']:
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[stack_details['StackId']] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[stack_details['StackId']] = False
         return report

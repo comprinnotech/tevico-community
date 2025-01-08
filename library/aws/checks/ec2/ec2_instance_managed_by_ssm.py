@@ -18,7 +18,7 @@ class ec2_instance_managed_by_ssm(Check):
         ssm_client = connection.client('ssm')
 
         report = CheckReport(name=__name__)
-        report.passed = True  # Assume passed unless we find an unmanaged instance
+        report.status = True  # Assume passed unless we find an unmanaged instance
         report.resource_ids_status = {}
 
         # Fetch all EC2 instances
@@ -26,12 +26,12 @@ class ec2_instance_managed_by_ssm(Check):
             instances_response = ec2_client.describe_instances()
             instances = [i for r in instances_response['Reservations'] for i in r['Instances']]
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 
         # Check each instance
         if not instances:
-            report.passed = False
+            report.status = False
             report.resource_ids_status['No Instances'] = False  # No instances available
             return report
 
@@ -51,10 +51,10 @@ class ec2_instance_managed_by_ssm(Check):
                 managed_instance_ids = {m['InstanceId'] for m in managed_instances}
 
                 if instance_id not in managed_instance_ids:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[instance_id] = False  # Mark as unmanaged
             except Exception as e:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[instance_id] = False
                 
         return report

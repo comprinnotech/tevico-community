@@ -14,10 +14,10 @@ class apigateway_restapi_logging_enabled(Check):
             api_name = api['name']
             logging = api['endpointConfiguration']['types']
             if 'REGIONAL' in logging:
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[api_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[api_name] = False
         return report
 

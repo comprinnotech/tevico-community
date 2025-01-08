@@ -14,7 +14,7 @@ class ecr_image_private_image_scanning_enabled(Check):
         client = connection.client('ecr')
         paginator = client.get_paginator('describe_repositories')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # List all ECR repositories
         for page in paginator.paginate():
@@ -31,6 +31,6 @@ class ecr_image_private_image_scanning_enabled(Check):
                 else:
                     # Private repository without scan enabled
                     report.resource_ids_status[repo_name] = False
-                    report.passed = False
+                    report.status = False
 
         return report

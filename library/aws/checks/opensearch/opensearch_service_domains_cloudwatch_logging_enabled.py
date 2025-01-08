@@ -24,10 +24,10 @@ class opensearch_service_domains_cloudwatch_logging_enabled(Check):
             domain_name = dn['DomainName']
             res = client.describe_domain_config(DomainName=domain_name)
             for log_option in log_publishing_options:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[domain_name] = False
                 if res['DomainConfig']['LogPublishingOptions'][log_option]['Enabled']:
-                    report.passed = True
+                    report.status = True
                     report.resource_ids_status[domain_name] = True
 
         return report

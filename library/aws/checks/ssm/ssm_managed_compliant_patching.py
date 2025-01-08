@@ -24,7 +24,7 @@ class ssm_managed_compliant_patching(Check):
             instance_ids = [instance['InstanceId'] for reservation in response['Reservations'] for instance in reservation['Instances']]
 
             if not instance_ids:
-                report.passed = False
+                report.status = False
                 return report
 
             patch_response = ssm_client.describe_instance_patch_states(InstanceIds=instance_ids)
@@ -40,9 +40,9 @@ class ssm_managed_compliant_patching(Check):
                     passed = False
                     break
 
-            report.passed = passed  
+            report.status = passed  
             return report
 
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report

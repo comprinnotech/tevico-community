@@ -30,13 +30,13 @@ class ssm_patch_manager_enabled(Check):
                         report.resource_ids_status[instance_id] = True
                     else:
                         report.resource_ids_status[instance_id] = False
-                        report.passed = False
+                        report.status = False
 
                 except ssm_client.exceptions.InvalidInstanceId:
                     report.resource_ids_status[instance_id] = False
-                    report.passed = False
+                    report.status = False
 
         if all(report.resource_ids_status.values()):
-            report.passed = True
+            report.status = True
 
         return report

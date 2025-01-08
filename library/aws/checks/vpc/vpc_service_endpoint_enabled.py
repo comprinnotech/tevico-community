@@ -29,7 +29,7 @@ class vpc_service_endpoint_enabled(Check):
             if endpoint_enabled:
                 report.resource_ids_status[vpc_id] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[vpc_id] = False
         
         return report

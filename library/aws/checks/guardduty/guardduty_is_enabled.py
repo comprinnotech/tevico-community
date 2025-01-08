@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError
 class guardduty_is_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         try:
             available_regions = connection.get_available_regions('guardduty')
@@ -23,7 +23,7 @@ class guardduty_is_enabled(Check):
                     detectors = regional_client.list_detectors()
 
                     if not detectors.get('DetectorIds', []):
-                        report.passed = False
+                        report.status = False
                         continue
 
                     for detector_id in detectors['DetectorIds']:
@@ -32,18 +32,18 @@ class guardduty_is_enabled(Check):
                             detector = regional_client.get_detector(DetectorId=detector_id)
                             if detector.get('Status') is None or not detector.get('Status'):
                                 report.resource_ids_status[resource_key] = False
-                                report.passed = False
+                                report.status = False
                             else:
                                 report.resource_ids_status[resource_key] = True
                         except ClientError:
                             report.resource_ids_status[resource_key] = False
-                            report.passed = False
+                            report.status = False
 
                 except ClientError:
-                    report.passed = False
+                    report.status = False
 
         except Exception:
-            report.passed = False
+            report.status = False
 
         return report
 

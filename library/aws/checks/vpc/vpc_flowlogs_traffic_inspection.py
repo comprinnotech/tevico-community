@@ -30,7 +30,7 @@ class vpc_flowlogs_traffic_inspection(Check):
             if flow_logs_enabled:
                 report.resource_ids_status[vpc_id] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[vpc_id] = False
         
         return report

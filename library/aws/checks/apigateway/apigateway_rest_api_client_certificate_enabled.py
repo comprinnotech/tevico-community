@@ -13,7 +13,7 @@ class apigateway_rest_api_client_certificate_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('apigateway')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         try:
             # Use pagination to handle large number of APIs efficiently
@@ -39,12 +39,12 @@ class apigateway_rest_api_client_certificate_enabled(Check):
                             report.resource_ids_status[resource_id] = has_cert
                             
                             if not has_cert:
-                                report.passed = False
+                                report.status = False
                                 
                     except client.exceptions.ClientError as e:
-                        report.passed = False
+                        report.status = False
                                 
         except client.exceptions.ClientError as e:
-            report.passed = False
+            report.status = False
             
         return report

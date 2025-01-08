@@ -13,7 +13,7 @@ class kms_cmk_rotation_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('kms')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         try:
             paginator = client.get_paginator('list_keys')
@@ -35,7 +35,7 @@ class kms_cmk_rotation_enabled(Check):
                     except ClientError:
                         # If we can't get key details, mark it as non-compliant
                         report.resource_ids_status[key_id] = False
-                        report.passed = False
+                        report.status = False
                         continue
 
                     # Check rotation status only for customer managed keys
@@ -45,14 +45,14 @@ class kms_cmk_rotation_enabled(Check):
                         
                         report.resource_ids_status[key_id] = rotation_enabled
                         if not rotation_enabled:
-                            report.passed = False
+                            report.status = False
                             
                     except ClientError:
                         # If we can't check rotation status, mark as non-compliant
                         report.resource_ids_status[key_id] = False
-                        report.passed = False
+                        report.status = False
                         
         except (ClientError, Exception):
-            report.passed = False
+            report.status = False
             
         return report

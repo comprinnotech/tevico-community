@@ -23,10 +23,10 @@ class networkfirewall_multi_az_enabled(Check):
             subnet_mappings = firewall_details['Firewall']['SubnetMappings']
             
             if len(subnet_mappings) > 1:
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[firewall_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[firewall_name] = False
 
         return report

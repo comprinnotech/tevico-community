@@ -18,7 +18,7 @@ class cloudtrail_cloudwatch_logging_enabled(Check):
 
         trails = response.get('trailList', [])
         if not trails:
-            report.passed = False
+            report.status = False
             return report
 
         for trail in trails:
@@ -28,7 +28,7 @@ class cloudtrail_cloudwatch_logging_enabled(Check):
             if cloudwatch_logs_arn:
                 report.resource_ids_status[trail_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[trail_name] = False
 
         return report

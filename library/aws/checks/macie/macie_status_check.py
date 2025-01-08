@@ -17,10 +17,10 @@ class macie_status_check(Check):
         try:
             macie_status = client.get_macie_session()
             if macie_status['status'] == 'ENABLED':
-                report.passed = True
+                report.status = True
             else:
-                report.passed = False
+                report.status = False
         except (client.exceptions.AccessDeniedException, EndpointConnectionError):
-            report.passed = False
+            report.status = False
 
         return report

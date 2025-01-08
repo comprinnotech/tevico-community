@@ -14,19 +14,19 @@ class ec2_instance_profile_attached(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         ec2_client = connection.client('ec2')
         report = CheckReport(name=__name__)
-        report.passed = True  # Start assuming all instances have profiles
+        report.status = True  # Start assuming all instances have profiles
 
         try:
             # Fetch all EC2 instances
             response = ec2_client.describe_instances()
             reservations = response.get('Reservations', [])
         except Exception as e:
-            report.passed = False
+            report.status = False
             #report.message = f"Error fetching EC2 instances: {str(e)}"
             return report
 
         if not reservations:
-            report.passed = False
+            report.status = False
             #report.message = "No EC2 instances found."
             return report
 
@@ -38,7 +38,7 @@ class ec2_instance_profile_attached(Check):
                 if instance_profile:
                     report.resource_ids_status[instance_id] = True  # Instance has a profile attached
                 else:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[instance_id] = False  # No profile attached
                     #report.message = f"EC2 Instance {instance_id} does not have an IAM instance profile attached."
 

@@ -27,10 +27,10 @@ class vpc_security_group_port_restriction_check(Check):
                         return True
             return False
         
-        report.passed = True
+        report.status = True
         for sg in security_groups['SecurityGroups']:
             if has_restricted_ports(sg.get('IpPermissions', [])) or has_restricted_ports(sg.get('IpPermissionsEgress', [])):
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[sg['GroupId']] = False
             else:
                 report.resource_ids_status[sg['GroupId']] = True

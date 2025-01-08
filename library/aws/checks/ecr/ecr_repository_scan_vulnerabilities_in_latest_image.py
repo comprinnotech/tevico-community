@@ -14,7 +14,7 @@ class ecr_repository_scan_vulnerabilities_in_latest_image(Check):
         client = connection.client('ecr')
         paginator = client.get_paginator('describe_repositories')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         # List all ECR repositories
         for page in paginator.paginate():
             repositories = page['repositories']
@@ -58,7 +58,7 @@ class ecr_repository_scan_vulnerabilities_in_latest_image(Check):
                 if vulnerabilities_found:
                     # If any vulnerabilities are found, fail the check
                     report.resource_ids_status[repo_name] = False
-                    report.passed = False
+                    report.status = False
                 else:
                     # No vulnerabilities found
                     report.resource_ids_status[repo_name] = True

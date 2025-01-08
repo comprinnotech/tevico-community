@@ -12,7 +12,7 @@ class apigatewayv2_api_access_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('apigatewayv2')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # List all API Gateway V2 APIs
         apis = client.get_apis()
@@ -31,13 +31,13 @@ class apigatewayv2_api_access_logging_enabled(Check):
                     # Logging is not enabled for this stage
                     report.resource_ids_status[f"{api_name}-{stage['StageName']}"] = False
                     stage_passed = False
-                    report.passed = False
+                    report.status = False
                 else:
                     # Logging is enabled for this stage
                     report.resource_ids_status[f"{api_name}-{stage['StageName']}"] = True
             
             # If any stage is missing logging, mark the API check as failed
             if not stage_passed:
-                report.passed = False
+                report.status = False
         
         return report

@@ -62,8 +62,8 @@ class iam_account_maintain_current_contact_details(Check):
                     report.resource_ids_status[check] = True
 
             # Set the final report status based on whether all checks passed
-            report.passed = all_checks_passed
-            if report.passed:
+            report.status = all_checks_passed
+            if report.status:
                 # print("All checks passed successfully.")
                 pass
             else:
@@ -72,13 +72,13 @@ class iam_account_maintain_current_contact_details(Check):
 
         except client.exceptions.NoSuchEntityException:
             # Handle the case where contact information cannot be found
-            report.passed = False
+            report.status = False
             report.report_metadata = {"error": "No contact information found for this account"}
             # print("Error: No contact information found for this account.")
         
         except Exception as e:
             # Handle any other exceptions
-            report.passed = False
+            report.status = False
             report.report_metadata = {"error": str(e)}
             # print(f"An unexpected error occurred: {e}")
 

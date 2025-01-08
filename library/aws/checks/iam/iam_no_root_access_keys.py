@@ -21,7 +21,7 @@ class iam_no_root_access_keys(Check):
             )
 
             if has_active_root_keys:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status['root_account'] = False
             else:
                 report.resource_ids_status['root_account'] = True
@@ -37,12 +37,12 @@ class iam_no_root_access_keys(Check):
                 )
 
                 if has_active_iam_keys:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[user_name] = False
                 else:
                     report.resource_ids_status[user_name] = True
 
         except Exception:
-            report.passed = False
+            report.status = False
 
         return report

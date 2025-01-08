@@ -15,7 +15,7 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
         paginator = client.get_paginator('list_tables')
         
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # List all DynamoDB tables
         for page in paginator.paginate():
@@ -33,6 +33,6 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
                 else:
                     # Otherwise, mark the check as failed for this table
                     report.resource_ids_status[table_name] = False
-                    report.passed = False
+                    report.status = False
         
         return report

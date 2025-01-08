@@ -18,7 +18,7 @@ class cloudtrail_s3_bucket_access_logging_enabled(Check):
 
         buckets = response.get('Buckets', [])
         if not buckets:
-            report.passed = False
+            report.status = False
             return report
 
         for bucket in buckets:
@@ -28,7 +28,7 @@ class cloudtrail_s3_bucket_access_logging_enabled(Check):
             if logging_status:
                 report.resource_ids_status[bucket_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[bucket_name] = False
 
         return report

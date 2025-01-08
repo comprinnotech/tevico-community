@@ -17,13 +17,13 @@ class iam_password_policy_number(Check):
             password_policy = account_password_policy['PasswordPolicy']
             requires_number = password_policy.get('RequireNumbers', False)
 
-            report.passed = requires_number
+            report.status = requires_number
             report.resource_ids_status['password_policy'] = requires_number
 
         except client.exceptions.NoSuchEntityException:
-            report.passed = False
+            report.status = False
             report.resource_ids_status['password_policy'] = False
         except Exception:
-            report.passed = False
+            report.status = False
 
         return report

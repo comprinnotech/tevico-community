@@ -11,7 +11,7 @@ from tevico.engine.entities.check.check import Check
 class apigateway_rest_api_waf_acl_attached(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         try:
             # Initialize clients
@@ -55,9 +55,9 @@ class apigateway_rest_api_waf_acl_attached(Check):
                 
                 # If any API doesn't have WAF, mark the overall check as failed
                 if not api_has_waf:
-                    report.passed = False
+                    report.status = False
                     
         except Exception as e:
-            report.passed = False
+            report.status = False
             
         return report

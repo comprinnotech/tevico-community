@@ -12,7 +12,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudfront')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
 
         # List CloudFront distributions
         distributions = client.list_distributions()
@@ -29,7 +29,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
                 minimum_protocol_version = viewer_certificate.get('MinimumProtocolVersion', '')
                 if minimum_protocol_version in deprecated_protocols:
                     report.resource_ids_status[distribution_id] = False
-                    report.passed = False
+                    report.status = False
                 else:
                     report.resource_ids_status[distribution_id] = True
 

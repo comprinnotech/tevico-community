@@ -15,7 +15,7 @@ class ecr_repository_scan_images_on_push_enabled(Check):
         paginator = client.get_paginator('describe_repositories')
         
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # List all ECR repositories
         for page in paginator.paginate():
@@ -32,6 +32,6 @@ class ecr_repository_scan_images_on_push_enabled(Check):
                 else:
                     # Otherwise, mark the check as failed for this repository
                     report.resource_ids_status[repo_name] = False
-                    report.passed = False
+                    report.status = False
 
         return report

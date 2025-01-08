@@ -19,7 +19,7 @@ class rds_instance_minor_version_upgrade_enabled(Check):
         try:
             rds_client = connection.client('rds')
             db_instances = rds_client.describe_db_instances()['DBInstances']
-            report.passed = True
+            report.status = True
             
             for db_instance in db_instances:
                 
@@ -30,12 +30,12 @@ class rds_instance_minor_version_upgrade_enabled(Check):
                     report.resource_ids_status[db_instance_id] = True
                 else:
                     report.resource_ids_status[db_instance_id] = False
-                    report.passed = False
+                    report.status = False
                         
                 
             
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 
         return report

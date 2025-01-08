@@ -27,12 +27,12 @@ class iam_support_role_created(Check):
             
             if not support_role_found:
 
-                report.passed = False
+                report.status = False
             else:
-                report.passed = True
+                report.status = True
             
         except Exception as e:
 
-            report.passed = False
+            report.status = False
         
         return report

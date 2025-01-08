@@ -12,20 +12,20 @@ class rds_instance_multi_az(Check):
         try:
             client = connection.client('rds')
             response = client.describe_db_instances()
-            report.passed = True 
+            report.status = True 
             
             for instance in response['DBInstances']:
                 instance_id = instance['DBInstanceIdentifier']
                 multi_az = instance['MultiAZ']
                 
                 if not multi_az:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[instance_id] = False
                 else:
                     report.resource_ids_status[instance_id] = True
                     
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 
         return report

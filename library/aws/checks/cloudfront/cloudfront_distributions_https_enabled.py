@@ -12,7 +12,7 @@ class cloudfront_distributions_https_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudfront')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         distributions = client.list_distributions()
         
         if ('DistributionList' in distributions and 
@@ -25,7 +25,7 @@ class cloudfront_distributions_https_enabled(Check):
                 viewer_protocol_policy = default_cache_behavior.get('ViewerProtocolPolicy', '')
                 if viewer_protocol_policy != 'redirect-to-https' and viewer_protocol_policy != 'https-only':
                     report.resource_ids_status[distribution_id] = False
-                    report.passed = False
+                    report.status = False
                 else:
                     report.resource_ids_status[distribution_id] = True
         else:

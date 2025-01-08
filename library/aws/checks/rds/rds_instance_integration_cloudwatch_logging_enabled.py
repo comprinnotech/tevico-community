@@ -18,7 +18,7 @@ class rds_instance_integration_cloudwatch_logging_enabled(Check):
         try:
             client = connection.client('rds')
             instances = client.describe_db_instances()['DBInstances']
-            report.passed = True  
+            report.status = True  
 
             for instance in instances:
                 instance_name = instance['DBInstanceIdentifier']
@@ -27,10 +27,10 @@ class rds_instance_integration_cloudwatch_logging_enabled(Check):
                     report.resource_ids_status[instance_name] = True
                 else:
                     report.resource_ids_status[instance_name] = False
-                    report.passed = False  
+                    report.status = False  
                      
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 
         return report

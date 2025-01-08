@@ -19,7 +19,7 @@ class rds_instance_storage_encrypted(Check):
         try:
             client = connection.client('rds')
             instances = client.describe_db_instances()['DBInstances']
-            report.passed = True  
+            report.status = True  
             
             for instance in instances:
                 instance_name = instance['DBInstanceIdentifier']
@@ -28,11 +28,11 @@ class rds_instance_storage_encrypted(Check):
                 if storage_encrypted:
                     report.resource_ids_status[instance_name] = True
                 else:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[instance_name] = False
                         
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 
         return report

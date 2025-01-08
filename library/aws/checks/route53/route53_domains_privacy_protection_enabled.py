@@ -14,7 +14,7 @@ class route53_domains_privacy_protection_enabled(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         report.resource_ids_status = {}
 
         
@@ -34,6 +34,6 @@ class route53_domains_privacy_protection_enabled(Check):
                 report.resource_ids_status[domain_name] = True
             else:
                 report.resource_ids_status[domain_name] = False
-                report.passed = False
+                report.status = False
 
         return report

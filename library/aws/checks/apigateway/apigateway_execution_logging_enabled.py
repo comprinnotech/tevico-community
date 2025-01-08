@@ -12,7 +12,7 @@ class apigateway_execution_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('apigateway')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # Retrieve all API Gateway REST APIs
         apis = client.get_rest_apis()
@@ -34,15 +34,15 @@ class apigateway_execution_logging_enabled(Check):
                         else:
                             report.resource_ids_status[f"{api_name}-{stage['stageName']}"] = False
                             stage_passed = False
-                            report.passed = False
+                            report.status = False
                 else:
                     # No logging settings for this stage
                     report.resource_ids_status[f"{api_name}-{stage['stageName']}"] = False
                     stage_passed = False
-                    report.passed = False
+                    report.status = False
             
             # If any stage lacks logging, mark the API check as failed
             if not stage_passed:
-                report.passed = False
+                report.status = False
         
         return report

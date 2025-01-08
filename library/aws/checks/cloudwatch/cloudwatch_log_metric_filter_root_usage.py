@@ -18,7 +18,7 @@ class cloudwatch_log_metric_filter_security_group_changes(Check):
 
         metric_filters = response.get('metricFilters', [])
         if not metric_filters:
-            report.passed = False
+            report.status = False
             return report
 
         for filter in metric_filters:
@@ -28,7 +28,7 @@ class cloudwatch_log_metric_filter_security_group_changes(Check):
             if 'security-group' in filter_pattern.lower():
                 report.resource_ids_status[filter_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[filter_name] = False
 
         return report

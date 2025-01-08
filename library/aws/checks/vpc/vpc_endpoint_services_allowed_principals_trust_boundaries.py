@@ -37,7 +37,7 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
 
                     if principal_account_id not in trusted_account_ids:
                         all_compliant = False
-                        report.passed = False
+                        report.status = False
                         report.resource_ids_status[service['ServiceName']] = False
                         break
 
@@ -45,11 +45,11 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
                     break
 
             if all_compliant:
-                report.passed = True
+                report.status = True
 
             return report
 
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 

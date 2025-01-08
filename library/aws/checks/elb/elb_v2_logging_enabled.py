@@ -14,7 +14,7 @@ class elb_v2_logging_enabled(Check):
         paginator = client.get_paginator('describe_load_balancers')
         
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         # Iterate over all ALBs and NLBs
         for page in paginator.paginate():
@@ -32,6 +32,6 @@ class elb_v2_logging_enabled(Check):
                     report.resource_ids_status[lb_arn] = True
                 else:
                     report.resource_ids_status[lb_arn] = False
-                    report.passed = False
+                    report.status = False
 
         return report

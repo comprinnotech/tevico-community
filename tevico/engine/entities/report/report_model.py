@@ -12,6 +12,8 @@ class CheckStatusReport(BaseModel):
     total: int = 0
     passed: int = 0
     failed: int = 0
+    not_applicable: int = 0
+    skipped: int = 0
 
 class GeneralReport(BaseModel):
     name: str

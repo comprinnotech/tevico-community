@@ -24,10 +24,10 @@ class s3_bucket_acl_prohibited(Check):
                 owner_enforced = True
 
             if owner_enforced:
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[bucket_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[bucket_name] = False
 
         return report

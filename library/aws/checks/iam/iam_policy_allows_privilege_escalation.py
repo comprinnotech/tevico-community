@@ -66,10 +66,10 @@ class iam_policy_allows_privilege_escalation(Check):
                     report.resource_ids_status[username] = False
 
             # Set overall check status
-            report.passed = not any(report.resource_ids_status.values())
+            report.status = not any(report.resource_ids_status.values())
         
         except Exception as e:
-            report.passed = False
+            report.status = False
         
         return report
 

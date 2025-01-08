@@ -20,7 +20,7 @@ class cloudwatch_log_metric_filter_vpc_alarm_configured(Check):
 
         filters = response.get('metricFilters', [])
         if not filters:
-            report.passed = False
+            report.status = False
             return report
 
         for metric_filter in filters:
@@ -38,7 +38,7 @@ class cloudwatch_log_metric_filter_vpc_alarm_configured(Check):
                 if alarms['MetricAlarms']:
                     report.resource_ids_status[filter_name] = True
                 else:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[filter_name] = False
 
         return report

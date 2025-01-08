@@ -23,7 +23,7 @@ class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
             filters.extend(page.get('metricFilters', []))
 
         if not filters:
-            report.passed = False
+            report.status = False
             return report
 
         pattern = r"\$\.errorCode\s*=\s*.?\*UnauthorizedOperation.+\$\.errorCode\s*=\s*.?AccessDenied\*"
@@ -35,7 +35,7 @@ class cloudwatch_log_metric_filter_unauthorized_api_calls(Check):
             if re.search(pattern, filter_pattern):
                 report.resource_ids_status[filter_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[filter_name] = False
 
         return report

@@ -19,7 +19,7 @@ class ec2_ebs_snapshot_encrypted(Check):
         report = CheckReport(name=__name__)
 
         # Initialize report status
-        report.passed = True  # Assume passed unless we find an unencrypted snapshot
+        report.status = True  # Assume passed unless we find an unencrypted snapshot
         report.resource_ids_status = {}
 
         try:
@@ -35,10 +35,10 @@ class ec2_ebs_snapshot_encrypted(Check):
                 report.resource_ids_status[snapshot_id] = encrypted
 
                 if not encrypted:
-                    report.passed = False  # If any snapshot is not encrypted, mark the report as failed
+                    report.status = False  # If any snapshot is not encrypted, mark the report as failed
 
         except Exception as e:
-            report.passed = False
+            report.status = False
             report.resource_ids_status = {}
 
         return report

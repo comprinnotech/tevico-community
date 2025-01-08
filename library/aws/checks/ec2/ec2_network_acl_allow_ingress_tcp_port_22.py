@@ -7,6 +7,7 @@ DATE: 2024-10-09
 import boto3
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
+from tevico.engine.core.enums import CheckStatus
 
 class ec2_network_acl_allow_ingress_tcp_port_22(Check):
 
@@ -17,7 +18,7 @@ class ec2_network_acl_allow_ingress_tcp_port_22(Check):
         
         tcp_protocol = "6"
         check_port = 22
-        report.passed = True   
+        report.status = CheckStatus.PASSED
 
         for acl in acls:
             acl_id = acl['NetworkAclId']
@@ -41,7 +42,6 @@ class ec2_network_acl_allow_ingress_tcp_port_22(Check):
             
             report.resource_ids_status[acl_id] = not acl_allows_ingress
             if acl_allows_ingress:
-                report.passed = False
+                report.status = CheckStatus.FAILED
         
         return report
-

@@ -13,7 +13,7 @@ class kms_cmk_are_used(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('kms')
         report = CheckReport(name=__name__)
-        report.passed = False  # Start with False until we find at least one valid CMK
+        report.status = False  # Start with False until we find at least one valid CMK
         
         try:
             paginator = client.get_paginator('list_keys')
@@ -46,9 +46,9 @@ class kms_cmk_are_used(Check):
                         continue
                         
             # Set overall check status based on finding at least one enabled CMK
-            report.passed = customer_managed_keys_found
+            report.status = customer_managed_keys_found
                         
         except (ClientError, Exception):
-            report.passed = False
+            report.status = False
             
         return report

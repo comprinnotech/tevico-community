@@ -13,16 +13,16 @@ class macie_auto_sensitive_data_discovery_check(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('macie2')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         
         try:
             auto_discovery_status = client.get_automated_discovery_configuration()
             if auto_discovery_status['status'] == 'ENABLED':
-                report.passed = True
+                report.status = True
             else:
-                report.passed = False
+                report.status = False
         except (client.exceptions.AccessDeniedException, EndpointConnectionError):
-            report.passed = False
+            report.status = False
 
         return report
 

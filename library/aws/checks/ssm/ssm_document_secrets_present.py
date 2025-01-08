@@ -35,14 +35,14 @@ class ssm_document_secrets_present(Check):
                     missing_secrets.append(document_name)
             except Exception as e:
                 report.resource_ids_status[document_name] = False
-                report.passed = False
+                report.status = False
                 continue
 
       
         if missing_secrets:
-            report.passed = False
+            report.status = False
             report.resource_ids_status.update({doc: False for doc in missing_secrets})
         else:
-            report.passed = True
+            report.status = True
         
         return report

@@ -20,10 +20,10 @@ class s3_bucket_object_versioning(Check):
             versioning = client.get_bucket_versioning(Bucket=bucket_name).get('Status')
 
             if versioning == 'Enabled':
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[bucket_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[bucket_name] = False
 
         return report

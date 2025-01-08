@@ -17,3 +17,9 @@ class FrameworkDimension(str, Enum):
     reliability = 'reliability'
     security = 'security'
     sustainability = 'sustainability'
+
+class CheckStatus(str, Enum):
+    PASSED = "passed"
+    FAILED = "failed"
+    NOT_APPLICABLE = "not_applicable"
+    SKIPPED = "skipped"

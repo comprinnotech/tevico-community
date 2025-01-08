@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from tevico.engine.core.enums import FrameworkDimension
+from tevico.engine.core.enums import CheckStatus
 
 ######################################################################
 
@@ -53,7 +54,7 @@ class CheckMetadata(BaseModel):
 ######################################################################
 
 class CheckReport(BaseModel):
-    passed: bool = True
+    status: CheckStatus = CheckStatus.PASSED
     name: str
     execution_time: float = 0.0
     check_metadata: Optional[CheckMetadata] = None

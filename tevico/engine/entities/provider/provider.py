@@ -11,6 +11,7 @@ from tevico.engine.entities.framework.framework_model import FrameworkModel, Fra
 from tevico.engine.entities.profile.profile_model import ProfileModel
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
+from tevico.engine.core.enums import CheckStatus
 
 class Provider(ABC):
     
@@ -64,10 +65,15 @@ class Provider(ABC):
         
         res.execution_time = round(res.execution_time, 2)
 
-        if res is not None and res.passed:
-            print(f'\t\t* Check Passed ✅: {res.name} ({res.execution_time} seconds)')
-        else:
-            print(f'\t\t* Check Failed ❌: {res.name} ({res.execution_time} seconds)')
+        if res is not None:
+            if res.status == CheckStatus.PASSED:
+                print(f'\t\t* Check Passed ✅: {res.name} ({res.execution_time} seconds)')
+            elif res.status == CheckStatus.FAILED:
+                print(f'\t\t* Check Failed ❌: {res.name} ({res.execution_time} seconds)')
+            elif res.status == CheckStatus.SKIPPED:
+                print(f'\t\t* Check Skipped ⏭️: {res.name} ({res.execution_time} seconds)')
+            elif res.status == CheckStatus.NOT_APPLICABLE:
+                print(f'\t\t* Check Not Applicable ⚠️: {res.name} ({res.execution_time} seconds)')
         
         return res
     

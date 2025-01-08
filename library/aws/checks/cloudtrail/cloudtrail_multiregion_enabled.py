@@ -18,7 +18,7 @@ class cloudtrail_multiregion_enabled(Check):
 
         trails = response.get('trailList', [])
         if not trails:
-            report.passed = False
+            report.status = False
             return report
 
         for trail in trails:
@@ -28,7 +28,7 @@ class cloudtrail_multiregion_enabled(Check):
             if is_multiregion:
                 report.resource_ids_status[trail_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[trail_name] = False
 
         return report

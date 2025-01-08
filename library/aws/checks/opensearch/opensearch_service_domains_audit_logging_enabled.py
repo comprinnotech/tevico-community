@@ -19,10 +19,10 @@ class opensearch_service_domains_audit_logging_enabled(Check):
             domain_name = dn['DomainName']
             res = client.describe_domain(DomainName=domain_name)
             domain = res['DomainStatus']
-            report.passed = False
+            report.status = False
             report.resource_ids_status[domain_name] = False
             if domain['LogPublishingOptions']['Options']['AUDIT_LOGS']['Enabled']:
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[domain_name] = True
 
         return report

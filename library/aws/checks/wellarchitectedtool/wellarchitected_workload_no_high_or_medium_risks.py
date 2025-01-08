@@ -45,8 +45,8 @@ class wellarchitected_workload_no_high_or_medium_risks(Check):
                 if high_risk_count > 0 or medium_risk_count > 0:
                     break
 
-            report.passed = high_risk_count == 0 and medium_risk_count == 0
-            report.resource_ids_status[workload_id] = report.passed
+            report.status = high_risk_count == 0 and medium_risk_count == 0
+            report.resource_ids_status[workload_id] = report.status
 
         return report
 

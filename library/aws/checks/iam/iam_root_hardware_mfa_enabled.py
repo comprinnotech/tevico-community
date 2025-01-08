@@ -21,7 +21,7 @@ class iam_root_hardware_mfa_enabled(Check):
             
             if account_summary['AccountMFAEnabled'] != 1:
                 # MFA is not enabled for root, immediately fail the check
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[resource_id] = False
                 return report
             
@@ -29,16 +29,16 @@ class iam_root_hardware_mfa_enabled(Check):
             virtual_mfa_devices = self._list_virtual_mfa_devices(connection)
             for mfa_device in virtual_mfa_devices:
                 if "root" in mfa_device.get("User", {}).get("Arn", ""):
-                    report.passed = False  # Root is using virtual MFA, fail the hardware check
+                    report.status = False  # Root is using virtual MFA, fail the hardware check
                     report.resource_ids_status[resource_id] = False
                     return report
 
             # If no virtual MFA for the root account, pass for hardware MFA
-            report.passed = True
+            report.status = True
             report.resource_ids_status[resource_id] = True
         
         except Exception as e:
-            report.passed = False
+            report.status = False
             report.resource_ids_status[resource_id] = False
 
         return report

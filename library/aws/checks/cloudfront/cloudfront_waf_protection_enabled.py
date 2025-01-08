@@ -17,7 +17,7 @@ class cloudfront_waf_protection_enabled(Check):
 
         distributions = response.get('DistributionList', {}).get('Items', [])
         if not distributions:
-            report.passed = True
+            report.status = True
             return report
 
         for distribution in distributions:
@@ -27,7 +27,7 @@ class cloudfront_waf_protection_enabled(Check):
             if web_acl_id:
                 report.resource_ids_status[distribution_id] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[distribution_id] = False
 
         return report

@@ -24,8 +24,8 @@ class iam_password_policy_uppercase(Check):
         
         
         if uppercase_required:
-            report.passed = True
+            report.status = True
         else:
-            report.passed = False
+            report.status = False
 
         return report

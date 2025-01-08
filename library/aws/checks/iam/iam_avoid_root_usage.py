@@ -48,20 +48,20 @@ class iam_avoid_root_usage(Check):
                         # Evaluate against maximum access days
                         if days_since_accessed <= maximum_access_days:
                             report.resource_ids_status['RootAccount'] = True  # Root usage detected
-                            report.passed = False
+                            report.status = False
                         else:
                             report.resource_ids_status['RootAccount'] = False  # No root usage detected
-                            report.passed = True
+                            report.status = True
                     else:
 
                         report.resource_ids_status['RootAccount'] = False  # No root usage detected
-                        report.passed = True
+                        report.status = True
 
                     break  # We only care about the root account, so stop after processing
 
         except Exception as e:
 
-            report.passed = False
+            report.status = False
             report.resource_ids_status['RootAccount'] = False  # Assume no usage detected in case of error
 
         return report

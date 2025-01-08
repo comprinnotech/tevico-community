@@ -27,10 +27,10 @@ class s3_bucket_secure_transport_policy(Check):
                 policy_json = None
 
             if not policy_json:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[bucket_name] = False
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[bucket_name] = False
                
                 for statement in policy_json.get("Statement", []):
@@ -52,7 +52,7 @@ class s3_bucket_secure_transport_policy(Check):
                                     ]
                                     == "false"
                                 ):
-                                    report.passed = True
+                                    report.status = True
                                     report.resource_ids_status[bucket_name] = True
 
         return report

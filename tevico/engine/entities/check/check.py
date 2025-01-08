@@ -5,6 +5,7 @@ from typing import Any
 
 
 from tevico.engine.entities.report.check_model import CheckMetadata, CheckReport
+from tevico.engine.core.enums import CheckStatus
 
 
 class Check(ABC):
@@ -25,9 +26,9 @@ class Check(ABC):
         
         # Set the check status based on resource_ids_status
         if check_report.has_failed_resources():
-            check_report.passed = False
-        else:
-            check_report.passed = True
+            check_report.status = CheckStatus.FAILED
+        # else:
+        #     check_report.status = CheckStatus.PASSED
         return check_report
     
     @abstractmethod

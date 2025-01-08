@@ -5,14 +5,19 @@ from typing import List
 
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.report.report_model import AnalyticsReport, CheckStatusReport, GeneralReport, SeverityReport
+from tevico.engine.core.enums import CheckStatus
 
 
 def __check_status_accumulator(acc: CheckStatusReport, check: CheckReport):
     acc.total += 1
-    if check.passed:
+    if check.status == CheckStatus.PASSED:
         acc.passed += 1
-    else:
+    elif check.status == CheckStatus.FAILED:
         acc.failed += 1
+    elif check.status == CheckStatus.NOT_APPLICABLE:
+        acc.not_applicable += 1
+    elif check.status == CheckStatus.SKIPPED:
+        acc.skipped += 1
     return acc
 
 def __severity_accumulator(acc: SeverityReport, check: CheckReport):

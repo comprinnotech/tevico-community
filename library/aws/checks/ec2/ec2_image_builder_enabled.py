@@ -16,9 +16,9 @@ class ec2_image_builder_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
         client = connection.client('imagebuilder')
-        report.passed = False
+        report.status = False
         pipelines = client.list_image_pipelines()['imagePipelineList']
         for pipeline in pipelines:
             if pipeline.get('status') == 'ENABLED':
-                report.passed = True
+                report.status = True
         return report        

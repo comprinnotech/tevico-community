@@ -11,7 +11,7 @@ class rds_instance_enhanced_monitoring_enabled(Check):
         
         try:
             client = connection.client('rds')
-            report.passed = True
+            report.status = True
             instances = client.describe_db_instances()['DBInstances']
             
             for instance in instances:
@@ -21,11 +21,11 @@ class rds_instance_enhanced_monitoring_enabled(Check):
                 if enhanced_monitoring:
                     report.resource_ids_status[instance_name] = True
                 else:
-                    report.passed = False
+                    report.status = False
                     report.resource_ids_status[instance_name] = False
                     
         except Exception as e:
-            report.passed = False
+            report.status = False
             return report
 
         return report

@@ -23,10 +23,10 @@ class s3_bucket_no_mfa_delete(Check):
             mfa_delete = versioning.get('MFADelete', 'Disabled')
 
             if mfa_delete == 'Enabled':
-                report.passed = True
+                report.status = True
                 report.resource_ids_status[bucket_name] = True
             else:
-                report.passed = False
+                report.status = False
                 report.resource_ids_status[bucket_name] = False
 
         return report

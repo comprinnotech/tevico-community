@@ -11,7 +11,7 @@ class cloudfront_cloudwatch_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudfront')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
         distributions = client.list_distributions()
         
         if distributions.get('DistributionList', {}).get('Items'):
@@ -24,11 +24,11 @@ class cloudfront_cloudwatch_logging_enabled(Check):
                         report.resource_ids_status[dist_id] = True
                     else:
                         report.resource_ids_status[dist_id] = False
-                        report.passed = False
+                        report.status = False
                 except client.exceptions.NoSuchMonitoringSubscription:
                     report.resource_ids_status[dist_id] = False
-                    report.passed = False
+                    report.status = False
         else:
-            report.passed = True  
+            report.status = True  
             
         return report

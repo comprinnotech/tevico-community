@@ -12,7 +12,7 @@ class lambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudtrail')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = True
 
         trails = client.describe_trails()['trailList']
         logging_enabled = False
@@ -25,8 +25,8 @@ class lambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
                     break
         
         if logging_enabled:
-            report.passed = True
+            report.status = True
         else:
-            report.passed = False
+            report.status = False
 
         return report
