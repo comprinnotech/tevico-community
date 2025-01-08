@@ -112,7 +112,7 @@ sections:
           - ec2_network_acl_allow_ingress_tcp_port_22
           - ec2_security_group_default_restrict_traffic
           - elb_ssl_listeners_enabled
-          - elb_waf_acl_attached
+          - elb_v2_waf_acl_attached
           - networkfirewall_multi_az_enabled
           - vpc_default_security_group_closed
           - vpc_endpoint_services_allowed_principals_trust_boundaries
@@ -132,6 +132,30 @@ sections:
           - macie_auto_sensitive_data_discovery_check
           - macie_status_check
           - securityhub_enabled
+      - name: Infrastructure Protection
+        description: |
+          The Infrastructure Protection section includes the ability to protect workloads, systems, and networks by implementing security best practices.
+
+          This section checks for the presence of a Well Architected Review in the AWS account.
+
+        checks:
+          - ecr_image_private_image_scanning_enabled
+          - ecr_repository_scan_images_on_push_enabled
+          - ecr_repository_scan_vulnerabilities_in_latest_image
+          - eks_control_plane_endpoint_access_restricted
+      - name: Detective Control
+        description: |
+          The Detective Control section includes the ability to identify, detect, and investigate security events to ensure accountability and improve security posture.
+
+          This section checks for the presence of a Well Architected Review in the AWS account.
+        sections:
+          - name: Logging and Monitoring
+            description: |
+              The Logging and Monitoring section includes checks for proper logging, monitoring, and alerting mechanisms to detect and respond to incidents effectively.
+
+            checks:
+              - eks_cluster_logging_enabled
+
 
   - name: Performance Efficiency
     description: |

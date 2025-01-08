@@ -1,25 +1,116 @@
 Provider: aws
 CheckID: ecr_repository_scan_vulnerabilities_in_latest_image
-CheckTitle: Check if ECR image scan found vulnerabilities in the newest image version
-CheckType: [Infrastructure Protection]
+CheckTitle: Check for vulnerabilities in latest ECR image scans
+CheckType: [Infrastructure Protection, Security Best Practices, Vulnerability Management]
 ServiceName: ecr
 SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: medium
+ResourceIdTemplate: arn:aws:ecr:${region}:${account}:repository/${repository-name}
+Severity: high
 ResourceType: AwsEcrRepository
-Description: Check if ECR image scan found vulnerabilities in the newest image version
-Risk: Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings
-RelatedUrl: https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html#describe-scan-findings
+Description: |
+  Evaluates the security posture of container images by checking scan results of the latest images in ECR repositories.
+  This check:
+  - Verifies if the latest image has been scanned
+  - Analyzes scan findings for security vulnerabilities
+  - Evaluates severity levels (CRITICAL, HIGH, MEDIUM)
+  - Reports detailed status for each repository
+Risk: |
+  Unscanned or vulnerable container images pose several risks:
+  1. Security vulnerabilities in base images or packages
+  2. Potential exploitation of known CVEs
+  3. Compliance violations for unscanned containers
+  4. Propagation of vulnerabilities to production environments
+  5. Delayed detection of security issues
+RelatedUrl: https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html
 Remediation:
   Code:
-    CLI: ""
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Start a manual scan for an image
+      aws ecr start-image-scan \
+        --repository-name <repository-name> \
+        --image-id imageTag=<tag>
+
+      # Enable automatic scanning on push
+      aws ecr put-image-scanning-configuration \
+        --repository-name <repository-name> \
+        --image-scanning-configuration scanOnPush=true
+
+      # View scan findings
+      aws ecr describe-image-scan-findings \
+        --repository-name <repository-name> \
+        --image-id imageTag=<tag>
+    NativeIaC: |
+      # AWS CloudFormation
+      Resources:
+        MyECRRepository:
+          Type: 'AWS::ECR::Repository'
+          Properties:
+            RepositoryName: my-secure-repo
+            ImageScanningConfiguration:
+              scanOnPush: true
+    Other: |
+      Via AWS Console:
+      1. Open ECR Console
+      2. Select repository
+      3. Select image
+      4. Click 'Scan' or enable automatic scanning
+      5. Review findings under 'Image scan findings'
+    Terraform: |
+      resource "aws_ecr_repository" "example" {
+        name                 = "my-repository"
+        image_scanning_configuration {
+          scan_on_push = true
+        }
+      }
   Recommendation:
-    Text: Open the Amazon ECR console. Then look for vulnerabilities and fix them
-    Url: https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html#describe-scan-findings
-Categories: [Infrastructure Protection]
-DependsOn: []
-RelatedTo: []
-Notes: Infrastructure Protection
+    Text: |
+      1. Enable automatic scan on push for all repositories
+      2. Regularly review and address scan findings
+      3. Implement vulnerability management process:
+         - Set up notifications for new findings
+         - Establish remediation timeframes based on severity
+         - Use base images with minimal vulnerabilities
+         - Keep base images updated
+         - Document exceptions and mitigations
+    Url: https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html
+Categories: [
+  Infrastructure Protection,
+  Container Security,
+  Vulnerability Management,
+  Compliance,
+  Security Best Practices
+]
+DependsOn: [
+  "ecr_repository_scan_on_push_enabled"
+]
+RelatedTo: [
+  "ecr_repository_policy_check",
+  "ecr_repository_tags_immutable",
+  "ecr_lifecycle_policy_configured"
+]
+Notes: |
+  Important Considerations:
+  1. Scan Status Conditions:
+     - No Scan Found: Image hasn't been scanned
+     - Scan In Progress: Scan currently running
+     - Scan Failed: Scan completion failed
+     - Scan Complete: Successful scan with findings
+
+  2. Severity Thresholds:
+     - CRITICAL: Immediate attention required
+     - HIGH: Prompt remediation needed
+     - MEDIUM: Should be addressed
+     - LOW: Minor issues
+     
+  3. Common Failure Scenarios:
+     - Repository has no images
+     - Images haven't been scanned
+     - Scan found critical vulnerabilities
+     - Scan failed to complete
+     
+  4. Best Practices:
+     - Enable automatic scanning
+     - Regular review of findings
+     - Prompt remediation of critical issues
+     - Documentation of exceptions
+     - Regular base image updates

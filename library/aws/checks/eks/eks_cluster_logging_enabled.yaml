@@ -1,25 +1,97 @@
 Provider: aws
 CheckID: eks_cluster_logging_enabled
-CheckTitle: Ensure EKS Cluster Logging is Enabled for Control Plane Components
-CheckType: [Infrastructure Protection]
+CheckTitle: Ensure amazon EKS control plane logging is fully enabled
+CheckType: [Infrastructure Protection, Logging and Monitoring]
 ServiceName: eks
-SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: medium
+SubServiceName: "cluster"
+ResourceIdTemplate: arn:aws:eks:${region}:${account}:cluster/${clustername}
+Severity: high
 ResourceType: AwsEksCluster
-Description: Ensures that EKS clusters have logging enabled for control plane components, which is important for monitoring, auditing, and troubleshooting purposes.
-Risk: Without logging enabled, critical data about the cluster's control plane may be inaccessible, hindering security analysis and monitoring capabilities.
-RelatedUrl: ""
-Remediation: 
+Description: |
+  This check verifies that all essential control plane logging components are enabled in your Amazon EKS cluster. 
+  The EKS control plane consists of five critical components that should be logged:
+  - API Server (api): Logs all API requests and responses
+  - Audit (audit): Records who did what and when
+  - Authenticator (authenticator): Logs authentication attempts
+  - Controller Manager (controllerManager): Logs control loop operations
+  - Scheduler (scheduler): Logs scheduling decisions
+  
+  Having comprehensive logging enabled is crucial for security monitoring, troubleshooting, and maintaining compliance.
+Risk: |
+  Without complete control plane logging enabled:
+  - Security incidents may go undetected or be difficult to investigate
+  - Troubleshooting cluster issues becomes more challenging
+  - Compliance requirements for audit logging may not be met
+  - User actions and system changes cannot be properly tracked
+  - Performance issues may be harder to diagnose
+RelatedUrl: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
+Remediation:
   Code:
-    CLI: ""
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      aws eks update-cluster-config \
+        --region region-code \
+        --name cluster-name \
+        --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+    NativeIaC: |
+      eksctl create cluster \
+        --name my-cluster \
+        --region region-code \
+        --enable-cluster-logger \
+        --cluster-logging '["api","audit","authenticator","controllerManager","scheduler"]'
+    Terraform: |
+      resource "aws_eks_cluster" "example" {
+        name     = "example"
+        role_arn = aws_iam_role.example.arn
+
+        enabled_cluster_log_types = [
+          "api",
+          "audit",
+          "authenticator",
+          "controllerManager",
+          "scheduler"
+        ]
+      }
   Recommendation:
-    Text: Enable logging for EKS control plane components in your EKS cluster to improve observability.
+    Text: |
+      To enable comprehensive control plane logging:
+      1. Verify current logging status using 'aws eks describe-cluster'
+      2. Enable all five logging components:
+         - API Server logs
+         - Audit logs
+         - Authenticator logs
+         - Controller Manager logs
+         - Scheduler logs
+      3. Ensure sufficient CloudWatch log retention periods
+      4. Set up log monitoring and alerting
+      5. Consider costs as logging increases CloudWatch usage
+      
+      Note: 
+      - Enabling logging may incur additional CloudWatch costs
+      - Each log type can be enabled independently
+      - Logs are retained according to CloudWatch log group settings
     Url: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
-Categories: [Infrastructure Protection]
+Categories: [Infrastructure Protection, Logging and Monitoring, Compliance]
 DependsOn: []
-RelatedTo: []
-Notes: Infrastructure Protection
+RelatedTo: 
+  - cloudwatch_log_group_retention_period
+  - eks_cluster_audit_logging_enabled
+Notes: |
+  Operational Considerations:
+  - Log Storage: Logs are stored in CloudWatch Logs with configurable retention
+  - Cost Impact: Enabling all log types increases CloudWatch usage and costs
+  - Performance: Logging has minimal impact on cluster performance
+  - Compliance: Helps meet various compliance requirements (SOC, PCI, HIPAA)
+  
+  Best Practices:
+  - Enable all five log types for comprehensive monitoring
+  - Set appropriate log retention periods based on compliance needs
+  - Implement log monitoring and alerting
+  - Regular review of logs for security and operational insights
+  - Use AWS CloudWatch Logs Insights for log analysis
+  
+  Common Log Use Cases:
+  - Security incident investigation
+  - Access pattern analysis
+  - Performance troubleshooting
+  - Compliance auditing
+  - Operational troubleshooting

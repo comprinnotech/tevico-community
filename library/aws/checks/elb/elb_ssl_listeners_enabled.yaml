@@ -1,25 +1,93 @@
 Provider: aws
 CheckID: elb_ssl_listeners_enabled
-CheckTitle: Ensure Classic ELB Listeners Use SSL/HTTPS for Secure Connections
-CheckType: [Data Protection]
+CheckTitle: Ensure classic load balancer listeners use secure protocols (SSL/HTTPS)
+CheckType: [Data Protection, Security]
 ServiceName: elb
-SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:loadbalancer/load-balancer-name
+SubServiceName: "classic"
+ResourceIdTemplate: arn:aws:elasticloadbalancing:${region}:${account-id}:loadbalancer/${name}
 Severity: high
-ResourceType: AwsElbLoadBalancer
-Description: Ensure Classic Elastic Load Balancers (ELBs) have SSL or HTTPS listeners enabled to encrypt traffic between clients and the load balancer.
-Risk: Non-SSL listeners could expose sensitive data to interception or tampering during transmission, posing a security risk to the application and users.
-RelatedUrl: ""
+ResourceType: AWS::ElasticLoadBalancing::LoadBalancer
+Description: |
+  Ensures Classic Load Balancers use secure protocols (HTTPS or SSL) 
+  for their listeners. This check helps maintain data security by identifying any Classic 
+  Load Balancers using insecure protocols like HTTP. Think of it as verifying that all 
+  old-style entrance doors have proper security locks installed.
+Risk: |
+  Non-secure listeners (e.g., HTTP) on Classic Load Balancers expose systems to:
+  - Man-in-the-middle attacks (like someone intercepting your mail)
+  - Data interception (like eavesdropping on conversations)
+  - Traffic tampering (like altering messages in transit)
+  - Credential theft (like stealing keys to your house)
+  - Session hijacking (like someone impersonating you)
+  
+  Using insecure protocols is like leaving your front door unlocked in a busy neighborhood.
+RelatedUrl: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html
 Remediation: 
   Code:
-    CLI: ""
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Add a new secure listener
+      aws elb create-load-balancer-listeners \
+        --load-balancer-name <lb-name> \
+        --listeners "Protocol=HTTPS,LoadBalancerPort=443,InstanceProtocol=HTTP,InstancePort=80,SSLCertificateId=<certificate-arn>"
+
+      # Delete insecure listener
+      aws elb delete-load-balancer-listeners \
+        --load-balancer-name <lb-name> \
+        --load-balancer-ports 80
+    NativeIaC: |
+      # AWS CloudFormation example
+      Resources:
+        MyClassicLoadBalancer:
+          Type: AWS::ElasticLoadBalancing::LoadBalancer
+          Properties:
+            Listeners:
+              - Protocol: HTTPS
+                LoadBalancerPort: '443'
+                InstanceProtocol: HTTP
+                InstancePort: '80'
+                SSLCertificateId: !Ref MyCertificate
+            SecurityGroups:
+              - !Ref MySecurityGroup
+    Terraform: |
+      # Terraform example
+      resource "aws_elb" "classic_lb" {
+        name = "classic-secure-lb"
+        
+        listener {
+          instance_port      = 80
+          instance_protocol  = "HTTP"
+          lb_port           = 443
+          lb_protocol       = "HTTPS"
+          ssl_certificate_id = "arn:aws:acm:region:account:certificate/certificate-id"
+        }
+
+        security_groups = [aws_security_group.lb_sg.id]
+      }
   Recommendation:
-    Text: Configure SSL/HTTPS listeners for your Classic ELB to ensure secure, encrypted communications.
-    Url: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-listener-config.html
-Categories: [Data Protection]
-DependsOn: []
-RelatedTo: []
-Notes: Data Protection
+    Text: |
+      1. Replace HTTP listeners with HTTPS using valid SSL certificates
+      2. Use AWS Certificate Manager (ACM) for certificate management
+      3. Select appropriate security policies with strong cipher suites
+      4. Configure SSL termination at the load balancer
+      5. Remove any insecure (HTTP) listeners
+      6. Regularly rotate SSL certificates
+      7. Monitor SSL certificate expiration dates
+    Url: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-config-update.html
+Categories: 
+  - Data Protection
+  - Security
+  - Compliance
+  - Best Practices
+  - Legacy Infrastructure
+DependsOn: 
+  - acm_certificate_expiration_check
+  - elb_security_policy_check
+RelatedTo: 
+  - elb_deletion_protection_enabled
+  - elb_logging_enabled
+  - elb_tls_https_listeners_only
+Notes: |
+  This check focuses specifically on Classic Load Balancers (legacy) and ensures:
+  - Only secure protocols (HTTPS/SSL) are in use
+  - Each listener is verified
+  - Non-compliant load balancers are identified

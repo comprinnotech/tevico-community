@@ -1,51 +1,83 @@
 """
-AUTHOR: 
-DATE: 
+AUTHOR: RONIT CHAUHAN
+EMAIL: ronit.chauhan@comprinno.net
+DATE: 2025-1-4
 """
-
+"""
+Check: IAM Account Security Contact Information
+Description: Verifies if AWS account has registered security contact information
+"""
 import boto3
-
+from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
-
 class iam_account_security_contact_information_registered(Check):
+    def __init__(self, metadata=None):
+        """Initialize check configuration"""
+        super().__init__(metadata)
+
+    def validate_security_contact(self, account_client) -> tuple:
+        """
+        Validate AWS account security contact information
+        Args:
+            account_client: AWS Account client
+        Returns:
+            tuple: (is_compliant: bool, message: str)
+        """
+        try:
+            response = account_client.get_alternate_contact(AlternateContactType='SECURITY')
+            contact = response.get('AlternateContact', {})
+            
+            # Check for required fields
+            email = contact.get('EmailAddress', '').strip()
+            phone = contact.get('PhoneNumber', '').strip()
+            name = contact.get('Name', '').strip()
+            title = contact.get('Title', '').strip()
+            
+            if all([email, phone, name, title]):
+                return True, "Security contact properly configured"
+            
+            missing = []
+            if not email:
+                missing.append("email")
+            if not phone:
+                missing.append("phone")
+            if not name:
+                missing.append("name")
+            if not title:
+                missing.append("title")
+                
+            return False, f"Incomplete security contact: missing {', '.join(missing)}"
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return False, "Security contact not configured"
+            raise
 
     def execute(self, connection: boto3.Session) -> CheckReport:
+        """
+        Execute the security contact information check
+        Args:
+            connection: AWS session
+        Returns:
+            CheckReport: Check results
+        """
         report = CheckReport(name=__name__)
+        report.passed = True
 
-        # Initialize the Account client
-        account_client = connection.client('account')
-        
-        report = CheckReport(name=__name__)
-
-        # Check if SECURITY contact is registered
         try:
-            security_contact = account_client.get_alternate_contact(AlternateContactType='SECURITY')
-            # print(security_contact['AlternateContact'])
+            account = connection.client('account')
+            is_compliant, message = self.validate_security_contact(account)
             
-            if 'AlternateContact' in security_contact and security_contact['AlternateContact']:
-                report.passed = True
-                # print("Security contact information is registered.")
-                report.resource_ids_status['SECURITY_CONTACT'] = True
-            else:
-                report.passed = False
-                # print("Security contact information is NOT registered.")
-                report.resource_ids_status['SECURITY_CONTACT'] = False
+            report.passed = is_compliant
+            report.resource_ids_status[message] = is_compliant
 
-        except account_client.exceptions.ResourceNotFoundException:
-            # Raised if the security contact is not set
+        except ClientError as e:
             report.passed = False
-            # print("Security contact information is NOT registered.")
-            report.resource_ids_status['SECURITY_CONTACT'] = False
-
+            report.resource_ids_status[f"AWS Error: {e.response['Error']['Code']}"] = False
         except Exception as e:
-            # Catch any other unexpected exceptions
             report.passed = False
-            # print(f"An unexpected error occurred: {str(e)}")
-            report.resource_ids_status['SECURITY_CONTACT'] = False
+            report.resource_ids_status[f"Unexpected Error: {str(e)}"] = False
 
         return report
-
-# The check will return **True (passed)** if all required fields (`FullName`, `Title`, `EmailAddress`, and `PhoneNumber`) are present and not empty in Security Contact .
-# The check will return **False (failed)** if any of these fields are missing or empty, or if an error occurs while fetching the contact information.

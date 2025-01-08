@@ -1,65 +1,115 @@
-########### PLEASE NOTE ###########
-# For better readability of the metadata file, kindly remove all the comments before using the template.
-###################################
-
 Provider: aws
 
-# Eg: cloudformation_stacks_termination_protection_enabled
 CheckID: organizations_account_part_of_organizations
 
-# Short title/description of the check
-CheckTitle: Check if account is part of an AWS Organizations
+CheckTitle: Verify AWS Account Organization Membership and Status
 
-# Check Type
 CheckType:
+  - Security and Compliance
+  - Governance
   - Logging and Monitoring
 
-# Service Name. Eg: cloudformation, ec2, s3, etc.
 ServiceName: organizations
 
-# Sub Service Name. Eg: ec2_instance, s3_bucket, etc.
-SubServiceName: ""
+SubServiceName: "organization"
 
-# Resource Template
-ResourceIdTemplate: arn:partition:service::account-id:organization/organization-id
+ResourceIdTemplate: arn:aws:organizations::${AccountId}:organization/${OrganizationId}
 
-# Severity of the check. Allowed values: critical, high, medium, low
-Severity: medium
+Severity: high
 
-# Resource Type. Eg: AwsCloudFormationStack, AwsEC2Instance, AwsS3Bucket, etc.
-ResourceType: Other
+ResourceType: AwsOrganizationsOrganization
 
-# Description of the check
-Description:  |
-  Ensure that AWS Organizations service is currently in use. This check verifies if the AWS account is part of an AWS Organization, confirming centralized management.
+Description: |
+  This check performs a comprehensive verification of AWS Organizations integration:
+  - Validates if the AWS account is part of an AWS Organization
+  - Confirms the organization status is active
+  - Verifies proper access permissions
+  - Validates organization feature set configuration
+  - Ensures master account relationship is established
 
-# Explanation of the risk associated with the check
-Risk: The risk associated with not being part of an AWS Organizations is that it can lead to a lack of centralized management and control over the AWS accounts in an organization. This can make it difficult to enforce security policies consistently across all accounts and can also result in increased costs due to inefficiencies in resource usage. Additionally, not being part of an AWS Organizations can make it harder to track and manage account usage and access.
+Risk: |
+  Not being part of AWS Organizations or having improper configuration poses several risks:
+  - Lack of centralized security policy enforcement
+  - Inability to implement consistent compliance controls
+  - Missing consolidated billing benefits
+  - Limited ability to implement cross-account security measures
+  - Reduced capability for centralized resource management
+  - Increased operational overhead managing accounts individually
+  - Higher risk of security misconfigurations
+  - Difficulty in maintaining regulatory compliance across accounts
 
-# Related URL for the check
-RelatedUrl: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html
+RelatedUrl: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_details.html
 
-# Help section on how to fix the issue
 Remediation:
   Code:
-    CLI: 
-      aws organizations create-organization
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Create new organization
+      aws organizations create-organization --feature-set ALL
+      
+      # Check organization status
+      aws organizations describe-organization
+      
+      # Enable service access
+      aws organizations enable-aws-service-access --service-principal organizations.amazonaws.com
+    NativeIaC: |
+      # AWS CloudFormation
+      Resources:
+        AWSOrganization:
+          Type: AWS::Organizations::Organization
+          Properties:
+            FeatureSet: ALL
+    Terraform: |
+      resource "aws_organizations_organization" "org" {
+        feature_set = "ALL"
+        aws_service_access_principals = ["organizations.amazonaws.com"]
+      }
+    Other: |
+      # Python using boto3
+      import boto3
+      client = boto3.client('organizations')
+      response = client.create_organization(FeatureSet='ALL')
   Recommendation:
-    Text: 
-      Create or Join an AWS Organization for effective account management.
-    Url: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html
+    Text: |
+      1. Ensure proper IAM permissions are configured
+      2. Create or join an AWS Organization with ALL feature set
+      3. Configure service control policies (SCPs)
+      4. Enable trusted access for required AWS services
+      5. Implement proper organizational unit (OU) structure
+      6. Set up consolidated billing
+      7. Configure organization-wide policies
+    Url: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started.html
 
-# Categories for the check. Eg: forensics-ready, security, etc.
-Categories: []
+Categories:
+  - security
+  - governance
+  - cost-optimization
+  - operational-excellence
 
-# Dependencies on other checks
-DependsOn: []
+DependsOn:
+  - iam_permissions_check
+  - organization_scp_enabled
 
-# Related checks
-RelatedTo: []
+RelatedTo:
+  - organizations_scp_attached
+  - organizations_trusted_access_enabled
+  - organizations_feature_set_all
 
-# Side notes
-Notes: Infrastructure Protection
+Notes: |
+  Critical Infrastructure Component
+  - Required for implementing organization-wide security controls
+  - Essential for multi-account management
+  - Key for implementing the AWS Well-Architected Framework
+  - Fundamental for AWS Control Tower implementation
+  - Necessary for centralized logging and monitoring
+
+RequiredPermissions:
+  - organizations:DescribeOrganization
+  - organizations:ListAccounts
+  - organizations:ListRoots
+
+ErrorHandling:
+  - AccessDeniedException: Verify IAM permissions
+  - AWSOrganizationsNotInUseException: Create or join organization
+  - ServiceException: Retry with exponential backoff
+  - TooManyRequestsException: Implement rate limiting
+  - ValidationException: Verify organization configuration

@@ -6,43 +6,120 @@ Provider: aws
 
 CheckID: iam_customer_attached_policy_admin_privileges_found
 
-CheckTitle: Ensure IAM Users Do Not Have Administrator Access Policy Attached
+CheckTitle: Detect IAM users with full administrative privileges in customer-managed policies
 
 CheckType:
   - Software and Configuration Checks
-  - Industry and Regulatory Standards
+  - Identity and Access Management
+  - Security Best Practices
   - CIS AWS Foundations Benchmark
+  - Compliance Validation
 
 ServiceName: iam
 
-SubServiceName: ""
+SubServiceName: "iam_user"
 
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+ResourceIdTemplate: arn:aws:iam::${AccountId}:user/${UserName}
 
 Severity: high
 
 ResourceType: AwsIamUser
 
-Description: Ensure that no IAM user has the AdministratorAccess policy attached.
+Description: |
+  This check identifies IAM users who have customer-managed policies attached that grant full administrative privileges ("*:*").
+  It examines each user's attached policies and alerts when overly permissive access rights are found.
+  The check specifically focuses on custom policies and excludes AWS-managed policies from the evaluation.
 
-Risk: Attaching administrative privileges to users and roles increases the security risk.
+Risk: |
+  Granting full administrative privileges through customer-managed policies creates several critical risks:
+  1. Unlimited access to all AWS services and resources
+  2. Potential for accidental or malicious resource modifications
+  3. Violation of least privilege principle
+  4. Increased attack surface if credentials are compromised
+  5. Non-compliance with security best practices
+  6. Difficulty in tracking and auditing user actions
+  7. Potential for cascading security failures
 
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege
 
 Remediation:
   Code:
-    CLI: "aws iam detach-user-policy --user-name <user_name> --policy-arn <policy_arn>"
-    NativeIaC: ""
-    Other: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html"
-    Terraform: "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-instances-have-backup-policy#terraform"
+    CLI: |
+      # List attached policies for a user
+      aws iam list-attached-user-policies --user-name USERNAME
+      
+      # Detach policy from user
+      aws iam detach-user-policy --user-name USERNAME --policy-arn POLICY_ARN
+    NativeIaC: |
+      Replace full administrative access with specific required permissions in policy documents
+    Other: |
+      1. Sign in to AWS Management Console
+      2. Navigate to IAM
+      3. Select Users
+      4. For each user:
+         - Review attached customer-managed policies
+         - Remove or modify policies granting full admin access
+         - Replace with least-privilege policies
+    Terraform: |
+      # Example of proper policy with specific permissions
+      resource "aws_iam_user_policy" "example" {
+        name = "specific_permissions"
+        user = aws_iam_user.example.name
+        policy = jsonencode({
+          Version = "2012-10-17"
+          Statement = [
+            {
+              Effect = "Allow"
+              Action = [
+                "s3:ListBucket",
+                "s3:GetObject"
+              ]
+              Resource = [
+                "arn:aws:s3:::specific-bucket",
+                "arn:aws:s3:::specific-bucket/*"
+              ]
+            }
+          ]
+        })
+      }
   Recommendation:
-    Text: "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that are too lenient and then trying to tighten them later. List policies and analyze if permissions are the least possible to conduct business activities."
-    Url: "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+    Text: |
+      1. Regularly audit user permissions and attached policies
+      2. Remove any customer-managed policies granting full admin access
+      3. Implement least privilege access:
+         - Grant only permissions required for job functions
+         - Use AWS managed policies where possible
+         - Create specific custom policies when necessary
+         - Document all policy assignments
+      4. Set up regular policy reviews
+      5. Implement policy governance processes
+      6. Monitor policy attachment activities
+      7. Use AWS Organizations for centralized policy management
+    Url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
 
-Categories: []
+Categories: 
+  - security
+  - compliance
+  - identity_and_access_management
+  - least_privilege
+  - policy_management
 
-DependsOn: []
+DependsOn: 
+  - iam_user_exists
+  - iam_policy_no_star_star
 
-RelatedTo: []
+RelatedTo: 
+  - iam_policy_no_full_access
+  - iam_user_no_admin_access
+  - iam_policy_attached_to_groups_only
+  - iam_user_mfa_enabled
+  - iam_customer_policy_blocked_kms_actions
 
-Notes: Infrastructure Protection
+Notes: |
+  Infrastructure Protection - Critical Security Control
+  This check is essential for:
+  - Maintaining secure access control
+  - Enforcing least privilege principle
+  - Ensuring compliance with security standards
+  - Preventing privilege escalation
+  - Regular security posture assessment

@@ -1,25 +1,111 @@
 Provider: aws
 CheckID: elb_v2_logging_enabled
-CheckTitle: Ensure Access Logging is Enabled for ELBv2 (ALB/NLB)
-CheckType: [Detective Control]
-ServiceName: elb
-SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+CheckTitle: Ensure access logging is enabled for ELBv2 (ALB/NLB/GWLB)
+CheckType: [Detective Control, Security, Logging]
+ServiceName: elbv2
+SubServiceName: "v2"
+ResourceIdTemplate: arn:aws:elasticloadbalancing:${region}:${account-id}:loadbalancer/${type}/${name}/${id}
 Severity: high
-ResourceType: AwsElbLoadBalancer
-Description: Ensure access logging is enabled for ELBv2 Application Load Balancers (ALB) and Network Load Balancers (NLB) to monitor and analyze traffic.
-Risk: Without access logging, visibility into request patterns and troubleshooting may be limited, impacting security and operational analysis.
-RelatedUrl: ""
-Remediation: 
+ResourceType: AwsElbV2LoadBalancer
+Description: |
+  Ensures access logging is enabled for all ELBv2 Load Balancers including:
+  - Application Load Balancers (ALB) for HTTP/HTTPS traffic
+  - Network Load Balancers (NLB) for TCP/UDP traffic
+  - Gateway Load Balancers (GWLB) for network security
+Risk: |
+  Without access logging enabled:
+  - Limited visibility into traffic patterns and security events
+  - Reduced ability to perform security audits and incident investigations
+  - Impaired troubleshooting capabilities for operational issues
+  - Potential compliance violations in regulated environments
+  - Missing data for security analytics and threat detection
+RelatedUrl: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html"
+Remediation:
   Code:
-    CLI: aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb-arn> --attributes Key=access_logs.s3.enabled,Value=true Key=access_logs.s3.bucket,Value=<bucket-name>
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # For Application Load Balancer (ALB)
+      aws elbv2 modify-load-balancer-attributes \
+        --load-balancer-arn <lb-arn> \
+        --attributes Key=access_logs.s3.enabled,Value=true \
+        Key=access_logs.s3.bucket,Value=<bucket-name> \
+        Key=access_logs.s3.prefix,Value=<prefix>
+
+      # For Network Load Balancer (NLB)
+      aws elbv2 modify-load-balancer-attributes \
+        --load-balancer-arn <lb-arn> \
+        --attributes Key=access_logs.s3.enabled,Value=true \
+        Key=access_logs.s3.bucket,Value=<bucket-name>
+    NativeIaC: |
+      # AWS CloudFormation
+      Resources:
+        MyLoadBalancer:
+          Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+          Properties:
+            LoadBalancerAttributes:
+              - Key: access_logs.s3.enabled
+                Value: true
+              - Key: access_logs.s3.bucket
+                Value: my-logging-bucket
+              - Key: access_logs.s3.prefix
+                Value: my-logs
+    Terraform: |
+      resource "aws_lb" "example" {
+        name               = "example-lb"
+        internal          = false
+        load_balancer_type = "application"
+
+        access_logs {
+          bucket  = "XXXXXXXXXXXXXXXXX"
+          prefix  = "my-lb-logs"
+          enabled = true
+        }
+      }
+    Other: |
+      # Python using boto3
+      client = boto3.client('elbv2')
+      response = client.modify_load_balancer_attributes(
+          LoadBalancerArn='your-lb-arn',
+          Attributes=[
+              {
+                  'Key': 'access_logs.s3.enabled',
+                  'Value': 'true'
+              },
+              {
+                  'Key': 'access_logs.s3.bucket',
+                  'Value': 'your-bucket-name'
+              }
+          ]
+      )
   Recommendation:
-    Text: Enable access logging for ELBv2 and specify an S3 bucket for log storage.
+    Text: |
+      1. Enable access logging for all ELBv2 load balancers
+      2. Configure an S3 bucket with appropriate permissions
+      3. Set meaningful prefix for log organization
+      4. Ensure S3 bucket policy allows ELB logging
+      5. Consider log retention and lifecycle policies
+      6. Monitor S3 storage costs
+      7. Implement log analysis solutions
     Url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
-Categories: [Detective Control]
-DependsOn: []
-RelatedTo: []
-Notes: Detective Control
+Categories: [
+  Detective Control,
+  Security,
+  Logging,
+  Compliance,
+  Monitoring
+]
+DependsOn: [
+  "aws_s3_bucket_logging_enabled",
+  "aws_s3_bucket_policy_allows_elbv2_logging"
+]
+RelatedTo: [
+  "elb_logging_enabled",
+  "s3_bucket_logging_enabled",
+  "cloudwatch_log_group_retention_period"
+]
+Notes: |
+  Detective Control for ELBv2 Load Balancers:
+  - Supports ALB, NLB, and GWLB
+  - Multi-region capability
+  - Verifies both logging enablement and S3 configuration
+  - Important for security auditing and compliance
+  - Checks S3 bucket existence and permissions

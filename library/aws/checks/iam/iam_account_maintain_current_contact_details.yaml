@@ -9,72 +9,115 @@ Provider: aws
 
 CheckID: iam_account_maintain_current_contact_details
 
-# Short title/description of the check
-CheckTitle: Verify AWS Account Contact Details
+CheckTitle: Verify and Validate AWS Account Contact Information Completeness
 
-# Check Type
-CheckType: [contact_information_check]
+CheckType: 
+  - contact_information_check
+  - compliance
+  - account_management
+  - security_best_practices
 
-# Service Name. Eg: cloudformation, ec2, s3, etc.
 ServiceName: account
 
-# Sub Service Name. Eg: ec2_instance, s3_bucket, etc.
 SubServiceName: contact_details
 
-# Resource Template
-ResourceIdTemplate: arn:aws:account::account-id:*
+ResourceIdTemplate: arn:aws:account::${AccountId}:contact-information
 
-# Severity of the check. Allowed values: critical, high, medium, low
-Severity: medium
+Severity: high
 
-# Resource Type. Eg: AwsCloudFormationStack, AwsEC2Instance, AwsS3Bucket, etc.
-ResourceType: AwsAccount
+ResourceType: AwsAccountContactInformation
 
-# Description of the check
-Description: Checks whether the AWS account has all required contact details updated.
+Description: |
+  Validates that all required AWS account contact information is present and properly formatted.
+  Required fields include: full name, company name, complete address, phone number, and website URL.
+  This check ensures your organization's contact details are complete and up-to-date for critical communications.
 
-# Explanation of the risk associated with the check
-Risk: Incomplete or outdated contact information may hinder communication during critical account issues or security incidents.
+Risk: |
+  Incomplete or outdated contact information poses several risks:
+  1. Delayed response to security incidents due to incorrect contact details
+  2. Missed critical AWS service notifications and alerts
+  3. Compliance violations in regulated industries
+  4. Difficulties with account recovery procedures
+  5. Problems with billing and payment communications
+  6. Challenges in emergency account support scenarios
 
-# Related URL for the check
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html
 
-# Help section on how to fix the issue
 Remediation:
   Code:
     CLI: |
-      # Use the AWS Management Console to update your contact details:
-      # 1. Sign in to the AWS Management Console
-      # 2. Go to the Billing & Cost Management Dashboard
-      # 3. Select your AWS account name and then My Account
-      # 4. Click Edit next to Contact Information
-      # 5. Enter your updated contact information
-      # 6. Click Update to save the changes
+      # Get current contact information
+      aws account get-contact-information
+      
+      # Update contact information
+      aws account put-contact-information \
+        --contact-information \
+        FullName='John Doe' \
+        CompanyName='Example Corp' \
+        AddressLine1='123 Main St' \
+        City='Seattle' \
+        StateOrRegion='WA' \
+        PostalCode='98101' \
+        CountryCode='US' \
+        PhoneNumber='+1-555-555-5555' \
+        WebsiteUrl='https://example.com'
 
     NativeIaC: |
-      # Ensure your infrastructure as code is updated with the correct account information.
+      # Contact information should be managed through AWS Console or API
+      # Infrastructure as Code tools typically don't manage account contact details
 
     Other: |
-      # Verify that all relevant contacts are updated in your organization’s internal systems as well.
+      1. Log into AWS Management Console
+      2. Navigate to Account Settings
+      3. Select "Edit" next to Contact Information
+      4. Fill in all required fields:
+         - Full Name
+         - Company Name
+         - Complete Address
+         - Phone Number
+         - Website URL
+      5. Save changes
 
     Terraform: |
-      # No specific Terraform commands; update account information via AWS Management Console.
+      # Account contact information cannot be managed via Terraform
+      # Use AWS Console or AWS CLI for contact information management
 
   Recommendation:
     Text: |
-      Enable automated backup for production data. Define a retention period and
-      periodically test backup restoration. A Disaster Recovery process should be
-      in place to govern Data Protection approach.
-    Url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html
+      1. Regularly review and update contact information
+      2. Ensure all required fields are completed:
+         - Full Name (legal contact person)
+         - Company Name (registered business name)
+         - Complete Address (valid business address)
+         - Phone Number (24/7 reachable number)
+         - Website URL (official company website)
+      3. Implement a quarterly review process
+      4. Document contact information updates
+      5. Verify information accuracy across all AWS accounts
+      6. Set up notifications for contact information changes
+    Url: https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html
 
-# Categories for the check. Eg: forensics-ready, security, etc.
-Categories: [infrastructure_protection, security]
+Categories: 
+  - account_management
+  - compliance
+  - security
+  - infrastructure_protection
+  - best_practices
 
-# Dependencies on other checks
-DependsOn: []
+DependsOn: 
+  - account_exists
+  - account_active
 
-# Related checks
-RelatedTo: []
+RelatedTo: 
+  - iam_account_alternate_contact
+  - iam_account_password_policy
+  - account_billing_info
+  - account_security_contacts
 
-# Side notes
-Notes: Infrastructure Protection
+Notes: |
+  Infrastructure Protection - Essential Account Management
+  - Critical for account security and compliance
+  - Required for AWS support communications
+  - Important for billing and legal notifications
+  - Necessary for emergency contact scenarios
+  - Part of AWS account best practices

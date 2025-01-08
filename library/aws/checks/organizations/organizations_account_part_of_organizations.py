@@ -1,83 +1,79 @@
 """
 AUTHOR: RONIT CHAUHAN
-DATE: 2024-10-17
+EMAIL: ronit.chauhan@comprinno.net
+DATE: 2025-1-4
 """
-
+"""
+Check: AWS Organizations Account Membership
+Description: Verifies if the AWS account is part of an AWS Organizations structure
+"""
 import boto3
+from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
-from datetime import datetime
 
 class organizations_account_part_of_organizations(Check):
-    def execute(self, connection: boto3.Session) -> CheckReport:
-        start_time = datetime.now()
-        # print(f"[{start_time}] - Starting the check for AWS Organizations.")
+    def __init__(self, metadata=None):
+        """Initialize check configuration"""
+        super().__init__(metadata)
 
-        report = CheckReport(name=__name__)
-
-        # Initialize the Organizations client
-        org_client = connection.client('organizations')
-        # print(f"[{datetime.now()}] - AWS Organizations client initialized.")
-        
-        findings = []
-        
+    def check_organization_membership(self, org_client, sts_client) -> dict:
+        """
+        Check if account is part of AWS Organizations and get organization details
+        Args:
+            org_client: Organizations client
+            sts_client: STS client
+        Returns:
+            dict: Organization status and details
+        """
         try:
-            # Fetch list of AWS Organizations
-            # print(f"[{datetime.now()}] - Fetching list of AWS Organizations...")
-            organizations_list = org_client.list_roots()['Roots']
-            # print(f"[{datetime.now()}] - Retrieved {len(organizations_list)} organization(s).")
+            org_info = org_client.describe_organization()['Organization']
+            account_id = sts_client.get_caller_identity()['Account']
             
-            for organization in organizations_list:
-                org_id = organization['Id']
-                org_arn = organization['Arn']
-                org_status = organization['PolicyTypes'][0]['Status']  # Assuming status is found under 'PolicyTypes'
-
-                # print(f"[{datetime.now()}] - Processing organization {org_id} with status {org_status}.")
-                
-                # Create a report for the organization
-                org_report = {
-                    "resource_id": org_id,
-                    "resource_arn": org_arn,
-                    "region": connection.region_name,
-                }
-
-                # Update this condition to reflect the correct status interpretation
-                if org_status == "ENABLED":  # Change from "ACTIVE" to "ENABLED"
-                    org_report["status"] = "PASS"
-                    org_report["message"] = f"AWS Organization {org_id} contains this AWS account."
-                    findings.append(org_report)
-                    # print(f"[{datetime.now()}] - Organization {org_id} is ENABLED. Marking as PASS.")
-                    report.passed = True
-                    
-                    # Fetch list of accounts in the organization
-                    # print(f"[{datetime.now()}] - Fetching accounts for organization {org_id}...")
-                    accounts = org_client.list_accounts()['Accounts']
-                    # print(f"[{datetime.now()}] - Found {len(accounts)} accounts under organization {org_id}:")
-                    for account in accounts:
-                        # print(f"  - Account ID: {account['Id']}, Name: {account['Name']}, Email: {account['Email']}")
-                        pass  # Commented out for output
-
-                else:
-                    org_report["status"] = "FAIL"
-                    org_report["message"] = f"AWS Organization {org_id} is not in use for this AWS account."
-                    findings.append(org_report)
-                    # print(f"[{datetime.now()}] - Organization {org_id} is not ENABLED. Marking as FAIL.")
-                    report.passed = False
-
-            # Store findings in report metadata
-            report.report_metadata = {"findings": findings}
-            # print(f"[{datetime.now()}] - Findings have been recorded.")
+            # Format organization details into a single status message
+            status_message = (
+                f"({account_id}) account is part of organization {org_info['Id']} "
+                f"(Master: {org_info['MasterAccountId']}, "
+                f"Features: {org_info['FeatureSet']}, "
+                f"Organization Status: Active)"
+            )
             
-        except Exception as e:
-            # Handle potential exceptions (e.g., permissions issues)
-            # print(f"[{datetime.now()}] - Exception occurred: {str(e)}")
+            return {status_message: True}
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AWSOrganizationsNotInUseException':
+                return {"Account Status: Not part of AWS Organizations": False}
+            raise
+
+    def execute(self, connection: boto3.Session) -> CheckReport:
+        """
+        Execute the Organizations membership check
+        Args:
+            connection: AWS session
+        Returns:
+            CheckReport: Check results
+        """
+        report = CheckReport(name=__name__)
+        report.passed = True
+
+        try:
+            org_client = connection.client('organizations')
+            sts_client = connection.client('sts')
+            org_status = self.check_organization_membership(org_client, sts_client)
+            
+            # Update report with organization status
+            report.resource_ids_status.update(org_status)
+            report.passed = all(org_status.values())
+
+        except ClientError as e:
             report.passed = False
-            report.report_metadata = {"error": str(e)}
-
-        end_time = datetime.now()
-        # print(f"[{end_time}] - Completed the check for AWS Organizations. Duration: {end_time - start_time}")
+            error_code = e.response['Error']['Code']
+            if error_code == 'AccessDeniedException':
+                report.resource_ids_status["Access Denied: Insufficient permissions to check Organizations"] = False
+            else:
+                report.resource_ids_status[f"AWS Error: {error_code}"] = False
+        except Exception as e:
+            report.passed = False
+            report.resource_ids_status[f"Unexpected Error: {str(e)}"] = False
 
         return report
-    
-    # Pass Condition: If the organization is ENABLED, it adds a "PASS" status confirming that the AWS Organization contains the AWS account.
-    # Fail Condition: If the status is not "ENABLED", it adds a "FAIL" status that the AWS Organization is not in use.

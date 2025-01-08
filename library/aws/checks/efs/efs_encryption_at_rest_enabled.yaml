@@ -1,25 +1,113 @@
 Provider: aws
 CheckID: efs_encryption_at_rest_enabled
-CheckTitle: Check if EFS protects sensitive data with encryption at rest.
-CheckType: [Infrastructure Protection]
+CheckTitle: Ensure amazon EFS file systems are protected with encryption at rest
+CheckType: [Infrastructure Protection, Data Protection]
 ServiceName: efs
-SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: medium
+SubServiceName: "filesystem"
+ResourceIdTemplate: arn:aws:efs:${region}:${account}:file-system/${filesystemid}
+Severity: high
 ResourceType: AwsEfsFileSystem
-Description: Check if EFS protects sensitive data with encryption at rest.
-Risk: EFS should be encrypted at rest to prevent exposure of sensitive data to bad actors.
+Description: |
+  This check verifies that Amazon Elastic File System (EFS) has encryption at rest enabled. 
+  EFS encryption at rest provides:
+  - Automatic encryption of data and metadata
+  - Integration with AWS KMS for key management
+  - Transparent encryption/decryption process
+  - No performance impact on file system operations
+  
+  Encryption at rest must be enabled during file system creation and cannot be modified later.
+Risk: |
+  Without encryption at rest enabled:
+  - Sensitive data stored on EFS could be exposed if unauthorized access occurs
+  - Compliance requirements for data protection may not be met
+  - Data at rest remains vulnerable to physical access threats
+  - No protection against unauthorized access to raw storage
+  - Potential breach of regulatory requirements (HIPAA, PCI DSS, etc.)
 RelatedUrl: https://docs.aws.amazon.com/efs/latest/ug/encryption.html
 Remediation: 
   Code:
-    CLI: aws efs create-file-system --creation-token $(uuidgen) --performance-mode generalPurpose --encrypted --kms-key-id user/customer-managedCMKalias
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Create new encrypted EFS with AWS managed key
+      aws efs create-file-system \
+        --creation-token $(uuidgen) \
+        --performance-mode generalPurpose \
+        --encrypted
+
+      # Create new encrypted EFS with customer managed key
+      aws efs create-file-system \
+        --creation-token $(uuidgen) \
+        --performance-mode generalPurpose \
+        --encrypted \
+        --kms-key-id arn:aws:kms:region:account-id:key/key-id
+    NativeIaC: |
+      # Using eksctl
+      eksctl create cluster \
+        --name my-cluster \
+        --region region-code \
+        --with-efs \
+        --efs-encryption
+    Terraform: |
+      resource "aws_efs_file_system" "encrypted_efs" {
+        creation_token = "my-encrypted-efs"
+        encrypted      = true
+        kms_key_id    = aws_kms_key.efs_key.arn  # Optional: for customer managed key
+        
+        tags = {
+          Name = "encrypted-efs"
+        }
+      }
   Recommendation:
-    Text: Ensure that encryption at rest is enabled for EFS file systems. Encryption at rest can only be enabled during the file system creation.
+    Text: |
+      To ensure EFS data protection:
+      
+      1. For new file systems:
+         - Always enable encryption at rest during creation
+         - Choose between AWS managed or customer managed KMS keys
+         - Consider using customer managed keys for more control
+      
+      2. For existing unencrypted file systems:
+         - Create new encrypted file system
+         - Migrate data to the new file system
+         - Delete old unencrypted file system
+      
+      Important considerations:
+      - Encryption cannot be enabled/disabled after creation
+      - Plan data migration strategy if replacing unencrypted systems
+      - Ensure proper IAM permissions for KMS key access
+      - Consider using AWS Backup for encrypted backups
     Url: https://docs.aws.amazon.com/efs/latest/ug/encryption.html
-Categories: [Infrastructure Protection]
+Categories: [Infrastructure Protection, Data Protection, Compliance]
 DependsOn: []
-RelatedTo: []
-Notes: Infrastructure Protection
+RelatedTo: 
+  - kms_cmk_rotation_enabled
+  - efs_in_backup_plan
+Notes: |
+  Security Best Practices:
+  1. Encryption Configuration:
+     - Use AWS KMS for key management
+     - Consider customer managed keys for sensitive data
+     - Enable automatic key rotation
+     - Implement proper key access controls
+  
+  2. Compliance Considerations:
+     - Helps meet HIPAA, PCI DSS requirements
+     - Supports data protection regulations
+     - Provides audit trail through CloudTrail
+     - Enables compliance reporting
+  
+  3. Operational Impact:
+     - No performance impact
+     - Transparent to applications
+     - Automatic encryption/decryption
+     - Compatible with all EFS features
+  
+  4. Cost Implications:
+     - No additional cost for encryption
+     - KMS key usage charges apply
+     - Consider backup storage costs
+  
+  5. Migration Strategy:
+     - Plan for data transfer
+     - Consider downtime requirements
+     - Test application compatibility
+     - Verify backup procedures

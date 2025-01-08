@@ -1,25 +1,128 @@
 Provider: aws
 CheckID: eks_control_plane_endpoint_access_restricted
-CheckTitle: Ensure EKS Cluster Control Plane Endpoint Access is Restricted
-CheckType: [Infrastructure Protection]
+CheckTitle: Ensure EKS cluster control plane endpoint has restricted access
+CheckType: [Infrastructure Protection, Network Security]
 ServiceName: eks
-SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: high
+SubServiceName: "cluster"
+ResourceIdTemplate: arn:aws:eks:${region}:${account}:cluster/${clustername}
+Severity: critical
 ResourceType: AwsEksCluster
-Description: Ensures that the EKS control plane endpoint access is restricted to private IP addresses, limiting exposure to public networks.
-Risk: Allowing unrestricted public access to the control plane endpoint could lead to unauthorized access or attacks on your cluster.
-RelatedUrl: ""
-Remediation: 
+Description: |
+  This check verifies that Amazon EKS cluster's Kubernetes API server endpoint has restricted public access.
+  It evaluates the endpoint configuration and reports if public access is enabled, which could pose security risks.
+  
+  The check specifically looks for:
+  - Public endpoint access status
+  - Compliance with security best practices
+  - Potential security vulnerabilities in endpoint configuration
+
+Risk: |
+  Public access to EKS control plane endpoints presents several security risks:
+  - Increased exposure to potential attacks from the internet
+  - Unauthorized access attempts to cluster management
+  - Potential compromise of cluster security
+  - Risk of data exposure through API endpoint
+  - Increased vulnerability to DDoS attacks
+  - Potential violation of security compliance requirements
+
+RelatedUrl: https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html
+
+Remediation:
   Code:
-    CLI: ""
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Disable public access and enable private access only
+      aws eks update-cluster-config \
+        --region ${region} \
+        --name ${cluster-name} \
+        --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
+
+      # For hybrid setup with restricted public access
+      aws eks update-cluster-config \
+        --region ${region} \
+        --name ${cluster-name} \
+        --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=["YOUR-IP-RANGE/32"]
+
+    Terraform: |
+      resource "aws_eks_cluster" "secure_cluster" {
+        name     = var.cluster_name
+        role_arn = aws_iam_role.eks_cluster.arn
+
+        vpc_config {
+          endpoint_private_access = true
+          endpoint_public_access = false
+          subnet_ids = var.private_subnet_ids
+        }
+
+        # Enable logging
+        enabled_cluster_log_types = ["api", "audit"]
+      }
+
   Recommendation:
-    Text: Restrict access to the control plane endpoint by disabling public access and allowing private access through your VPC.
-    Url: https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html
-Categories: [Infrastructure Protection]
+    Text: |
+      To secure your EKS cluster endpoint:
+
+      1. Private Access Configuration (Recommended):
+         - Set endpointPublicAccess=false
+         - Set endpointPrivateAccess=true
+         - Use AWS PrivateLink for secure access
+
+      2. If public access is required:
+         - Enable private access alongside public access
+         - Restrict public access to specific CIDR ranges
+         - Implement additional security controls:
+           * Network ACLs
+           * Security Groups
+           * IAM policies
+         - Regularly audit access patterns
+
+      3. Implementation Steps:
+         - Back up current configuration
+         - Plan for temporary connectivity impact
+         - Update endpoint access settings
+         - Verify connectivity
+         - Update DNS configurations if needed
+
+      4. Monitoring:
+         - Enable CloudWatch logging
+         - Set up alerts for unauthorized access attempts
+         - Regular security assessments
+
+Categories: [Infrastructure Protection, Network Security, Access Control]
 DependsOn: []
-RelatedTo: []
-Notes: Infrastructure Protection
+RelatedTo: 
+  - vpc_endpoint_service_private_dns_enabled
+  - security_group_restricted_incoming_traffic
+  - eks_cluster_logging_enabled
+
+Notes: |
+  Implementation Considerations:
+  1. Access Management:
+     - Use AWS PrivateLink for secure access
+     - Implement proper IAM roles
+     - Configure RBAC appropriately
+     - Regular access review
+
+  2. Network Security:
+     - VPC endpoint policies
+     - Security group configurations
+     - Network ACL rules
+     - Private subnet routing
+
+  3. Monitoring and Compliance:
+     - Enable AWS CloudTrail
+     - Configure CloudWatch alerts
+     - Regular compliance checks
+     - Access pattern analysis
+
+  4. Best Practices:
+     - Regular security assessments
+     - Documented change procedures
+     - Backup access methods
+     - Emergency access protocol
+     - Regular configuration review
+
+  5. Performance Impact:
+     - Minimal latency increase
+     - Network path considerations
+     - Application connectivity testing
+     - DNS resolution planning

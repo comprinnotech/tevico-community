@@ -1,25 +1,89 @@
 Provider: aws
 CheckID: ecr_repository_scan_images_on_push_enabled
-CheckTitle: Check if ECR image scan on push is enabled
-CheckType: [Infrastructure Protection]
+CheckTitle: Ensure ECR repositories have automatic image scanning enabled
+CheckType: [Infrastructure Protection, Security Best Practices]
 ServiceName: ecr
 SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+ResourceIdTemplate: arn:partition:ecr:region:account-id:repository/{repository-name}
 Severity: medium
 ResourceType: AwsEcrRepository
-Description: Check if ECR image scan on push is enabled
-Risk: Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings.
-RelatedUrl: https://tevi.co
+Description: |
+  Checks if Amazon Elastic Container Registry (ECR) repositories have automatic image scanning enabled on push.
+  This security feature acts like an automated security checkpoint that scans container images for known vulnerabilities
+  as soon as they are uploaded to the repository. Think of it as an X-ray machine that automatically checks
+  every container for security issues before it's stored.
+Risk: |
+  Without automatic image scanning:
+  - Vulnerable container images might be deployed without detection
+  - Known security vulnerabilities could remain unidentified
+  - Malicious code or backdoors might go undetected
+  - Compliance requirements for security scanning might be violated
+  - Manual scanning might be forgotten or delayed
+RelatedUrl: https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html
 Remediation:
   Code:
-    CLI: aws ecr create-repository --repository-name <repo_name> --image-scanning-configuration scanOnPush=true--region <region_name>
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Enable scanning on new repository creation
+      aws ecr create-repository \
+        --repository-name <repository-name> \
+        --image-scanning-configuration scanOnPush=true
+
+      # Enable scanning on existing repository
+      aws ecr put-image-scanning-configuration \
+        --repository-name <repository-name> \
+        --image-scanning-configuration scanOnPush=true
+    NativeIaC: |
+      # AWS CloudFormation example:
+      Resources:
+        MyECRRepository:
+          Type: AWS::ECR::Repository
+          Properties:
+            RepositoryName: my-repository
+            ImageScanningConfiguration:
+              ScanOnPush: true
+    Other: |
+      Via AWS Console:
+      1. Open the Amazon ECR console
+      2. Select your repository
+      3. Choose 'Edit'
+      4. Enable 'Scan on push'
+      5. Save changes
+    Terraform: |
+      # Terraform example:
+      resource "aws_ecr_repository" "example" {
+        name                 = "my-repository"
+        image_scanning_configuration {
+          scan_on_push = true
+        }
+      }
   Recommendation:
-    Text: Enable ECR image scanning and review the scan findings for information about the security of the container images that are being deployed.
+    Text: |
+      1. Enable automatic scan on push for all ECR repositories
+      2. Implement a process to review scan findings regularly
+      3. Set up notifications for critical vulnerabilities
+      4. Consider using AWS EventBridge to automate responses to scan findings
+      5. Maintain documentation of scanning policies and procedures
+      6. Regularly update base images to include security patches
     Url: https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html
-Categories: [Infrastructure Protection]
+Categories: [
+  Infrastructure Protection,
+  Container Security,
+  Compliance,
+  Security Best Practices
+]
 DependsOn: []
-RelatedTo: []
-Notes: Infrastructure Protection
+RelatedTo: [
+  "ecr_repository_policy_check",
+  "ecr_repository_tags_immutable",
+  "ecr_lifecycle_policy_configured"
+]
+Notes: |
+  Important considerations:
+  - Scanning occurs automatically when images are pushed
+  - Results are available through AWS Console, CLI, or API
+  - Scanning uses the Common Vulnerabilities and Exposures (CVEs) database
+  - Supports both operating system and programming language package vulnerabilities
+  - Consider implementing both scan-on-push and periodic scanning
+  - Review scan findings as part of your security workflow
+  - Set up AWS EventBridge rules for automated notifications
+  - Keep base images updated to minimize vulnerabilities

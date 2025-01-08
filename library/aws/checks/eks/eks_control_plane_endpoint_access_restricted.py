@@ -5,34 +5,55 @@ DATE: 2024-11-10
 """
 
 import boto3
+from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 class eks_control_plane_endpoint_access_restricted(Check):
-
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('eks')
-        paginator = client.get_paginator('list_clusters')
-        
+        """
+        Checks if EKS clusters have public endpoint access restricted.
+        Returns CheckReport with pass/fail status for each cluster.
+        """
         report = CheckReport(name=__name__)
         report.passed = True
-        
-        # Paginate through all EKS clusters
-        for page in paginator.paginate():
-            clusters = page['clusters']
+
+        try:
+            client = connection.client('eks')
+            clusters = self._get_all_clusters(client)
+            
+            if not clusters:
+                return report  # Return early if no clusters found
+            
             for cluster_name in clusters:
-                # Describe each cluster to get endpoint access configuration
-                cluster_desc = client.describe_cluster(name=cluster_name)['cluster']
-                
-                endpoint_config = cluster_desc.get('resourcesVpcConfig', {})
-                public_access_enabled = endpoint_config.get('endpointPublicAccess', True)
-                
-                if public_access_enabled:
-                    # Public access is enabled; fail the check for this cluster
+                try:
+                    cluster_desc = client.describe_cluster(name=cluster_name)['cluster']
+                    endpoint_config = cluster_desc.get('resourcesVpcConfig', {})
+                    
+                    # Update report based on public access status
+                    is_public = endpoint_config.get('endpointPublicAccess', True)
+                    report.resource_ids_status[cluster_name] = not is_public
+                    report.passed &= not is_public
+                    
+                except ClientError as e:
+                    # Handle cluster-specific errors without failing entire check
                     report.resource_ids_status[cluster_name] = False
                     report.passed = False
-                else:
-                    # Public access is restricted; pass the check
-                    report.resource_ids_status[cluster_name] = True
-
+                    
+        except ClientError as e:
+            # Handle service-level errors
+            report.passed = False
+            report.error = f"Failed to check EKS clusters: {str(e)}"
+            
         return report
+    
+    def _get_all_clusters(self, client) -> list:
+        """Helper method to get all cluster names using pagination"""
+        try:
+            clusters = []
+            paginator = client.get_paginator('list_clusters')
+            for page in paginator.paginate():
+                clusters.extend(page['clusters'])
+            return clusters
+        except ClientError:
+            return []

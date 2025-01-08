@@ -1,91 +1,94 @@
 """
-AUTHOR: RONIT CHAUHAN 
-DATE: 2024-10-17
+AUTHOR: RONIT CHAUHAN
+EMAIL: ronit.chauhan@comprinno.net
+DATE: 2025-1-4
+"""
+"""
+Check: IAM Account Contact Details
+Description: Verifies if AWS account maintains current contact details
+Author: Your Name
+Date: YYYY-MM-DD
 """
 
+"""
+Check: IAM Account Contact Details
+Description: Verifies if AWS account maintains current contact details
+"""
 import boto3
-from typing import List, Dict, Any
-from datetime import datetime
+from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 class iam_account_maintain_current_contact_details(Check):
+    def __init__(self, metadata=None):
+        """Initialize check configuration"""
+        super().__init__(metadata)
 
-    def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
-        # print("Starting the account contact details check...")
-
-        # List of attributes to check
-        checks_to_perform: List[str] = [
-            'full_name', 'company_name', 'address', 'phone_number', 'website_url'
-        ]
-        
-        # print("Attributes to check:", checks_to_perform)
-
-        # Get the current account information from AWS
-        client = connection.client('account')
-
+    def check_contact_info(self, account_client) -> dict:
+        """
+        Validate primary account contact information
+        Args:
+            account_client: AWS Account client
+        Returns:
+            dict: Status of contact information with formatted messages
+        """
         try:
-            # Fetch account contact details using the AWS Account API
-            # print("Fetching account contact information...")
-            contact_info = client.get_contact_information()
-            # print("Contact information fetched successfully.")
-            # print("Raw response:", contact_info)  # Debugging line
-            
-            # Extract relevant fields from the fetched information
-            account_details = {
-                'full_name': contact_info.get('ContactInformation', {}).get('FullName'),
-                'phone_number': contact_info.get('ContactInformation', {}).get('PhoneNumber'),
-                'company_name': contact_info.get('ContactInformation', {}).get('CompanyName'),
-                'address': ', '.join([
-                    contact_info.get('ContactInformation', {}).get('AddressLine1', ''),
-                    contact_info.get('ContactInformation', {}).get('AddressLine2', ''),
-                    contact_info.get('ContactInformation', {}).get('City', ''),
-                    contact_info.get('ContactInformation', {}).get('StateOrRegion', ''),
-                    contact_info.get('ContactInformation', {}).get('PostalCode', ''),
-                    contact_info.get('ContactInformation', {}).get('CountryCode', '')
-                ]).strip(', '),  # Concatenating address lines
-                'website_url': contact_info.get('ContactInformation', {}).get('WebsiteUrl')  # Assuming there's a Website URL
+            contact_info = account_client.get_contact_information()['ContactInformation']
+            status = {}
+
+            # Check address fields
+            address_fields = ['AddressLine1', 'City', 'PostalCode', 'CountryCode']
+            has_complete_address = all(
+                len(str(contact_info.get(field, ''))) > 0 
+                for field in address_fields
+            )
+            status["Address: Complete" if has_complete_address else "Address: Incomplete"] = has_complete_address
+
+            # Check other required fields with specific messages
+            field_messages = {
+                'CompanyName': 'CompanyName: Present and valid',
+                'FullName': 'FullName: Present and valid',
+                'PhoneNumber': 'PhoneNumber: Present and valid',
+                'WebsiteUrl': 'WebsiteUrl: Present and valid'
             }
 
-            # print("Account details retrieved:", account_details)
+            for field, message in field_messages.items():
+                field_value = str(contact_info.get(field, '')).strip()
+                is_valid = len(field_value) > 0
+                status[message if is_valid else f"{field}: Missing or invalid"] = is_valid
 
-            # Verify if all required fields are filled
-            all_checks_passed = True
-            for check in checks_to_perform:
-                if not account_details.get(check):
-                    # print(f"Check failed: '{check}' is missing or empty.")
-                    all_checks_passed = False
-                    report.resource_ids_status[check] = False
-                else:
-                    # print(f"Check passed: '{check}' is present.")
-                    report.resource_ids_status[check] = True
+            return status
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ValidationException':
+                return {"Contact Information: Invalid or missing": False}
+            raise
 
-            # Set the final report status based on whether all checks passed
-            report.passed = all_checks_passed
-            if report.passed:
-                # print("All checks passed successfully.")
-                pass
-            else:
-                # print("Some checks failed.")
-                pass
+    def execute(self, connection: boto3.Session) -> CheckReport:
+        """
+        Execute the account contact details check
+        Args:
+            connection: AWS session
+        Returns:
+            CheckReport: Check results
+        """
+        report = CheckReport(name=__name__)
+        report.passed = True
 
-        except client.exceptions.NoSuchEntityException:
-            # Handle the case where contact information cannot be found
+        try:
+            account = connection.client('account')
+            contact_status = self.check_contact_info(account)
+            
+            # Update report with contact status
+            report.resource_ids_status.update(contact_status)
+            report.passed = all(contact_status.values())
+
+        except ClientError as e:
             report.passed = False
-            report.report_metadata = {"error": "No contact information found for this account"}
-            # print("Error: No contact information found for this account.")
-        
+            report.resource_ids_status[f"AWS Error: {e.response['Error']['Code']}"] = False
         except Exception as e:
-            # Handle any other exceptions
             report.passed = False
-            report.report_metadata = {"error": str(e)}
-            # print(f"An unexpected error occurred: {e}")
+            report.resource_ids_status[f"Unexpected Error: {str(e)}"] = False
 
-        # print("Check execution completed.")
         return report
-    
 
-# The check will return **True (passed)** if all required fields (`full_name`, `company_name`, `address`, `phone_number`, and `website_url`) are present and not empty.
-  
-# The check will return **False (failed)** if any of these fields are missing or empty, or if an error occurs while fetching the contact information.

@@ -1,0 +1,75 @@
+Provider: aws
+CheckID: elb_v2_waf_acl_attached
+CheckTitle: Ensure WAF ACL is attached to application load balancers (ALB)
+CheckType: [Infrastructure Protection]
+ServiceName: elbv2
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: high
+ResourceType: AwsElbLoadBalancer
+Description: |
+  Checks if Application Load Balancers (ALBs) have Web Application Firewall (WAF) protection enabled.
+  This check verifies both WAFv2 and WAF Classic attachments to ensure comprehensive protection against web-based attacks.
+  Think of WAF as a security guard protecting your web applications from malicious traffic.
+Risk: |
+  Without WAF protection:
+  - Applications are vulnerable to common web attacks (SQL injection, cross-site scripting)
+  - Increased risk of data breaches
+  - Potential service disruptions from malicious traffic
+  - No protection against automated bots and scrapers
+  - Limited visibility into malicious web traffic patterns
+RelatedUrl: ""
+Remediation: 
+  Code:
+    CLI: |
+      # For new WAFv2 (recommended):
+      aws wafv2 associate-web-acl --resource-arn <alb-arn> --web-acl-arn <web-acl-arn>
+      
+      # For WAF Classic (legacy):
+      aws waf-regional associate-web-acl --web-acl-id <web-acl-id> --resource-arn <alb-arn>
+    NativeIaC: |
+      # AWS CloudFormation example:
+      Resources:
+        WAFWebACLAssociation:
+          Type: AWS::WAFv2::WebACLAssociation
+          Properties:
+            ResourceArn: !Ref ApplicationLoadBalancerArn
+            WebACLArn: !Ref WebACLArn
+    Other: |
+      1. Navigate to the AWS WAF Console
+      2. Select or create a Web ACL
+      3. Choose 'Associated AWS Resources'
+      4. Add your ALB from the list
+    Terraform: |
+      # Terraform example:
+      resource "aws_wafv2_web_acl_association" "example" {
+        resource_arn = aws_lb.example.arn
+        web_acl_arn  = aws_wafv2_web_acl.example.arn
+      }
+  Recommendation:
+    Text: |
+      1. Create or identify an appropriate WAF Web ACL with required protection rules
+      2. Associate the Web ACL with your Application Load Balancer
+      3. Consider implementing these common protections:
+         - Rate limiting rules to prevent DDoS
+         - SQL injection protection
+         - Cross-site scripting (XSS) protection
+         - Geographic-based access controls
+         - Known bad IP blocking
+    Url: https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html
+Categories: [
+  Infrastructure Protection,
+  Security Best Practices,
+  Compliance
+]
+DependsOn: []
+RelatedTo: [
+  "wafv2_web_acl_rules",
+  "alb_security_groups"
+]
+Notes: |
+  - This check supports both WAFv2 (newer) and WAF Classic (legacy) implementations
+  - WAFv2 is recommended for new deployments
+  - The check will pass if either WAFv2 or WAF Classic protection is detected
+  - Consider implementing both WAF and security groups for defense in depth
+  - Regular review of WAF rules and logs is recommended

@@ -1,44 +1,82 @@
 """
-AUTHOR: deepak-puri-comprinno
-EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-10
+AUTHOR: RONIT CHAUHAN
+EMAIL: ronit.chauhan@comprinno.net
+DATE: 2025-1-4
 """
-
+"""
+Check: EKS Cluster Logging Configuration
+Description: Verifies if EKS clusters have logging enabled for required components
+"""
 import boto3
+from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 class eks_cluster_logging_enabled(Check):
+    def __init__(self, metadata=None):
+        """Initialize check configuration"""
+        super().__init__(metadata)
+        self.required_log_types = {'api', 'audit', 'authenticator', 'controllerManager', 'scheduler'}
+
+    def check_logging_config(self, cluster: dict) -> tuple:
+        """
+        Evaluate cluster's logging configuration
+        Args:
+            cluster: Cluster configuration dictionary
+        Returns:
+            tuple: (is_compliant: bool, message: str)
+        """
+        cluster_name = cluster.get('name', 'Unknown')
+        logging = cluster.get('logging', {}).get('clusterLogging', [])
+        
+        if not logging:
+            return False, f"{cluster_name}: Logging not configured"
+            
+        enabled_types = set()
+        for config in logging:
+            if config.get('enabled'):
+                enabled_types.update(config.get('types', []))
+        
+        missing_logs = self.required_log_types - enabled_types
+        
+        if missing_logs:
+            return False, f"{cluster_name}: Missing log types: {', '.join(missing_logs)}"
+        return True, f"{cluster_name}: All required logs enabled"
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('eks')
-        paginator = client.get_paginator('list_clusters')
-        
+        """Execute the logging configuration check"""
         report = CheckReport(name=__name__)
         report.passed = True
-        
-        # Paginate through all EKS clusters
-        for page in paginator.paginate():
-            clusters = page['clusters']
-            for cluster_name in clusters:
-                # Describe each cluster to get logging configuration
-                cluster_desc = client.describe_cluster(name=cluster_name)['cluster']
-                
-                # Check if logging is enabled for control plane components
-                logging_config = cluster_desc.get('logging', {}).get('clusterLogging', [])
-                logging_enabled = False
-                
-                for log_type in logging_config:
-                    if log_type['enabled']:
-                        logging_enabled = True
-                        break
-                
-                if logging_enabled:
-                    # Logging is enabled for this cluster
-                    report.resource_ids_status[cluster_name] = True
-                else:
-                    # Logging is not enabled; fail the check for this cluster
-                    report.resource_ids_status[cluster_name] = False
-                    report.passed = False
+
+        try:
+            client = connection.client('eks')
+            paginator = client.get_paginator('list_clusters')
+            
+            clusters_found = False
+            for page in paginator.paginate():
+                if clusters := page.get('clusters', []):
+                    clusters_found = True
+                    for cluster_name in clusters:
+                        try:
+                            cluster_info = client.describe_cluster(name=cluster_name)
+                            is_compliant, message = self.check_logging_config(cluster_info.get('cluster', {}))
+                            report.resource_ids_status[message] = is_compliant
+                            if not is_compliant:
+                                report.passed = False
+                        except ClientError as e:
+                            report.resource_ids_status[f"{cluster_name}: {e.response['Error']['Code']}"] = False
+                            report.passed = False
+
+            # Consider no clusters as a passed case
+            if not clusters_found:
+                report.resource_ids_status["No EKS clusters found"] = True
+                return report
+
+        except ClientError as e:
+            report.passed = False
+            report.resource_ids_status[f"AWS Error: {e.response['Error']['Code']}"] = False
+        except Exception as e:
+            report.passed = False
+            report.resource_ids_status[f"Unexpected Error: {str(e)}"] = False
 
         return report

@@ -1,25 +1,95 @@
 Provider: aws
 CheckID: elb_logging_enabled
-CheckTitle: Ensure Access Logging is Enabled for Classic ELB
-CheckType: [Detective Control]
+CheckTitle: Ensure access logging is enabled for classic ELB
+CheckType: [Detective Control, Security, Logging]
 ServiceName: elb
-SubServiceName: ""
-ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
-Severity: medium
+SubServiceName: "classic"
+ResourceIdTemplate: arn:aws:elasticloadbalancing:${region}:${account-id}:loadbalancer/${name}
+Severity: high
 ResourceType: AwsElbLoadBalancer
-Description: Ensure access logging is enabled for Classic Elastic Load Balancers (ELB) to monitor and analyze traffic.
-Risk: Without access logging, visibility into request patterns and troubleshooting may be limited, impacting security and operational analysis.
-RelatedUrl: ""
+Description: |
+  Ensures access logging is enabled for Classic Elastic Load Balancers (ELB) to monitor and analyze traffic. 
+Risk: |
+  Without access logging:
+  - Limited visibility into request patterns and traffic analysis
+  - Reduced ability to perform security audits
+  - Difficulty in troubleshooting operational issues
+  - Potential compliance violations for regulated workloads
+  - Challenges in forensic investigations
+RelatedUrl: "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html"
 Remediation: 
   Code:
-    CLI: aws elb modify-load-balancer-attributes --load-balancer-name <lb-name> --load-balancer-attributes '{"AccessLog":{"Enabled":true,"S3BucketName":"<bucket-name>","EmitInterval":5}}'
-    NativeIaC: ""
-    Other: ""
-    Terraform: ""
+    CLI: |
+      # Enable logging with 5-minute interval
+      aws elb modify-load-balancer-attributes \
+        --load-balancer-name <lb-name> \
+        --load-balancer-attributes '{"AccessLog":{"Enabled":true,"S3BucketName":"<bucket-name>","EmitInterval":5}}'
+
+      # Enable logging with 60-minute interval
+      aws elb modify-load-balancer-attributes \
+        --load-balancer-name <lb-name> \
+        --load-balancer-attributes '{"AccessLog":{"Enabled":true,"S3BucketName":"<bucket-name>","EmitInterval":60}}'
+    NativeIaC: |
+      # AWS CloudFormation
+      Resources:
+        MyLoadBalancer:
+          Type: AWS::ElasticLoadBalancing::LoadBalancer
+          Properties:
+            LoadBalancerAttributes:
+              AccessLog:
+                Enabled: true
+                S3BucketName: my-logging-bucket
+                EmitInterval: 5
+    Terraform: |
+      resource "aws_elb" "example" {
+        name = "example-elb"
+        
+        access_logs {
+          bucket        = "XXXXXXXXXXXXXXXXX"
+          bucket_prefix = "elb-logs"
+          interval      = 5
+          enabled      = true
+        }
+      }
+    Other: |
+      # Python using boto3
+      client = boto3.client('elb')
+      response = client.modify_load_balancer_attributes(
+          LoadBalancerName='my-lb',
+          LoadBalancerAttributes={
+              'AccessLog': {
+                  'Enabled': True,
+                  'S3BucketName': 'XXXXXXXXX',
+                  'EmitInterval': 5
+              }
+          }
+      )
   Recommendation:
-    Text: Enable access logging for Classic ELB and specify an S3 bucket for log storage.
+    Text: |
+      1. Enable access logging for all Classic ELBs
+      2. Configure an S3 bucket with appropriate permissions
+      3. Set appropriate log emission interval (5 or 60 minutes)
+      4. Ensure S3 bucket policy allows ELB logging
+      5. Monitor S3 storage costs for log retention
     Url: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
-Categories: [Detective Control]
-DependsOn: []
-RelatedTo: []
-Notes: Detective Control
+Categories: [
+  Detective Control,
+  Security,
+  Logging,
+  Compliance,
+  Monitoring
+]
+DependsOn: [
+  "aws_s3_bucket_logging_enabled",
+  "aws_s3_bucket_policy_allows_elb_logging"
+]
+RelatedTo: [
+  "elbv2_logging_enabled",
+  "s3_bucket_logging_enabled"
+]
+Notes: |
+  - Detective Control for Classic ELB logging
+  - Supports multi-region checking
+  - Verifies both logging enablement and S3 bucket configuration
+  - Legacy service but still requires monitoring
+  - Important for compliance and security auditing

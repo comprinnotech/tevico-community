@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: ecr_image_private_image_scanning_enabled
-CheckTitle: Check if ECR private repositories have image scanning enabled.
+CheckTitle: Check if ECR private repositories have image scanning enabled
 CheckType: [Infrastructure Protection]
 ServiceName: ecr
 SubServiceName: ""
