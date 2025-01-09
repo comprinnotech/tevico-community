@@ -85,6 +85,10 @@ sections:
           - dynamodb_tables_kms_cmk_encryption_enabled
           - rds_instance_storage_encrypted
           - s3_bucket_default_encryption
+          - s3_bucket_acl_prohibited
+          - s3_bucket_no_mfa_delete
+          - s3_bucket_object_versioning
+          - s3_bucket_secure_transport_policy
           - sns_topics_kms_encryption_at_rest_enabled
           - secrets_manager_automatic_rotation_enabled
           - kms_cmk_rotation_enabled
@@ -132,6 +136,17 @@ sections:
           - macie_auto_sensitive_data_discovery_check
           - macie_status_check
           - securityhub_enabled
+
+      - name: Infrastructure Protection
+        description: |
+          The Infrastructure Protection section includes the ability to protect workloads, systems, and networks by implementing security best practices.
+
+          This section checks for the presence of a Well Architected Review in the AWS account.
+
+        checks:
+          - ecr_repository_scan_images_on_push_enabled
+          - ecr_repository_scan_vulnerabilities_in_latest_image
+      
 
   - name: Performance Efficiency
     description: |

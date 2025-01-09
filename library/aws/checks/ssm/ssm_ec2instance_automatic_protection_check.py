@@ -3,50 +3,50 @@ AUTHOR: SUPRIYO BHAKAT
 EMAIL: supriyo.bhakat@comprinno.net
 DATE: 2024-11-12
 """
-import boto3
 
+import boto3
+from botocore.exceptions import ClientError, BotoCoreError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 
 class ssm_ec2instance_automatic_protection_check(Check):
-
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        ec2_client = connection.client('ec2')
-        ssm_client = connection.client('ssm')
+        
+        try:
+            ec2_client = connection.client('ec2')
+            ssm_client = connection.client('ssm')
 
-        instances = ec2_client.describe_instances()['Reservations']
+            # Get all instances managed by SSM
+            ssm_instances = ssm_client.describe_instance_information()
+            
+            if not ssm_instances.get('InstanceInformationList'):
+                report.resource_ids_status['No SSM managed instances found'] = False
+                report.passed = False
+                return report
 
-        for reservation in instances:
-            for instance in reservation['Instances']:
+            # Check termination protection for each SSM managed instance
+            for instance in ssm_instances['InstanceInformationList']:
                 instance_id = instance['InstanceId']
                 
                 try:
-                    ssm_instance_info = ssm_client.describe_instance_information(Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}])
+                    protection_info = ec2_client.describe_instance_attribute(
+                        InstanceId=instance_id,
+                        Attribute='disableApiTermination'
+                    )
+                    
+                    is_protected = protection_info['DisableApiTermination']['Value']
+                    report.resource_ids_status[instance_id] = is_protected
 
-                    if ssm_instance_info['InstanceInformationList']:
-                        protection_info = ec2_client.describe_instance_attribute(
-                            InstanceId=instance_id,
-                            Attribute='disableApiTermination'
-                        )
-                        is_protected = protection_info['DisableApiTermination']['Value']
+                except (ClientError, BotoCoreError, Exception):
+                    report.resource_ids_status[instance_id] = False
 
-                        if is_protected:
-                            report.resource_ids_status[instance_id] = True  
-                        else:
-                            report.resource_ids_status[instance_id] = False  
-                            report.passed = False
+            # Check passes only if all SSM managed instances have termination protection
+            report.passed = all(report.resource_ids_status.values())
 
-                    else:
-                        report.resource_ids_status[instance_id] = False  
-                        report.passed = False
-
-                except (ssm_client.exceptions.InvalidInstanceId, ec2_client.exceptions.ClientError) as e:
-                    report.resource_ids_status[instance_id] = False  
-                    report.passed = False
-
-        if all(report.resource_ids_status.values()):
-            report.passed = True
+        except (ClientError, BotoCoreError, Exception):
+            report.resource_ids_status['Error checking instance protection'] = False
+            report.passed = False
 
         return report

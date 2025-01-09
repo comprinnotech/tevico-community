@@ -1,5 +1,5 @@
 Provider: aws
-CheckID: iam_root_mfa_enabled
+CheckID: "iam_root_mfa_enabled"
 CheckTitle: Ensure MFA is enabled for the root account
 CheckType: []
 ServiceName: iam
