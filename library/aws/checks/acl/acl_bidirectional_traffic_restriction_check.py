@@ -1,41 +1,95 @@
 """
 AUTHOR: deepak-puri-comprinno
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-15
+DATE: 2025-01-13
 """
 
 import boto3
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
+
 class acl_bidirectional_traffic_restriction_check(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('ec2')
+        # Initialize the report
         report = CheckReport(name=__name__)
         report.passed = True
-        all_nacls = []
-        paginator = client.get_paginator('describe_network_acls')
-        
-        for page in paginator.paginate():
-            all_nacls.extend(page['NetworkAcls'])
+        report.resource_ids_status = {}
 
-        for nacl in all_nacls:
-            nacl_id = nacl['NetworkAclId']
-            is_bidirectional_traffic_restricted = True
+        # Initialize EC2 client
+        ec2_client = connection.client('ec2')
 
-            for entry in nacl['Entries']:
-                if not entry['Egress'] and entry['RuleAction'] == 'allow':
-                    for egress_entry in nacl['Entries']:
-                        if egress_entry['Egress'] and egress_entry['RuleAction'] == 'allow' and \
-                                entry['CidrBlock'] == egress_entry['CidrBlock']:
-                            is_bidirectional_traffic_restricted = False
-                            break
+        try:
+            # Initialize pagination for Network ACLs
+            network_acls = []
+            next_token = None
 
-            if not is_bidirectional_traffic_restricted:
-                report.resource_ids_status[nacl_id] = False
-                report.passed = False
-            else:
-                report.resource_ids_status[nacl_id] = True
+            while True:
+                if next_token:
+                    response = ec2_client.describe_network_acls(NextToken=next_token)
+                else:
+                    response = ec2_client.describe_network_acls()
+
+                network_acls.extend(response.get('NetworkAcls', []))
+                next_token = response.get('NextToken', None)
+
+                if not next_token:
+                    break
+
+            # Process each Network ACL
+            for acl in network_acls:
+                acl_id = acl['NetworkAclId']
+
+                # Filter out the default deny rules (rule number 32767)
+                ingress_rules = [
+                    rule for rule in acl['Entries'] if not rule['Egress'] and rule['RuleNumber'] != 32767
+                ]
+                egress_rules = [
+                    rule for rule in acl['Entries'] if rule['Egress'] and rule['RuleNumber'] != 32767
+                ]
+
+                # Check for overly permissive rules in both directions
+                has_permissive_ingress = self._has_permissive_rules(ingress_rules)
+                has_permissive_egress = self._has_permissive_rules(egress_rules)
+
+                # Prepare the status message
+                if not ingress_rules and not egress_rules:
+                    status_message = f"NACL {acl_id} has only default deny rules (secure configuration)"
+                    report.resource_ids_status[status_message] = True
+                elif has_permissive_ingress and has_permissive_egress:
+                    status_message = f"NACL {acl_id} has permissive rules in both ingress and egress"
+                    report.resource_ids_status[status_message] = False
+                    report.passed = False
+                elif has_permissive_ingress:
+                    status_message = f"NACL {acl_id} has permissive rules in ingress"
+                    report.resource_ids_status[status_message] = False
+                    report.passed = False
+                elif has_permissive_egress:
+                    status_message = f"NACL {acl_id} has permissive rules in egress"
+                    report.resource_ids_status[status_message] = False
+                    report.passed = False
+                else:
+                    status_message = f"NACL {acl_id} has no permissive rules"
+                    report.resource_ids_status[status_message] = True
+
+        except Exception as e:
+            # Handle API errors
+            report.resource_ids_status["NACL listing error"] = False
+            report.passed = False
 
         return report
 
+    def _has_permissive_rules(self, rules):
+        """
+        Check if there are any permissive ALLOW rules with 0.0.0.0/0
+        """
+        for rule in rules:
+            # Check if the rule allows traffic from anywhere
+            is_open_cidr = rule.get('CidrBlock') == '0.0.0.0/0'
+            is_allow_rule = rule.get('RuleAction') == 'allow'
+
+            if is_open_cidr and is_allow_rule:
+                return True
+
+        return False
