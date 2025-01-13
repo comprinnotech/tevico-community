@@ -1,0 +1,32 @@
+Provider: aws
+CheckID: "cloudwatch_log_metric_filter_security_group_changes"
+CheckTitle: Ensure CloudWatch Log Metric Filter for Security Group Changes is in place
+CheckType:
+  - Software and Configuration Checks
+  - Security Best Practices
+  - CIS AWS Foundations Benchmark
+ServiceName: cloudwatch
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name:filter-name
+Severity: high
+ResourceType: AwsLogsMetricFilter
+Description: Ensure that CloudWatch Log Metric Filter is created to detect and alert on security group changes or root actions in your environment.
+Risk:
+  Security group changes and root actions could indicate unauthorized access or misconfigurations in your environment. Ensuring the creation of metric filters for such changes helps to monitor and alert on suspicious activities promptly.
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
+Remediation:
+  Code:
+    CLI:
+      aws logs put-metric-filter --log-group-name <log-group-name> --filter-name <filter-name> --filter-pattern '{ $.eventName = "AuthorizeSecurityGroupIngress" || $.eventName = "AuthorizeSecurityGroupEgress" || $.userIdentity.type = "Root" }' --metric-name SecurityGroupChanges --metric-namespace "MySecurityMetrics" --metric-value 1
+    Other: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
+    Terraform: ""
+  Recommendation:
+    Text:
+      Ensure that CloudWatch metric filters are configured to capture security group changes and root actions, and that alerts are triggered for suspicious activities.
+    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
+Categories:
+  - security
+  - monitoring
+DependsOn: []
+RelatedTo: []
+Notes: "This check ensures that CloudWatch Log Metric Filters are used to detect and alert on security group changes and root actions in your AWS environment."
