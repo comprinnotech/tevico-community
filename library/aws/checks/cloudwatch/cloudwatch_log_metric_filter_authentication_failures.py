@@ -8,7 +8,7 @@ import boto3
 import logging
 import re
 
-from requests import PreparedRequest
+from requests import PreparedRequest, get
 
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
@@ -42,8 +42,11 @@ class cloudwatch_log_metric_filter_authentication_failures(Check):
 
                 if not next_token:
                     break
-            
-            # Check for a Metric Filter for authentication failures in each log group
+
+            # Track if any log group has a matching filter
+            any_matching_filter_found = False
+
+            # Check for Metric Filters for authentication failures in each log group
             for log_group in log_groups:
                 log_group_name = log_group['logGroupName']
                 
@@ -51,21 +54,23 @@ class cloudwatch_log_metric_filter_authentication_failures(Check):
                 filters = client.describe_metric_filters(logGroupName=log_group_name)
                 
                 # Look for filters related to authentication failures with the custom pattern
-                found_filter = False
+                matching_filters = []
+                print(matching_filters)
                 for filter in filters.get('metricFilters', []):
                     filter_pattern = filter.get('filterPattern', '')
-                    print(filter_pattern)
-                    print(re.search(pattern, filter_pattern))
                     # Check if the filter pattern matches the custom pattern for authentication failures
                     if re.search(pattern, filter_pattern):
-                        found_filter = True
-                        
-                        report.resource_ids_status[f"{log_group_name} has Metric Filter for Authentication Failures"] = True
-                        break
+                        matching_filters.append(filter.get('filterName'))
 
-                if not found_filter:
-                    report.passed = False  # Mark as failed if no authentication failure filter is found
-                    report.resource_ids_status[f"{log_group_name} does NOT have Metric Filter for Authentication Failures"] = False
+                if matching_filters:
+                    # If a matching filter is found, update the report status and details
+                    report.resource_ids_status[f"{log_group_name} has Metric Filters for Authentication Failures: [{', '.join(matching_filters)}]"] = True
+                    any_matching_filter_found = True
+                    
+            # If no matching filter was found in any log group, set the report as failed
+            if not any_matching_filter_found:
+                report.passed = False
+                report.resource_ids_status["No matching filters found for Authentication Failures in any log group"] = False
 
         except Exception as e:
             logging.error(f"Error while fetching CloudWatch logs and metric filters: {e}")
