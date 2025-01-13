@@ -1,11 +1,10 @@
 """
 AUTHOR: deepak-puri-comprinno
 EMAIL: deepak.puri@comprinno.net
-DATE: 2025-01-09
+DATE: DATE: 2025-01-13
 """
 
 import boto3
-from botocore.exceptions import ClientError, BotoCoreError
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 

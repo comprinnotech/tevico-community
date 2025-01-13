@@ -1,50 +1,73 @@
-
 """
 AUTHOR: deepak-puri-comprinno
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-13
+DATE: 2025-01-13
 """
 
 import boto3
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
+
 class apigateway_rest_api_client_certificate_enabled(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
+
+        # Initialize the API Gateway client
         client = connection.client('apigateway')
+
+        # Initialize the report
         report = CheckReport(name=__name__)
         report.passed = True
-        
+        report.resource_ids_status = {}
+
         try:
-            # Use pagination to handle large number of APIs efficiently
-            paginator = client.get_paginator('get_rest_apis')
-            for page in paginator.paginate():
-                for api in page.get('items', []):
-                    api_id = api['id']
-                    api_name = api.get('name', 'Unnamed API')
-                    
-                    try:
-                        # Get stages directly since pagination is not supported
-                        stages_response = client.get_stages(restApiId=api_id)
-                        
-                        # Process each stage in the response
-                        for stage in stages_response.get('item', []):
-                            stage_name = stage.get('stageName', 'unknown')
-                            
-                            # Check if client certificate is enabled for this stage
-                            has_cert = stage.get('clientCertificateId') is not None
-                            
-                            # Use formatted string for resource ID
-                            resource_id = f"{api_name}-{stage_name}"
-                            report.resource_ids_status[resource_id] = has_cert
-                            
-                            if not has_cert:
-                                report.passed = False
-                                
-                    except client.exceptions.ClientError as e:
-                        report.passed = False
-                                
-        except client.exceptions.ClientError as e:
+            # Initialize pagination for REST APIs
+            apis = []
+            next_token = None
+
+            while True:
+                if next_token:
+                    response = client.get_rest_apis(position=next_token)
+                else:
+                    response = client.get_rest_apis()
+
+                apis.extend(response.get('items', []))
+                next_token = response.get('position', None)
+
+                if not next_token:
+                    break
+
+            # Check each API and its stages for client certificate configuration
+            for api in apis:
+                api_id = api.get('id')
+                api_name = api.get('name', 'Unnamed API')
+
+                try:
+                    # Fetch stages for the current API
+                    stages_response = client.get_stages(restApiId=api_id)
+                    stages = stages_response.get('item', [])
+
+                    for stage in stages:
+                        stage_name = stage.get('stageName', 'unknown')
+                        resource_id = f"{api_name}/{stage_name}"
+
+                        # Check if client certificate is enabled for this stage
+                        has_cert = stage.get('clientCertificateId') is not None
+
+                        if has_cert:
+                            report.resource_ids_status[f"{resource_id} has a client certificate enabled."] = True
+                        else:
+                            report.resource_ids_status[f"{resource_id} does not have a client certificate enabled."] = False
+                            report.passed = False
+
+                except Exception as e:
+                    report.resource_ids_status[f"Error fetching stages for {api_name}"] = False
+                    report.passed = False
+
+        except Exception as e:
+            # Handle API listing errors
+            report.resource_ids_status["API Gateway listing error"] = False
             report.passed = False
-            
+
         return report
