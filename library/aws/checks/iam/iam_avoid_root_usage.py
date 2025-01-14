@@ -1,67 +1,58 @@
-"""
-AUTHOR: Mohd Asif <mohd.asif@comprinno.net>
-DATE: 2024-10-10
-"""
-
 import boto3
-from datetime import datetime, timezone
+import logging
+import datetime
+import pytz
 from dateutil import parser
+
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
-# Define maximum number of days allowed for root access
-maximum_access_days = 1
 
 class iam_avoid_root_usage(Check):
-    def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
+
+    def execute(self, connection: boto3.Session, maximum_access_days: int = 90) -> CheckReport:
         client = connection.client('iam')
+        report = CheckReport(name=__name__)
+
+        # Initialize report status as 'Passed' unless we find the root user was accessed recently
+        report.passed = True
+        report.resource_ids_status = {}
 
         try:
-            # Generate the credential report
-            client.generate_credential_report()
-            response = client.get_credential_report()['Content']
-            decoded_report = response.decode('utf-8').splitlines()
+            # Get the IAM account information
+            account_info = client.get_account_summary()
+            root_user = account_info['SummaryMap'].get('AccountAccessKeysPresent', 0)
 
-            # Parse the CSV-like credential report
-            for row in decoded_report[1:]:
-                user_info = row.split(',')
-                if user_info[0] == "<root_account>":
-                    # Extract last access times
-                    password_last_used = user_info[4]
-                    access_key_1_last_used = user_info[6]
-                    access_key_2_last_used = user_info[9]
+            # Check if root user has access keys or password and was recently used
+            if root_user > 0:
+                user = client.get_user(UserName="root")['User']
+                last_password_used = user.get('PasswordLastUsed', 'no_information')
+                access_key_1_last_used = user.get('AccessKey1LastUsedDate', 'N/A')
+                access_key_2_last_used = user.get('AccessKey2LastUsedDate', 'N/A')
 
-                    last_accessed = None
+                days_since_accessed = None
+                if last_password_used != 'no_information':
+                    days_since_accessed = (datetime.datetime.now(pytz.utc) - parser.parse(last_password_used)).days
+                elif access_key_1_last_used != 'N/A':
+                    days_since_accessed = (datetime.datetime.now(pytz.utc) - parser.parse(access_key_1_last_used)).days
+                elif access_key_2_last_used != 'N/A':
+                    days_since_accessed = (datetime.datetime.now(pytz.utc) - parser.parse(access_key_2_last_used)).days
 
-                    # Check when the root account was last accessed (password or access keys)
-                    if password_last_used != "not_supported":
-                        last_accessed = parser.parse(password_last_used)
-                    elif access_key_1_last_used != "N/A":
-                        last_accessed = parser.parse(access_key_1_last_used)
-                    elif access_key_2_last_used != "N/A":
-                        last_accessed = parser.parse(access_key_2_last_used)
-
-                    if last_accessed:
-                        days_since_accessed = (datetime.now(timezone.utc) - last_accessed).days
-
-                        # Evaluate against maximum access days
-                        if days_since_accessed <= maximum_access_days:
-                            report.resource_ids_status['RootAccount'] = True  # Root usage detected
-                            report.passed = False
-                        else:
-                            report.resource_ids_status['RootAccount'] = False  # No root usage detected
-                            report.passed = True
-                    else:
-
-                        report.resource_ids_status['RootAccount'] = False  # No root usage detected
-                        report.passed = True
-
-                    break  # We only care about the root account, so stop after processing
+                # If root user was accessed within the maximum access days threshold
+                if days_since_accessed is not None and days_since_accessed <= maximum_access_days:
+                    report.passed = False
+                    report.resource_ids_status[f"Root user recently accessed. [ Root user in the account was last accessed {days_since_accessed} days ago.]"] = False
+                else:
+                    report.passed = True
+                    report.resource_ids_status[f"Root user not recently accessed. [ Root user in the account wasn't accessed in the last {maximum_access_days} days.]"] = True
+            else:
+                report.passed = True
+                report.resource_ids_status["Root user does not have access keys."] = True
 
         except Exception as e:
-
+            # Handle errors
+            logging.error(f"Error while checking root user access: {e}")
             report.passed = False
-            report.resource_ids_status['RootAccount'] = False  # Assume no usage detected in case of error
+            report.resource_ids_status = {}
 
         return report
