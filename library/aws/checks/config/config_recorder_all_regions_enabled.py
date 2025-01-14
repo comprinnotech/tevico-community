@@ -1,3 +1,9 @@
+"""
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-14
+"""
+
 import boto3
 import logging
 
@@ -48,6 +54,7 @@ class config_recorder_all_regions_enabled(Check):
                                 report.resource_ids_status[f" {region}: AWS Config recorder {recorder['name']} is enabled."] = True
                             else:
                                 report.resource_ids_status[f" {region}: AWS Config recorder {recorder['name']} is disabled."] = False
+                                report.passed = False
 
                             # Check for failure state
                             if recorder_status_dict.get(recorder['name']) == 'FAILURE':
