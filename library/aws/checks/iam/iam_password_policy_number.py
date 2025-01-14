@@ -1,3 +1,9 @@
+"""
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-14
+"""
+
 import boto3
 import logging
 
