@@ -1,41 +1,57 @@
 """
-AUTHOR: Mohd Asif <mohd.asif@comprinno.net>
-DATE: 2024-10-10
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-15
 """
 
-
 import boto3
+import logging
+
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
+
 class iam_policy_attached_to_only_group_or_roles(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
+        # Initialize IAM client
         client = connection.client('iam')
+        report = CheckReport(name=__name__)
+
+        # Initialize report status as passed unless we find policies directly attached to users
+        report.passed = True
+        report.resource_ids_status = {}
 
         try:
-            # List all IAM users
-            users = client.list_users()['Users']
+            # Retrieve all customer-managed policies
+            policies = client.list_policies(Scope='Local', OnlyAttached=False)['Policies']
 
-            # Check for attached policies for each user
-            for user in users:
-                username = user['UserName']
-                # List attached user policies
-                attached_policies = client.list_attached_user_policies(UserName=username)['AttachedPolicies']
+            for policy in policies:
+                policy_name = policy['PolicyName']
+                policy_arn = policy['Arn']
 
-                if attached_policies:
+                # Check policy attachments
+                attached_users = client.list_entities_for_policy(PolicyArn=policy_arn, EntityFilter='User')['PolicyUsers']
+                attached_groups = client.list_entities_for_policy(PolicyArn=policy_arn, EntityFilter='Group')['PolicyGroups']
+                attached_roles = client.list_entities_for_policy(PolicyArn=policy_arn, EntityFilter='Role')['PolicyRoles']
 
-                    report.resource_ids_status[username] = True  # Flag as a violation
+                # Determine compliance
+                if attached_users:
+                    # If the policy is attached to users, it fails the check
+                    user_list = [user['UserName'] for user in attached_users]
+                    report.passed = False
+                    report.resource_ids_status[f"Policy {policy_name} is attached to users: {', '.join(user_list)}"] = False
+                elif attached_groups or attached_roles:
+                    # If the policy is attached only to groups or roles, it passes
+                    report.resource_ids_status[f"Policy {policy_name} is only attached to groups or roles"] = True
                 else:
-
-                    report.resource_ids_status[username] = False  # No violation
-
-            # Overall check passes if no user has directly attached policies
-            report.passed = not any(report.resource_ids_status.values())
+                    # Policy is not attached to any entity
+                    report.resource_ids_status[f"Policy {policy_name} is not attached to any entity"] = True
 
         except Exception as e:
-
+            # Handle errors such as network issues or IAM permission issues
+            logging.error(f"Error while checking policy attachments: {e}")
             report.passed = False
+            report.resource_ids_status["Error occurred while checking policy attachments"] = False
 
         return report
-
