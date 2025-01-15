@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: ec2_network_acl_bidirectional_traffic_restriction_check
+CheckTitle: Ensure bidirectional traffic restrictions are enforced in Network ACLs.
+CheckType: [Infrastructure Protection]
+ServiceName: ec2
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
+Severity: medium
+ResourceType: AwsEc2NetworkAcl
+Description: Checks if Network ACLs (NACLs) enforce restrictions on bidirectional traffic to prevent unintended access.
+Risk: Allowing unrestricted bidirectional traffic can expose resources to unauthorized access and compromise security.
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html
+Remediation:
+  Code:
+    CLI: ""
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Restrict bidirectional traffic by implementing explicit deny rules for ingress and egress in NACLs.
+    Url: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html
+Categories: [Infrastructure Protection]
+DependsOn: []
+RelatedTo: []
+Notes: Ensure NACLs do not allow unrestricted bidirectional traffic to maintain security best practices.
