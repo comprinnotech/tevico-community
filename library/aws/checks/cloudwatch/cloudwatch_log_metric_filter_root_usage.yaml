@@ -1,32 +1,30 @@
 Provider: aws
-CheckID: "cloudwatch_log_metric_filter_security_group_changes"
-CheckTitle: Ensure CloudWatch Logs are monitoring root user activity
+CheckID: "cloudwatch_log_metric_filter_root_usage"
+CheckTitle: Ensure a log metric filter and alarm exist for usage of root account.
 CheckType:
-  - Security Monitoring
-  - Logging and Monitoring Best Practices
-  - Regulatory Standards
+  - Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark
 ServiceName: cloudwatch
 SubServiceName: logs
-ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name
+ResourceIdTemplate: arn:partition:cloudwatch:region:account-id:certificate/resource-id
 Severity: medium
-ResourceType: AwsCloudWatchLogGroup
-Description: Ensure CloudWatch Logs have metric filters set up to monitor root user activity and other sensitive events
+ResourceType: AwsCloudWatchAlarm
+Description: Ensure a log metric filter and alarm exist for usage of root account.
 Risk: 
-  Root user activity is critical to monitor for any suspicious or unauthorized actions. If metric filters are not in place to monitor root user activity, it increases the risk of undetected malicious activity.
-RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogDataWithMetricFilters.html
+  Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.
+RelatedUrl: "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
 Remediation:
   Code:
     CLI:
-      aws logs describe-metric-filters --log-group-name <log-group-name>
+      https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#procedure
     NativeIaC: ""
-    Other: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs-UsingMetricFilters.html
-    Terraform: ""
+    Other: ""
+    Terraform: "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#fix---buildtime"
   Recommendation:
     Text:
-      Ensure metric filters are set up to detect and alert on suspicious root user activity by monitoring event patterns that involve root user actions.
-    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatchLogs-UsingMetricFilters.html
+      It is recommended that a metric filter and alarm be established for unauthorized requests.
+    Url: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html
 Categories:
   - forensics-ready
 DependsOn: []
 RelatedTo: []
-Notes: "This check ensures that CloudWatch Logs are set up to monitor root user activity and potentially trigger alarms if needed."
+Notes: "Logging and Monitoring."
