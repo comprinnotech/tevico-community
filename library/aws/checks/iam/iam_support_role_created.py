@@ -11,7 +11,7 @@ from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 
-class ensure_aws_support_role(Check):
+class iam_support_role_created(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         # Initialize IAM client
