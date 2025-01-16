@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from tevico.engine.core.enums import FrameworkDimension
+from enum import Enum
 
 ######################################################################
 
@@ -52,8 +53,38 @@ class CheckMetadata(BaseModel):
 
 ######################################################################
 
+class AwsArn(BaseModel):
+    arn: str = Field(..., alias='Arn', description='Amazon Resource Name (ARN)')
+    
+    @field_validator('arn')
+    def validate_arn(cls, v):
+        # Split the ARN by colon and check if it has 6 parts
+        parts = v.split(':')
+        if len(parts) != 6 or parts[0] != 'arn':
+            # If the ARN is not in the correct format, raise an error
+            raise ValueError(f"Invalid ARN format: {v}")
+        return v
+
+class ResourceStatus(Enum):
+    # If the check passed
+    PASSED = 'passed'
+    
+    # If the check failed
+    FAILED = 'failed'
+
+    # If the check cannot be executed because of lack of information
+    SKIPPED = 'skipped'
+    
+    # If there are no resources to check
+    NOT_APPLICABLE = 'not_applicable'
+    
+    # If the AWS API call fails for unknown reasons
+    UNKNOWN = 'unknown'
+
+
+
 class CheckReport(BaseModel):
-    passed: bool = True
+    status: Optional[ResourceStatus] = None
     name: str
     execution_time: float = 0.0
     check_metadata: Optional[CheckMetadata] = None

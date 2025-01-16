@@ -4,7 +4,7 @@ DATE: 2024-10-11
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class iam_customer_unattached_policy_admin_privileges_found(Check):
@@ -63,7 +63,11 @@ class iam_customer_unattached_policy_admin_privileges_found(Check):
                 findings.append(report_entry)
 
         # Determine report status based on findings
-        report.passed = all(entry['status'] == "PASS" for entry in findings)  # Indicate that the check passed only if all reports are "PASS"
+        if all(entry['status'] == "PASS" for entry in findings): # Indicate that the check passed only if all reports are "PASS"
+            report.status = ResourceStatus.PASSED
+        else:
+            report.status = ResourceStatus.FAILED
+
         report.resource_ids_status = {entry['resource_id']: (entry['status'] == "PASS") for entry in findings}  # Mark policies as having issues or not
         report.report_metadata = {"findings": findings}  # Store findings in report metadata
 

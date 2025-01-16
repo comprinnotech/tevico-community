@@ -31,11 +31,11 @@ class iam_policy_attached_to_only_group_or_roles(Check):
                     report.resource_ids_status[username] = False  # No violation
 
             # Overall check passes if no user has directly attached policies
-            report.passed = not any(report.resource_ids_status.values())
+            report.status = not any(report.resource_ids_status.values())
 
         except Exception as e:
 
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report
 

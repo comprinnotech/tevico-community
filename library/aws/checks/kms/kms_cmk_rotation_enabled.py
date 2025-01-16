@@ -5,7 +5,7 @@ DATE: 2024-11-12
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 from botocore.exceptions import ClientError
 
@@ -13,7 +13,7 @@ class kms_cmk_rotation_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('kms')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         
         try:
             paginator = client.get_paginator('list_keys')
@@ -35,7 +35,7 @@ class kms_cmk_rotation_enabled(Check):
                     except ClientError:
                         # If we can't get key details, mark it as non-compliant
                         report.resource_ids_status[key_id] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         continue
 
                     # Check rotation status only for customer managed keys
@@ -45,14 +45,14 @@ class kms_cmk_rotation_enabled(Check):
                         
                         report.resource_ids_status[key_id] = rotation_enabled
                         if not rotation_enabled:
-                            report.passed = False
+                            report.status = ResourceStatus.FAILED
                             
                     except ClientError:
                         # If we can't check rotation status, mark as non-compliant
                         report.resource_ids_status[key_id] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         
         except (ClientError, Exception):
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             
         return report

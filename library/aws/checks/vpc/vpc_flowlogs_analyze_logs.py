@@ -37,8 +37,8 @@ class vpc_flowlogs_analyze_logs(Check):
                         logs_analyzed = False
                         break
 
-            report.passed = logs_analyzed
+            report.status = logs_analyzed
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         
         return report

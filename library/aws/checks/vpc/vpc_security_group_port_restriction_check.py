@@ -7,7 +7,7 @@ DATE: 2024-11-13
 import boto3
 
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -27,10 +27,10 @@ class vpc_security_group_port_restriction_check(Check):
                         return True
             return False
         
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         for sg in security_groups['SecurityGroups']:
             if has_restricted_ports(sg.get('IpPermissions', [])) or has_restricted_ports(sg.get('IpPermissionsEgress', [])):
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[sg['GroupId']] = False
             else:
                 report.resource_ids_status[sg['GroupId']] = True

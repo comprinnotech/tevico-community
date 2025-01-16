@@ -5,7 +5,7 @@ DATE: 2024-10-10
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -26,11 +26,11 @@ class root_mfa_enabled(Check):
             
             if root_mfa_enabled == 1:
                 print("pass")
-                report.passed = True
+                report.status = ResourceStatus.PASSED
                 report.resource_ids_status['root_account'] = True
                 
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status['root_account'] = False
                 print("MFA Is Disabled")
         except Exception as e:

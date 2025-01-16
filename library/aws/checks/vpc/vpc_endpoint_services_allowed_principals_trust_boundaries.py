@@ -7,7 +7,7 @@ DATE: 2024-11-13
 import boto3
 import re
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
@@ -37,7 +37,7 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
 
                     if principal_account_id not in trusted_account_ids:
                         all_compliant = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         report.resource_ids_status[service['ServiceName']] = False
                         break
 
@@ -45,11 +45,11 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
                     break
 
             if all_compliant:
-                report.passed = True
+                report.status = ResourceStatus.PASSED
 
             return report
 
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             return report
 

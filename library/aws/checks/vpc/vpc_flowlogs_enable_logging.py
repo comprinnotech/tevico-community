@@ -30,8 +30,8 @@ class vpc_flowlogs_enable_logging(Check):
                     flow_logs_enabled = False
                     break  
 
-            report.passed = flow_logs_enabled
+            report.status = flow_logs_enabled
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         
         return report

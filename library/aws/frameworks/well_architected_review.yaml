@@ -113,7 +113,8 @@ sections:
           - ec2_network_acl_allow_ingress_tcp_port_22
           - ec2_security_group_default_restrict_traffic
           - elb_ssl_listeners_enabled
-          - elb_waf_acl_attached
+          # @deepak.puri - Fix ARN issue for WAF ACL
+          # - elb_waf_acl_attached
           - networkfirewall_multi_az_enabled
           - vpc_default_security_group_closed
           - vpc_endpoint_services_allowed_principals_trust_boundaries

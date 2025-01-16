@@ -5,7 +5,7 @@ DATE: 2025-01-13
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -18,7 +18,7 @@ class apigateway_restapi_logging_enabled(Check):
 
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -61,16 +61,16 @@ class apigateway_restapi_logging_enabled(Check):
                             report.resource_ids_status[f"{resource_id} has logging enabled"] = True
                         else:
                             report.resource_ids_status[f"{resource_id} has logging disabled"] = False
-                            report.passed = False
+                            report.status = ResourceStatus.FAILED
 
                 except Exception as e:
                     report.resource_ids_status[f"Error fetching stages for {api_name}"] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         except Exception as e:
             # Handle API listing errors
             report.resource_ids_status["API Gateway listing error"] = False
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report
 

@@ -39,10 +39,10 @@ class iam_rotate_access_keys_90_days(Check):
                         report.resource_ids_status[username] = False
 
             # Check if any users have access keys older than 90 days
-            report.passed = not any(report.resource_ids_status.values())
+            report.status = not any(report.resource_ids_status.values())
         except Exception as e:
 
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         
         return report
 

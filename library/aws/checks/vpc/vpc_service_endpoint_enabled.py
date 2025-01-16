@@ -6,7 +6,7 @@ DATE: 2024-11-13
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class vpc_service_endpoint_enabled(Check):
@@ -29,7 +29,7 @@ class vpc_service_endpoint_enabled(Check):
             if endpoint_enabled:
                 report.resource_ids_status[vpc_id] = True
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[vpc_id] = False
         
         return report

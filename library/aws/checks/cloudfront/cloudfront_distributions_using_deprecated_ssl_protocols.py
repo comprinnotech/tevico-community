@@ -5,8 +5,7 @@ DATE: 2025-01-09
 """
 
 import boto3
-
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -20,7 +19,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
         report = CheckReport(name=__name__)
 
         # Initialize report status as 'Passed' unless we find a distribution using deprecated SSL protocols
-        report.passed = "Passed"
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -52,12 +51,12 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
                 # Check for deprecated SSL protocols (TLSv1, TLSv1.1, SSLv3)
                 if ssl_protocols in ['TLSv1', 'TLSv1.1', 'SSLv3']:
                     report.resource_ids_status[f"{distribution_id} uses the deprecated SSL protocol {ssl_protocols}."] = False
-                    report.passed = False  # Mark report as 'Failed' if any distribution is using deprecated SSL protocols
+                    report.status = ResourceStatus.FAILED  # Mark report as 'Failed' if any distribution is using deprecated SSL protocols
                 else:
                     report.resource_ids_status[f"{distribution_id} uses {ssl_protocols}, not a deprecated SSL protocol."] = True
 
         except Exception as e:
-            report.passed = "Failed"
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status = {}
 
         return report

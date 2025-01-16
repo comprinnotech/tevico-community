@@ -6,7 +6,7 @@ DATE: 2024-11-08
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -18,7 +18,7 @@ class rds_instance_integration_cloudwatch_logging_enabled(Check):
         try:
             client = connection.client('rds')
             instances = client.describe_db_instances()['DBInstances']
-            report.passed = True  
+            report.status = ResourceStatus.PASSED  
 
             for instance in instances:
                 instance_name = instance['DBInstanceIdentifier']
@@ -27,10 +27,10 @@ class rds_instance_integration_cloudwatch_logging_enabled(Check):
                     report.resource_ids_status[instance_name] = True
                 else:
                     report.resource_ids_status[instance_name] = False
-                    report.passed = False  
+                    report.status = ResourceStatus.FAILED  
                      
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             return report
 
         return report

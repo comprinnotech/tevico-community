@@ -4,14 +4,14 @@ EMAIL: deepak.puri@comprinno.net
 DATE: 2024-11-15
 """
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class cloudfront_cloudwatch_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudfront')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         distributions = client.list_distributions()
         
         if distributions.get('DistributionList', {}).get('Items'):
@@ -24,11 +24,11 @@ class cloudfront_cloudwatch_logging_enabled(Check):
                         report.resource_ids_status[dist_id] = True
                     else:
                         report.resource_ids_status[dist_id] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                 except client.exceptions.NoSuchMonitoringSubscription:
                     report.resource_ids_status[dist_id] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
         else:
-            report.passed = True  
+            report.status = ResourceStatus.PASSED  
             
         return report

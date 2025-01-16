@@ -5,7 +5,7 @@ DATE: 2025-01-13
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -14,7 +14,7 @@ class acl_bidirectional_traffic_restriction_check(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         # Initialize EC2 client
@@ -60,15 +60,15 @@ class acl_bidirectional_traffic_restriction_check(Check):
                 elif has_permissive_ingress and has_permissive_egress:
                     status_message = f"NACL {acl_id} has permissive rules in both ingress and egress"
                     report.resource_ids_status[status_message] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                 elif has_permissive_ingress:
                     status_message = f"NACL {acl_id} has permissive rules in ingress"
                     report.resource_ids_status[status_message] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                 elif has_permissive_egress:
                     status_message = f"NACL {acl_id} has permissive rules in egress"
                     report.resource_ids_status[status_message] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                 else:
                     status_message = f"NACL {acl_id} has no permissive rules"
                     report.resource_ids_status[status_message] = True
@@ -76,7 +76,7 @@ class acl_bidirectional_traffic_restriction_check(Check):
         except Exception as e:
             # Handle API errors
             report.resource_ids_status["NACL listing error"] = False
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report
 

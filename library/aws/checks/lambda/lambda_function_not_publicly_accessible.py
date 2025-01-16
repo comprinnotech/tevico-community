@@ -5,7 +5,7 @@ DATE: 2024-11-14
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 from botocore.exceptions import ClientError
 
@@ -13,7 +13,7 @@ class lambda_function_not_publicly_accessible(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('lambda')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         
         try:
             functions = client.list_functions()['Functions']
@@ -26,7 +26,7 @@ class lambda_function_not_publicly_accessible(Check):
                     
                     if '"Effect": "Allow"' in policy_json and '"Principal": "*"' in policy_json:
                         report.resource_ids_status[function_name] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                     else:
                         report.resource_ids_status[function_name] = True
                         
@@ -35,10 +35,10 @@ class lambda_function_not_publicly_accessible(Check):
                         report.resource_ids_status[function_name] = True
                     else:
                         report.resource_ids_status[function_name] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         
         except ClientError as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report
 

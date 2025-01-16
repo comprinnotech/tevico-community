@@ -5,7 +5,7 @@ DATE: 2025-01-13
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -19,7 +19,7 @@ class apigateway_rest_api_waf_acl_attached(Check):
 
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -61,6 +61,11 @@ class apigateway_rest_api_waf_acl_attached(Check):
                         if wafv2_response.get('WebACL'):
                             api_has_waf = True
                             resource_id = f"{api_name}/{stage_name}"
+                            if wafv2_response.get('WebACL'):
+                                api_has_waf = True
+                                report.resource_ids_status[f"{resource_id} has WAF attached."] = True
+                            else:
+                                report.resource_ids_status[f"{resource_id} has no WAF attached."] = False
                             report.resource_ids_status[f"{resource_id} has WAF attached."] = True
                         else:
                             resource_id = f"{api_name}/{stage_name}"
@@ -72,10 +77,10 @@ class apigateway_rest_api_waf_acl_attached(Check):
                         report.resource_ids_status[f"{resource_id} has no WAF attached."] = False
 
                 if not api_has_waf:
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         except Exception as e:
             report.resource_ids_status["API Gateway listing error occurred."] = False
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

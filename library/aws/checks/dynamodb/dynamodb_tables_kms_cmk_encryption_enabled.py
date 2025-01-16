@@ -5,7 +5,7 @@ DATE: 2025-01-13
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -18,7 +18,7 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
 
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -48,24 +48,24 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
                             else:
                                 # Not using a CMK
                                 report.resource_ids_status[f"{table_name} is encrypted but not with a CMK."] = False
-                                report.passed = False
+                                report.status = ResourceStatus.FAILED
                         else:
                             # No encryption or not using a CMK
                             report.resource_ids_status[f"{table_name} has no CMK encryption enabled."] = False
-                            report.passed = False
+                            report.status = ResourceStatus.FAILED
 
                     except dynamodb_client.exceptions.ResourceNotFoundException:
                         report.resource_ids_status[f"{table_name} does not exist."] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                     except kms_client.exceptions.NotFoundException:
                         report.resource_ids_status[f"KMS key for {table_name} not found."] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                     except Exception as e:
                         report.resource_ids_status[f"Error processing {table_name}: {str(e)}"] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
 
         except Exception as e:
             report.resource_ids_status["DynamoDB table listing error occurred."] = False
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

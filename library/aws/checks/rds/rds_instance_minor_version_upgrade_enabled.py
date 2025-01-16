@@ -8,7 +8,7 @@ from enum import auto
 import boto3
 from botocore.exceptions import ClientError
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -19,7 +19,7 @@ class rds_instance_minor_version_upgrade_enabled(Check):
         try:
             rds_client = connection.client('rds')
             db_instances = rds_client.describe_db_instances()['DBInstances']
-            report.passed = True
+            report.status = ResourceStatus.PASSED
             
             for db_instance in db_instances:
                 
@@ -30,12 +30,12 @@ class rds_instance_minor_version_upgrade_enabled(Check):
                     report.resource_ids_status[db_instance_id] = True
                 else:
                     report.resource_ids_status[db_instance_id] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                         
                 
             
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             return report
 
         return report

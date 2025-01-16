@@ -4,7 +4,7 @@ DATE: 2024-10-10
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class iam_policy_allows_privilege_escalation(Check):
@@ -37,7 +37,7 @@ class iam_policy_allows_privilege_escalation(Check):
                 """Helper function to check policy documents for escalation actions"""
                 for policy in policies:
                     policy_arn = policy['PolicyArn']
-                    if not is_custom_policy(policy_arn):  # Only check custom policies
+                    if not self.is_custom_policy(policy_arn):  # Only check custom policies
                         continue
 
                     policy_version = client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
@@ -66,10 +66,14 @@ class iam_policy_allows_privilege_escalation(Check):
                     report.resource_ids_status[username] = False
 
             # Set overall check status
-            report.passed = not any(report.resource_ids_status.values())
+            # report.status = not any(report.resource_ids_status.values())
+            if not any(report.resource_ids_status.values()):
+                report.status = ResourceStatus.FAILED
+            else:
+                report.status = ResourceStatus.PASSED
         
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         
         return report
 

@@ -5,7 +5,7 @@ DATE: 2025-01-09
 """
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -19,7 +19,7 @@ class cloudfront_distributions_https_enabled(Check):
         report = CheckReport(name=__name__)
 
         # Initialize report status as 'Passed' unless we find a distribution without HTTPS enabled
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -49,15 +49,15 @@ class cloudfront_distributions_https_enabled(Check):
 
                 # Log the HTTPS status of each distribution (True or False
                 if viewer_protocol_policy in ['redirect-to-https', 'https-only']:
-                    report.passed = True  # Mark report as 'Failed' if any distribution is not using HTTPS
+                    report.status = ResourceStatus.PASSED  # Mark report as 'Failed' if any distribution is not using HTTPS
                     report.resource_ids_status[f"{distribution_id} has  {viewer_protocol_policy}."] = True
                 else:
-                    report.passed = False  # Mark report as 'Failed' if any distribution is not using HTTPS
+                    report.status = ResourceStatus.FAILED  # Mark report as 'Failed' if any distribution is not using HTTPS
                     report.resource_ids_status[f"{distribution_id} has  {viewer_protocol_policy}."] = False
                     
 
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status = {}
 
         return report

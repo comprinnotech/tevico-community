@@ -7,7 +7,7 @@ import boto3
 import base64
 import re
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -16,7 +16,7 @@ class ec2_launch_template_no_secrets(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         ec2_client = connection.client('ec2')
         report = CheckReport(name=__name__)
-        report.passed = True  # Assume passed unless secrets are found
+        report.status = ResourceStatus.PASSED  # Assume passed unless secrets are found
         report.resource_ids_status = {}
 
         try:
@@ -24,12 +24,12 @@ class ec2_launch_template_no_secrets(Check):
             templates_response = ec2_client.describe_launch_templates()
             launch_templates = templates_response.get('LaunchTemplates', [])
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             #report.message = f"Error fetching launch templates: {str(e)}"
             return report
 
         if not launch_templates:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status['No Launch Templates'] = False  # No launch templates found
             return report
 
@@ -44,7 +44,7 @@ class ec2_launch_template_no_secrets(Check):
                 )
                 versions = version_response['LaunchTemplateVersions']
             except Exception as e:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[template_name] = False
                 #report.message = f"Error fetching template versions for {template_name}: {str(e)}"
                 continue
@@ -58,14 +58,14 @@ class ec2_launch_template_no_secrets(Check):
                         # Decode user data from base64
                         decoded_user_data = base64.b64decode(user_data_encoded).decode('utf-8', errors='ignore')
                     except Exception as e:
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         report.resource_ids_status[f"{template_name}-v{version_number}"] = False
                         #report.message = f"Error decoding user data for {template_name} version {version_number}: {str(e)}"
                         continue
 
                     # Check for sensitive information
                     if self.contains_sensitive_data(decoded_user_data):
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         report.resource_ids_status[f"{template_name}-v{version_number}"] = False
                         # report.resource_ids_status[f"{template_name}-v{version_number}"] = (
                         #    f"Launch Template {template_name} version {version_number} contains sensitive data in user data."

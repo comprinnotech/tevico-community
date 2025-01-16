@@ -6,14 +6,14 @@ DATE: 2024-10-11
 
 import boto3
 from datetime import datetime
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class ec2_microsoft_sql_server_end_of_support(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True  # Initialize as passed
+        report.status = ResourceStatus.PASSED  # Initialize as passed
         client = connection.client('ec2')
 
         # Step 1: Get all EC2 instances
@@ -49,7 +49,7 @@ class ec2_microsoft_sql_server_end_of_support(Check):
                 # Calculate end-of-support date and compare with today's date
                 eos_date = self._calculate_end_of_support(sql_version)
                 if eos_date and eos_date < datetime.now():
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                     report.resource_ids_status[instance_id] = False
                 else:
                     report.resource_ids_status[instance_id] = True

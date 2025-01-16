@@ -27,8 +27,8 @@ class iam_user_multiple_active_access_keys(Check):
 
                     report.resource_ids_status[username] = False
             
-            report.passed = not any(report.resource_ids_status.values())
+            report.status = not any(report.resource_ids_status.values())
         except Exception as e:
 
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         return report

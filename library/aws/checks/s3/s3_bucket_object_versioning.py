@@ -5,7 +5,7 @@ DATE: 2024-11-10
 """
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -20,10 +20,10 @@ class s3_bucket_object_versioning(Check):
             versioning = client.get_bucket_versioning(Bucket=bucket_name).get('Status')
 
             if versioning == 'Enabled':
-                report.passed = True
+                report.status = ResourceStatus.PASSED
                 report.resource_ids_status[bucket_name] = True
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[bucket_name] = False
 
         return report

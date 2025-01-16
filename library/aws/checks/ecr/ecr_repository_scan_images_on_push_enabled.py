@@ -5,7 +5,7 @@ DATE: 2024-11-07
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class ecr_repository_scan_images_on_push_enabled(Check):
@@ -15,7 +15,7 @@ class ecr_repository_scan_images_on_push_enabled(Check):
         paginator = client.get_paginator('describe_repositories')
         
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         
         # List all ECR repositories
         for page in paginator.paginate():
@@ -32,6 +32,6 @@ class ecr_repository_scan_images_on_push_enabled(Check):
                 else:
                     # Otherwise, mark the check as failed for this repository
                     report.resource_ids_status[repo_name] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         return report

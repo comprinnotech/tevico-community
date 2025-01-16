@@ -5,7 +5,7 @@ DATE: 2025-01-14
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -16,7 +16,7 @@ class ec2_network_acl_allow_ingress_tcp_port_22(Check):
 
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -59,12 +59,12 @@ class ec2_network_acl_allow_ingress_tcp_port_22(Check):
                 # Record the result for this ACL
                 if acl_allows_ingress:
                     report.resource_ids_status[f"{acl_id} allows ingress on port 22 from 0.0.0.0/0"] = False
-                    report.passed = False
+                    report.status =ResourceStatus.FAILED
                 else:
                     report.resource_ids_status[f"{acl_id} does not allow ingress on port 22 from 0.0.0.0/0"] = True
 
         except Exception as e:
             report.resource_ids_status["Network ACL listing error occurred."] = False
-            report.passed = False
+            report.status =ResourceStatus.FAILED
 
         return report

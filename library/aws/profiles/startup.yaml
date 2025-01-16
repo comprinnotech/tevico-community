@@ -1,6 +1,5 @@
 name: Checks only meant for startups!
 description: |
   This section checks for the presence of a Well Architected Review in the AWS account and is only meant for startups.
-exclude_checks:
-  - rds_instance_enhanced_monitoring_enabled
-  - rds_instance_multi_az
+include_checks:
+  - cloudwatch_log_metric_filter_vpc_alarm_configured

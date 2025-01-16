@@ -6,7 +6,7 @@ DATE: 2024-11-12
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -42,18 +42,18 @@ class ssm_ec2instance_remove_interactive_access_check(Check):
 
                         if interactive_access_enabled:
                             report.resource_ids_status[instance_id] = False 
-                            report.passed = False
+                            report.status = ResourceStatus.FAILED
                         else:
                             report.resource_ids_status[instance_id] = True  
                     else:
                         report.resource_ids_status[instance_id] = False  
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
 
                 except (ssm_client.exceptions.InvalidInstanceId, ec2_client.exceptions.ClientError) as e:
                     report.resource_ids_status[instance_id] = False  
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         if all(report.resource_ids_status.values()):
-            report.passed = True
+            report.status = ResourceStatus.PASSED
 
         return report

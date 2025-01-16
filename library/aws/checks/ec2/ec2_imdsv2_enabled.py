@@ -5,7 +5,7 @@ DATE: 10-10-2024
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -17,7 +17,7 @@ class ec2_imdsv2_enabled(Check):
 
         # Create a report object to store check results
         report = CheckReport(name=__name__)
-        report.passed = True  # Default to True, will change if any instance is non-compliant
+        report.status = ResourceStatus.PASSED  # Default to True, will change if any instance is non-compliant
         report.resource_ids_status = {}
 
         try:
@@ -26,7 +26,7 @@ class ec2_imdsv2_enabled(Check):
             reservations = response.get('Reservations', [])
             
             if not reservations:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 #report.message = "No EC2 instances found."
                 return report
 
@@ -40,12 +40,12 @@ class ec2_imdsv2_enabled(Check):
                     if metadata_options.get('HttpTokens') == 'required':
                         report.resource_ids_status[instance_id] = True
                     else:
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                         report.resource_ids_status[instance_id] = False
                         #report.message = f"EC2 Instance {instance_id} does not have IMDSv2 enabled (HttpTokens set to {metadata_options.get('HttpTokens')})."
         except Exception as e:
             # In case of an error, mark the check as failed and log the error
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             #report.message = f"Error while fetching EC2 instance metadata: {str(e)}"
         
         return report

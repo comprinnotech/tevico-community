@@ -6,7 +6,7 @@ DATE: 2024-11-12
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -24,25 +24,25 @@ class ssm_managed_compliant_patching(Check):
             instance_ids = [instance['InstanceId'] for reservation in response['Reservations'] for instance in reservation['Instances']]
 
             if not instance_ids:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 return report
 
             patch_response = ssm_client.describe_instance_patch_states(InstanceIds=instance_ids)
 
             compliance_resources = patch_response.get('InstancePatchStates', [])
 
-            passed = True
+            passed = ResourceStatus.PASSED
 
             for resource in compliance_resources:
                 patch_compliance_status = resource['PatchComplianceStatus']
 
                 if patch_compliance_status != "COMPLIANT":
-                    passed = False
+                    passed = ResourceStatus.FAILED
                     break
 
-            report.passed = passed  
+            report.status = passed  
             return report
 
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             return report

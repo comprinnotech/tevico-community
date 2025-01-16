@@ -6,7 +6,7 @@ DATE: 2024-11-10
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -21,10 +21,10 @@ class s3_bucket_default_encryption(Check):
             encryption = client.get_bucket_encryption(Bucket=bucket_name).get('ServerSideEncryptionConfiguration', {})
 
             if encryption.get('Rules', []):
-                report.passed = True
+                report.status = ResourceStatus.PASSED
                 report.resource_ids_status[bucket_name] = True
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[bucket_name] = False
 
         return report

@@ -23,10 +23,10 @@ class iam_user_mfa_enabled_console_access(Check):
                 else:
 
                     report.resource_ids_status[username] = False
-            report.passed = all(report.resource_ids_status.values())
+            report.status = all(report.resource_ids_status.values())
         except Exception as e:
 
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         return report
 
 

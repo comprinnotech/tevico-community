@@ -6,7 +6,7 @@ DATE: 2025-1-7
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -23,7 +23,7 @@ class iam_inline_policy_admin_privileges_found(Check):
         client = connection.client('iam')
 
         report = CheckReport(name=__name__)
-        report.passed = True  # Default to passed until an admin inline policy is found
+        report.status = ResourceStatus.PASSED  # Default to passed until an admin inline policy is found
         report.resource_ids_status = {}
 
         def has_admin_privileges(policy_document):
@@ -71,7 +71,7 @@ class iam_inline_policy_admin_privileges_found(Check):
                                 if has_admin_privileges(policy_document):
                                     # Add the failed policy name to the list
                                     failed_policies.append(policy_name)
-                                    report.passed = False
+                                    report.status = ResourceStatus.FAILED
 
                             # If there were failed policies, store them as a comma-separated list
                             if failed_policies:
@@ -84,10 +84,10 @@ class iam_inline_policy_admin_privileges_found(Check):
 
                         except (BotoCoreError, ClientError):
                             # Mark as fail on error and add to the status
-                            report.passed = False
+                            report.status = ResourceStatus.FAILED
                             report.resource_ids_status[f"{entity_type}::{entity_name}"] = False
             except (BotoCoreError, ClientError):
-                report.passed = False
+                report.status = ResourceStatus.FAILED
 
         # Process IAM users, groups, and roles
         process_entities(
@@ -114,7 +114,7 @@ class iam_inline_policy_admin_privileges_found(Check):
         # )
         # If any failure was found, the check should fail
         if any(status is False for status in report.resource_ids_status.values()):
-            report.passed = False  # Ensure this is a boolean
+            report.status = ResourceStatus.FAILED  # Ensure this is a boolean
 
         return report
  

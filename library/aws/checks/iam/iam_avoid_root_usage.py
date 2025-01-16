@@ -6,7 +6,7 @@ DATE: 2024-10-10
 import boto3
 from datetime import datetime, timezone
 from dateutil import parser
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 # Define maximum number of days allowed for root access
@@ -48,20 +48,20 @@ class iam_avoid_root_usage(Check):
                         # Evaluate against maximum access days
                         if days_since_accessed <= maximum_access_days:
                             report.resource_ids_status['RootAccount'] = True  # Root usage detected
-                            report.passed = False
+                            report.status = ResourceStatus.FAILED
                         else:
                             report.resource_ids_status['RootAccount'] = False  # No root usage detected
-                            report.passed = True
+                            report.status = ResourceStatus.PASSED
                     else:
 
                         report.resource_ids_status['RootAccount'] = False  # No root usage detected
-                        report.passed = True
+                        report.status = ResourceStatus.PASSED
 
                     break  # We only care about the root account, so stop after processing
 
         except Exception as e:
 
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status['RootAccount'] = False  # Assume no usage detected in case of error
 
         return report

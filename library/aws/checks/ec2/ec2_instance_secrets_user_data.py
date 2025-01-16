@@ -7,7 +7,7 @@ import base64
 import boto3
 import re
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -16,7 +16,7 @@ class ec2_instance_secrets_user_data(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         ec2_client = connection.client('ec2')
         report = CheckReport(name=__name__)
-        report.passed = True  # Assume passed unless we find secrets
+        report.status = ResourceStatus.PASSED  # Assume passed unless we find secrets
         report.resource_ids_status = {}
 
         # Fetch all EC2 instances
@@ -24,13 +24,13 @@ class ec2_instance_secrets_user_data(Check):
             instances_response = ec2_client.describe_instances()
             instances = [i for r in instances_response['Reservations'] for i in r['Instances']]
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             #report.message = f"Error fetching EC2 instances: {str(e)}"
             return report
 
         # Check each instance
         if not instances:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status['No Instances'] = False  # No instances available
             return report
 
@@ -49,7 +49,7 @@ class ec2_instance_secrets_user_data(Check):
                 else:
                     decoded_user_data = ''
             except Exception as e:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[instance_id] = False
                 #report.message = f"Error retrieving user data for instance {instance_id}: {str(e)}"
                 continue  # Skip to next instance
@@ -71,21 +71,21 @@ class ec2_instance_secrets_user_data(Check):
 
             # Check for sensitive keywords
             if any(keyword in decoded_user_data.lower() for keyword in sensitive_keywords):
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[instance_id] = False  # Mark as having secrets
                 #report.resource_ids_status[instance_id] = f"EC2 Instance {instance_id} has sensitive keywords in user data."
 
             # Check against regex patterns
             for pattern in regex_patterns:
                 if re.search(pattern, decoded_user_data):
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                     report.resource_ids_status[instance_id] = False  # Mark as having secrets
                    #report.resource_ids_status[instance_id] = f"EC2 Instance {instance_id} has sensitive patterns in user data."
                     break  # No need to check further patterns for this instance
 
             # Optional: Check for high entropy strings (indicative of secrets)
             if self.is_high_entropy(decoded_user_data):
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[instance_id] = False
                 #report.resource_ids_status[instance_id] = f"EC2 Instance {instance_id} contains high entropy strings in user data."
 

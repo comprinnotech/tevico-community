@@ -5,7 +5,7 @@ DATE: 2024-11-13
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class apigateway_waf_protection_enabled(Check):
@@ -13,7 +13,7 @@ class apigateway_waf_protection_enabled(Check):
         client = connection.client('apigateway')
         waf_client = connection.client('waf-regional')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         
         try:
             # Retrieve all REST APIs
@@ -46,9 +46,9 @@ class apigateway_waf_protection_enabled(Check):
                 
                 report.resource_ids_status[api_name] = api_protected
                 if not api_protected:
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                     
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             
         return report

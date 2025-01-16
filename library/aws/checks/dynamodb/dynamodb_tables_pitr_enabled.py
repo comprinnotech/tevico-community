@@ -1,5 +1,5 @@
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -10,7 +10,7 @@ class dynamodb_tables_pitr_enabled(Check):
 
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status =ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -40,22 +40,22 @@ class dynamodb_tables_pitr_enabled(Check):
                         report.resource_ids_status[f"{table} has PITR enabled."] = True
                     else:
                         report.resource_ids_status[f"{table} has PITR disabled."] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
 
                 except client.exceptions.TableNotFoundException:
                     report.resource_ids_status[f"{table} not found."] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
                 except client.exceptions.ContinuousBackupsUnavailableException:
                     report.resource_ids_status[f"{table} has no continuous backups available."] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
                 except Exception as e:
                     report.resource_ids_status[f"Error checking PITR for {table}: {str(e)}"] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         except Exception as e:
             report.resource_ids_status["DynamoDB table listing error occurred."] = False
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

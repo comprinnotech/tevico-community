@@ -6,7 +6,7 @@ DATE: 2024-11-10
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class efs_encryption_at_rest_enabled(Check):
@@ -16,7 +16,7 @@ class efs_encryption_at_rest_enabled(Check):
         paginator = client.get_paginator('describe_file_systems')
         
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         
         # Paginate through all EFS file systems
         for page in paginator.paginate():
@@ -33,6 +33,6 @@ class efs_encryption_at_rest_enabled(Check):
                 else:
                     # Encryption is not enabled; fail the check for this file system
                     report.resource_ids_status[fs_id] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         return report

@@ -7,7 +7,7 @@ DATE: 2024-11-15
 
 import boto3
 import re
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class cloudwatch_log_metric_filter_authentication_failures(Check):
@@ -20,7 +20,7 @@ class cloudwatch_log_metric_filter_authentication_failures(Check):
         log_groups = cloudwatch_client.describe_log_groups()
 
         if not log_groups['logGroups']:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             return report
 
         for log_group in log_groups['logGroups']:
@@ -38,7 +38,7 @@ class cloudwatch_log_metric_filter_authentication_failures(Check):
             if found_filter:
                 report.resource_ids_status[log_group_name] = True
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 report.resource_ids_status[log_group_name] = False
 
         return report

@@ -4,7 +4,7 @@ import time
 from typing import Any
 
 
-from tevico.engine.entities.report.check_model import CheckMetadata, CheckReport
+from tevico.engine.entities.report.check_model import CheckMetadata, CheckReport, ResourceStatus
 
 
 class Check(ABC):
@@ -25,9 +25,9 @@ class Check(ABC):
         
         # Set the check status based on resource_ids_status
         if check_report.has_failed_resources():
-            check_report.passed = False
+            check_report.status = ResourceStatus.FAILED
         else:
-            check_report.passed = True
+            check_report.status = ResourceStatus.PASSED
         return check_report
     
     @abstractmethod

@@ -5,7 +5,7 @@ DATE: 2024-10-10
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class iam_password_policy_reuse_24(Check):
@@ -18,13 +18,13 @@ class iam_password_policy_reuse_24(Check):
             password_policy = account_password_policy['PasswordPolicy']
             reuse_prevention = password_policy.get('ReusePrevention', 0)
 
-            report.passed = reuse_prevention >= 24
+            report.status = reuse_prevention >= 24
             report.resource_ids_status['password_policy'] = reuse_prevention >= 24
 
         except client.exceptions.NoSuchEntityException:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status['password_policy'] = False
         except Exception:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

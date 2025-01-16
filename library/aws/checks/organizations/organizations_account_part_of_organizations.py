@@ -4,7 +4,7 @@ DATE: 2024-10-17
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 from datetime import datetime
 
@@ -47,7 +47,7 @@ class organizations_account_part_of_organizations(Check):
                     org_report["message"] = f"AWS Organization {org_id} contains this AWS account."
                     findings.append(org_report)
                     # print(f"[{datetime.now()}] - Organization {org_id} is ENABLED. Marking as PASS.")
-                    report.passed = True
+                    report.status = ResourceStatus.PASSED
                     
                     # Fetch list of accounts in the organization
                     # print(f"[{datetime.now()}] - Fetching accounts for organization {org_id}...")
@@ -62,7 +62,7 @@ class organizations_account_part_of_organizations(Check):
                     org_report["message"] = f"AWS Organization {org_id} is not in use for this AWS account."
                     findings.append(org_report)
                     # print(f"[{datetime.now()}] - Organization {org_id} is not ENABLED. Marking as FAIL.")
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
             # Store findings in report metadata
             report.report_metadata = {"findings": findings}
@@ -71,7 +71,7 @@ class organizations_account_part_of_organizations(Check):
         except Exception as e:
             # Handle potential exceptions (e.g., permissions issues)
             # print(f"[{datetime.now()}] - Exception occurred: {str(e)}")
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.report_metadata = {"error": str(e)}
 
         end_time = datetime.now()

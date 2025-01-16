@@ -5,14 +5,14 @@ DATE: 2024-11-13
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class networkfirewall_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('network-firewall')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         firewalls = client.list_firewalls()
 
         for firewall in firewalls.get('Firewalls', []):
@@ -24,9 +24,9 @@ class networkfirewall_logging_enabled(Check):
                     report.resource_ids_status[firewall_name] = True
                 else:
                     report.resource_ids_status[firewall_name] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
             except client.exceptions.ResourceNotFoundException:
                 report.resource_ids_status[firewall_name] = False
-                report.passed = False
+                report.status = ResourceStatus.FAILED
 
         return report

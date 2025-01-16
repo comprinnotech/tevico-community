@@ -5,7 +5,7 @@ DATE: 10-10-2024
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -19,7 +19,7 @@ class ec2_ebs_snapshot_encrypted(Check):
         report = CheckReport(name=__name__)
 
         # Initialize report status
-        report.passed = True  # Assume passed unless we find an unencrypted snapshot
+        report.status = ResourceStatus.PASSED  # Assume passed unless we find an unencrypted snapshot
         report.resource_ids_status = {}
 
         try:
@@ -35,10 +35,10 @@ class ec2_ebs_snapshot_encrypted(Check):
                 report.resource_ids_status[snapshot_id] = encrypted
 
                 if not encrypted:
-                    report.passed = False  # If any snapshot is not encrypted, mark the report as failed
+                    report.status = ResourceStatus.FAILED  # If any snapshot is not encrypted, mark the report as failed
 
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status = {}
 
         return report

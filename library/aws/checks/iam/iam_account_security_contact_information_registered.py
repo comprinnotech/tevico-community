@@ -5,7 +5,7 @@ DATE:
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -25,23 +25,23 @@ class iam_account_security_contact_information_registered(Check):
             # print(security_contact['AlternateContact'])
             
             if 'AlternateContact' in security_contact and security_contact['AlternateContact']:
-                report.passed = True
+                report.status = ResourceStatus.PASSED
                 # print("Security contact information is registered.")
                 report.resource_ids_status['SECURITY_CONTACT'] = True
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
                 # print("Security contact information is NOT registered.")
                 report.resource_ids_status['SECURITY_CONTACT'] = False
 
         except account_client.exceptions.ResourceNotFoundException:
             # Raised if the security contact is not set
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             # print("Security contact information is NOT registered.")
             report.resource_ids_status['SECURITY_CONTACT'] = False
 
         except Exception as e:
             # Catch any other unexpected exceptions
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             # print(f"An unexpected error occurred: {str(e)}")
             report.resource_ids_status['SECURITY_CONTACT'] = False
 

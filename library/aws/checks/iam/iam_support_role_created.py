@@ -5,7 +5,7 @@ DATE: 2024-10-10
 
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class iam_support_role_created(Check):
@@ -27,12 +27,12 @@ class iam_support_role_created(Check):
             
             if not support_role_found:
 
-                report.passed = False
+                report.status = ResourceStatus.FAILED
             else:
-                report.passed = True
+                report.status = ResourceStatus.PASSED
             
         except Exception as e:
 
-            report.passed = False
+            report.status = ResourceStatus.FAILED
         
         return report

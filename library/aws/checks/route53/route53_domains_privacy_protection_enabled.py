@@ -6,7 +6,7 @@ DATE: 2024-11-10
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -14,7 +14,7 @@ class route53_domains_privacy_protection_enabled(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         
@@ -34,6 +34,6 @@ class route53_domains_privacy_protection_enabled(Check):
                 report.resource_ids_status[domain_name] = True
             else:
                 report.resource_ids_status[domain_name] = False
-                report.passed = False
+                report.status = ResourceStatus.FAILED
 
         return report

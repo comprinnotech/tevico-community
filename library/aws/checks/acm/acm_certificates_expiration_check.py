@@ -7,7 +7,7 @@ DATE: 2025-01-09
 
 import boto3
 from datetime import datetime, timezone
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -21,7 +21,7 @@ class acm_certificates_expiration_check(Check):
         # Initialize ACM client and check report
         client = connection.client('acm')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -52,7 +52,7 @@ class acm_certificates_expiration_check(Check):
                             # Handle expired certificates gracefully
                             if days_until_expiration < 0:
                                 report.resource_ids_status[f"Certificate {cert_arn} has already expired ({-days_until_expiration} days ago)."] = False
-                                report.passed = False
+                                report.status = ResourceStatus.FAILED
                             else:
                                 # Determine if certificate is within expiration threshold
                                 is_valid = days_until_expiration > self.EXPIRATION_THRESHOLD_DAYS
@@ -60,12 +60,12 @@ class acm_certificates_expiration_check(Check):
 
                                 # If any certificate is expiring soon, mark the check as failed
                                 if not is_valid:
-                                    report.passed = False
+                                    report.status = ResourceStatus.FAILED
 
                     except Exception as e:
                         # Handle errors while describing a certificate
                         report.resource_ids_status[f"Error describing {cert_arn}"] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
 
             if not certificates_found:
                 # No certificates found, mark the check as passed
@@ -73,7 +73,7 @@ class acm_certificates_expiration_check(Check):
 
         except Exception as e:
             # Handle errors while listing certificates
-            report.passed = False
+            report.status = ResourceStatus.FAILED
             report.resource_ids_status["ACM listing error"] = False
 
         return report

@@ -7,7 +7,7 @@ DATE: 2024-11-17
 import boto3
 import tempfile
 import os
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 from detect_secrets.core.secrets_collection import SecretsCollection
 from detect_secrets.settings import transient_settings
@@ -16,7 +16,7 @@ class lambda_function_no_secrets_in_variables(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('lambda')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
 
         # List all Lambda functions
         paginator = client.get_paginator('list_functions')
@@ -37,16 +37,16 @@ class lambda_function_no_secrets_in_variables(Check):
                     secrets_found = self.detect_secrets_scan(data=env_variables_data)
                     if secrets_found:
                         report.resource_ids_status[function_name] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
                     else:
                         report.resource_ids_status[function_name] = True
 
                 except client.exceptions.ResourceNotFoundException:
                     report.resource_ids_status[function_name] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
                 except Exception as e:
                     report.resource_ids_status[function_name] = False
-                    report.passed = False
+                    report.status = ResourceStatus.FAILED
 
         return report
 

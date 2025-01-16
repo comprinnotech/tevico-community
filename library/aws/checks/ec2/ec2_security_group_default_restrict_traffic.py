@@ -5,7 +5,7 @@ DATE: 2025-01-14
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
@@ -16,7 +16,7 @@ class ec2_security_group_default_restrict_traffic(Check):
 
         # Initialize the report
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
@@ -52,10 +52,10 @@ class ec2_security_group_default_restrict_traffic(Check):
                         report.resource_ids_status[
                             f"{sg_id} (default SG) in VPC {vpc_id} allows traffic"
                         ] = False
-                        report.passed = False
+                        report.status = ResourceStatus.FAILED
 
         except Exception as e:
             report.resource_ids_status["Error fetching security groups"] = False
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

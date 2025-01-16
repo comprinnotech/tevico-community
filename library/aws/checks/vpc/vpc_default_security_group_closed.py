@@ -38,8 +38,8 @@ class vpc_default_security_group_closed(Check):
                 if not all_closed:
                     break
 
-            report.passed = all_closed
+            report.status = all_closed
         except Exception as e:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

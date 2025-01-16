@@ -5,14 +5,14 @@ DATE: 2024-11-14
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class lambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         client = connection.client('cloudtrail')
         report = CheckReport(name=__name__)
-        report.passed = True
+        report.status = ResourceStatus.PASSED
 
         trails = client.describe_trails()['trailList']
         logging_enabled = False
@@ -25,8 +25,8 @@ class lambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
                     break
         
         if logging_enabled:
-            report.passed = True
+            report.status = ResourceStatus.PASSED
         else:
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report

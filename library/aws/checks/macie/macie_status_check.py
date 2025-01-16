@@ -5,7 +5,7 @@ DATE: 2024-11-16
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 from botocore.exceptions import EndpointConnectionError
 
@@ -17,10 +17,10 @@ class macie_status_check(Check):
         try:
             macie_status = client.get_macie_session()
             if macie_status['status'] == 'ENABLED':
-                report.passed = True
+                report.status = ResourceStatus.PASSED
             else:
-                report.passed = False
+                report.status = ResourceStatus.FAILED
         except (client.exceptions.AccessDeniedException, EndpointConnectionError):
-            report.passed = False
+            report.status = ResourceStatus.FAILED
 
         return report
