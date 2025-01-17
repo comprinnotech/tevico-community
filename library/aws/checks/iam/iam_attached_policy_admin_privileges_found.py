@@ -44,7 +44,7 @@ class iam_attached_policy_admin_privileges_found(Check):
                     report.status = ResourceStatus.FAILED
 
             # If no admin privileges are found, mark as compliant
-            if report.passed:
+            if report.status == ResourceStatus.PASSED:
                 report.resource_ids_status["No users or roles with admin privileges"] = True
 
         except Exception as e:
