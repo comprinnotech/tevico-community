@@ -47,6 +47,12 @@ class apigateway_restapi_logging_enabled(Check):
                     # Fetch stages for the current API
                     stages = client.get_stages(restApiId=api_id).get('item', [])
 
+                    if not stages:
+                        # If no stages are present, set resource_ids_status to False
+                        report.resource_ids_status[f"{api_name} has no stages."] = False
+                        report.status = ResourceStatus.FAILED
+                        continue
+
                     for stage in stages:
                         stage_name = stage.get('stageName')
                         resource_id = f"{api_name}/{stage_name}"

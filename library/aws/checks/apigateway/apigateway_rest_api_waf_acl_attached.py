@@ -12,10 +12,8 @@ from tevico.engine.entities.check.check import Check
 class apigateway_rest_api_waf_acl_attached(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-
-        # Initialize the API Gateway and WAFv2 clients
+        # Initialize the API Gateway client
         apigw_client = connection.client('apigateway')
-        wafv2_client = connection.client('wafv2')
 
         # Initialize the report
         report = CheckReport(name=__name__)
@@ -39,7 +37,7 @@ class apigateway_rest_api_waf_acl_attached(Check):
                 if not next_token:
                     break
 
-            # Check each API and its stages for WAFv2 ACL attachment
+            # Check each API and its stages for WAFv2 ACL attachment or missing stages
             for api in apis:
                 api_id = api['id']
                 api_name = api.get('name', 'Unnamed API')
@@ -48,31 +46,23 @@ class apigateway_rest_api_waf_acl_attached(Check):
                 stages_response = apigw_client.get_stages(restApiId=api_id)
                 stages = stages_response.get('item', [])
 
+                if not stages:
+                    # If no stages are present, set resource_ids_status to False
+                    report.resource_ids_status[f"{api_name} has no stages."] = False
+                    report.status = ResourceStatus.FAILED
+                    continue
+
                 api_has_waf = False
 
                 for stage in stages:
                     stage_name = stage['stageName']
-                    stage_arn = f"arn:aws:apigateway:{connection.region_name}::/restapis/{api_id}/stages/{stage_name}"
+                    web_acl_id = stage.get('webAclArn')
 
-                    try:
-                        # Check if a WAFv2 ACL is attached to the stage
-                        wafv2_response = wafv2_client.get_web_acl_for_resource(ResourceArn=stage_arn)
-
-                        if wafv2_response.get('WebACL'):
-                            api_has_waf = True
-                            resource_id = f"{api_name}/{stage_name}"
-                            if wafv2_response.get('WebACL'):
-                                api_has_waf = True
-                                report.resource_ids_status[f"{resource_id} has WAF attached."] = True
-                            else:
-                                report.resource_ids_status[f"{resource_id} has no WAF attached."] = False
-                            report.resource_ids_status[f"{resource_id} has WAF attached."] = True
-                        else:
-                            resource_id = f"{api_name}/{stage_name}"
-                            report.resource_ids_status[f"{resource_id} has no WAF attached."] = False
-
-                    except wafv2_client.exceptions.WAFNonexistentItemException:
-                        # Record the status for this stage as not having a WAF ACL
+                    if web_acl_id:
+                        api_has_waf = True
+                        resource_id = f"{api_name}/{stage_name}"
+                        report.resource_ids_status[f"{resource_id} has WAF attached."] = True
+                    else:
                         resource_id = f"{api_name}/{stage_name}"
                         report.resource_ids_status[f"{resource_id} has no WAF attached."] = False
 
@@ -80,7 +70,7 @@ class apigateway_rest_api_waf_acl_attached(Check):
                     report.status = ResourceStatus.FAILED
 
         except Exception as e:
-            report.resource_ids_status["API Gateway listing error occurred."] = False
             report.status = ResourceStatus.FAILED
+            report.resource_ids_status["API Gateway listing error occurred."] = False
 
         return report
