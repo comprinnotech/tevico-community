@@ -1,48 +1,64 @@
 """
-AUTHOR: Mohd Asif <mohd.asif@comprinno.net>
-DATE: 2024-10-10
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-14
 """
 
-
 import boto3
-from datetime import datetime, timedelta, timezone
+import logging
+import datetime
+import pytz
+from dateutil import parser
+
 from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
+
 class iam_rotate_access_keys_90_days(Check):
-    def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
+
+    def execute(self, connection: boto3.Session, maximum_key_age: int = 90) -> CheckReport:
+        # Initialize IAM client
         client = connection.client('iam')
+        report = CheckReport(name=__name__)
+
+        # Initialize report status as passed unless we find non-compliant keys
+        report.status = ResourceStatus.PASSED
+        report.resource_ids_status = {}
 
         try:
-            # Get the current date and time as an aware datetime object
-            current_time = datetime.now(timezone.utc)
-            # Define the 90-day threshold
-            ninety_days_ago = current_time - timedelta(days=90)
-
-            # List all IAM users
+            # Retrieve the list of IAM users
             users = client.list_users()['Users']
+
             for user in users:
                 username = user['UserName']
-                # List access keys for each user
-                access_keys = client.list_access_keys(UserName=username)['AccessKeyMetadata']
                 
+                # Retrieve access keys for the user
+                response = client.list_access_keys(UserName=username)
+                access_keys = response['AccessKeyMetadata']
+
                 for key in access_keys:
-                    create_date = key['CreateDate']  # AWS returns this as a timezone-aware datetime
-                    
-                    # Compare access key creation date to the 90-day threshold
-                    if key['Status'] == 'Active' and create_date < ninety_days_ago:
+                    key_id = key['AccessKeyId']
+                    status = key['Status']
+                    create_date = key['CreateDate']
 
-                        report.resource_ids_status[username] = True
+                    # Calculate the age of the access key
+                    days_since_created = (datetime.datetime.now(pytz.utc) - create_date).days
+
+                    if status == 'Active' and days_since_created > maximum_key_age:
+                        # Key is active and older than the maximum allowed age
+                        report.resource_ids_status[f"User {username}, Access Key {key_id} is older than {maximum_key_age} days."] = False
+                        report.status = ResourceStatus.FAILED
+                    elif status == 'Active':
+                        # Key is active and compliant
+                        report.resource_ids_status[f"User {username}, Access Key {key_id} is compliant."] = True
                     else:
+                        # Key is inactive (not checked for rotation)
+                        report.resource_ids_status[f"User {username}, Access Key {key_id} is inactive."] = True
 
-                        report.resource_ids_status[username] = False
-
-            # Check if any users have access keys older than 90 days
-            report.status = not any(report.resource_ids_status.values())
         except Exception as e:
-
+            # Handle errors such as network issues or IAM permission issues
+            logging.error(f"Error while checking access key rotation for IAM users: {e}")
             report.status = ResourceStatus.FAILED
-        
-        return report
+            report.resource_ids_status["Error occurred while checking access key rotation"] = False
 
+        return report

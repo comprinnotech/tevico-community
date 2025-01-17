@@ -1,51 +1,80 @@
 """
-AUTHOR: 
-DATE: 
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-1-16
 """
 
 import boto3
-
-from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
+import logging
+from typing import Optional
+from tevico.engine.entities.report.check_model import CheckReport
 from tevico.engine.entities.check.check import Check
 
 
 class iam_account_security_contact_information_registered(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
+        # Initialize the report object
         report = CheckReport(name=__name__)
+        report.status = ResourceStatus.PASSED
+        report.resource_ids_status = {}
 
-        # Initialize the Account client
-        account_client = connection.client('account')
-        
-        report = CheckReport(name=__name__)
-
-        # Check if SECURITY contact is registered
         try:
-            security_contact = account_client.get_alternate_contact(AlternateContactType='SECURITY')
-            # print(security_contact['AlternateContact'])
-            
-            if 'AlternateContact' in security_contact and security_contact['AlternateContact']:
-                report.status = ResourceStatus.PASSED
-                # print("Security contact information is registered.")
-                report.resource_ids_status['SECURITY_CONTACT'] = True
-            else:
-                report.status = ResourceStatus.FAILED
-                # print("Security contact information is NOT registered.")
-                report.resource_ids_status['SECURITY_CONTACT'] = False
+            # Initialize the AWS Account client
+            client = connection.client("account")
 
-        except account_client.exceptions.ResourceNotFoundException:
-            # Raised if the security contact is not set
+            # Fetch security contact information
+            security_contact = client.get_alternate_contact(
+                AlternateContactType="SECURITY"
+            ).get("AlternateContact", {})
+            print(security_contact)
+
+            # Extract email and phone number
+            security_email = security_contact.get("EmailAddress")
+            security_phone_number = security_contact.get("PhoneNumber")
+
+            # Validate the security contact email
+            if security_email:
+                report.resource_ids_status["Security contact email is registered"] = True
+            else:
+                report.resource_ids_status["Security contact email is missing"] = False
+                report.status = ResourceStatus.FAILED
+
+            # Validate the security contact phone number
+            if security_phone_number:
+                report.resource_ids_status[
+                    "Security contact phone number is registered"
+                ] = True
+            else:
+                report.resource_ids_status[
+                    "Security contact phone number is missing"
+                ] = False
+                report.status = ResourceStatus.FAILED
+
+        except client.exceptions.ResourceNotFoundException:
+            # Handle case where no security contact is found
+            logging.error("No security contact information found for this account.")
             report.status = ResourceStatus.FAILED
-            # print("Security contact information is NOT registered.")
-            report.resource_ids_status['SECURITY_CONTACT'] = False
+            report.resource_ids_status[
+                "No security contact information found"
+            ] = False
+
+        except client.exceptions.AccessDeniedException:
+            # Handle insufficient permissions
+            logging.error(
+                "Access denied when trying to fetch security contact information."
+            )
+            report.status = ResourceStatus.FAILED
+            report.resource_ids_status[
+                "Access denied to fetch security contact information"
+            ] = False
 
         except Exception as e:
-            # Catch any other unexpected exceptions
+            # Handle unexpected errors
+            logging.error(f"Error while checking security contact information: {e}")
             report.status = ResourceStatus.FAILED
-            # print(f"An unexpected error occurred: {str(e)}")
-            report.resource_ids_status['SECURITY_CONTACT'] = False
+            report.resource_ids_status[
+                "Error occurred while checking security contact information"
+            ] = False
 
         return report
-
-# The check will return **True (passed)** if all required fields (`FullName`, `Title`, `EmailAddress`, and `PhoneNumber`) are present and not empty in Security Contact .
-# The check will return **False (failed)** if any of these fields are missing or empty, or if an error occurs while fetching the contact information.
