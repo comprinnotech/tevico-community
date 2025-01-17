@@ -51,7 +51,7 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
                                 report.status = ResourceStatus.FAILED
                         else:
                             # No encryption or not using a CMK
-                            report.resource_ids_status[f"{table_name} is encrypted with DynamoDB"] = False
+                            report.resource_ids_status[f"{table_name} is encrypted with by Amazon DynamoDB owned key"] = False
                             report.status = ResourceStatus.FAILED
 
                     except dynamodb_client.exceptions.ResourceNotFoundException:
