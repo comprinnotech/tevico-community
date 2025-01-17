@@ -7,7 +7,7 @@ DATE: 2025-01-15
 import boto3
 import logging
 
-from tevico.engine.entities.report.check_model import CheckReport, 
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 

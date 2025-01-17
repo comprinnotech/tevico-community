@@ -11,7 +11,7 @@ import datetime
 import pytz
 from dateutil import parser
 
-from tevico.engine.entities.report.check_model import CheckReport
+from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
