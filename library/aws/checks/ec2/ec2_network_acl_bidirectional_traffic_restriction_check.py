@@ -46,12 +46,12 @@ class ec2_network_acl_bidirectional_traffic_restriction_check(Check):
             for acl in network_acls:
                 acl_id = acl['NetworkAclId']
 
-                # Filter out the default deny rules (rule number 32767)
+                # Filter out the interal rules (rule number 32767 to 65535 )
                 ingress_rules = [
-                    rule for rule in acl['Entries'] if not rule['Egress'] and rule['RuleNumber'] != 32767
+                    rule for rule in acl['Entries'] if not rule['Egress'] and rule['RuleNumber'] <= 32767
                 ]
                 egress_rules = [
-                    rule for rule in acl['Entries'] if rule['Egress'] and rule['RuleNumber'] != 32767
+                    rule for rule in acl['Entries'] if rule['Egress'] and rule['RuleNumber'] <= 32767
                 ]
 
                 # Check for overly permissive rules in both directions
