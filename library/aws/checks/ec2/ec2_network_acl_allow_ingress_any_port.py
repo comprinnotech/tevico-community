@@ -42,19 +42,19 @@ class ec2_network_acl_allow_ingress_any_port(Check):
                 acl_allows_ingress = False
 
                 for entry in acl['Entries']:
-                    if entry['Egress']:  # Skip egress rules
-                        continue
-                    if entry.get('RuleAction') != 'allow' or entry.get('CidrBlock') != '0.0.0.0/0':
+                    # Skip egress rules
+                    if entry['Egress']:
                         continue
 
-                    # Check for full port range or all protocols
-                    port_range = entry.get('PortRange')
-                    if port_range and port_range['From'] == 0 and port_range['To'] == 65535:
-                        acl_allows_ingress = True
-                        break
-                    if entry.get('Protocol') == '-1':  # Allow all protocols
-                        acl_allows_ingress = True
-                        break
+                    # Skip if not an 'allow' rule or CIDR is not 0.0.0.0/0  
+                    if entry.get('RuleAction') != 'allow' or entry.get('CidrBlock') != '0.0.0.0/0':  
+                        continue  
+
+                    # Check for full port range or all protocols  
+                    port_range = entry.get('PortRange')  
+                    if (port_range and port_range['From'] == 0 and port_range['To'] == 65535) or entry.get('Protocol') == '-1':  
+                        acl_allows_ingress = True  
+                        break  
 
                 # Record the result for this ACL
                 if acl_allows_ingress:
