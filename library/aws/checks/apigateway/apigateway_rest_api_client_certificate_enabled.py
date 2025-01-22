@@ -27,11 +27,7 @@ class apigateway_rest_api_client_certificate_enabled(Check):
             next_token = None
 
             while True:
-                if next_token:
-                    response = client.get_rest_apis(position=next_token)
-                else:
-                    response = client.get_rest_apis()
-
+                response = client.get_rest_apis(position=next_token) if next_token else client.get_rest_apis()
                 apis.extend(response.get('items', []))
                 next_token = response.get('position', None)
 

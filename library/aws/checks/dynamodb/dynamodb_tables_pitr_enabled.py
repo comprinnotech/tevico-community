@@ -19,11 +19,7 @@ class dynamodb_tables_pitr_enabled(Check):
             next_token = None
 
             while True:
-                if next_token:
-                    response = client.list_tables(ExclusiveStartTableName=next_token)
-                else:
-                    response = client.list_tables()
-
+                response = client.list_tables(ExclusiveStartTableName=next_token) if next_token else client.list_tables()
                 tables.extend(response.get('TableNames', []))
                 next_token = response.get('LastEvaluatedTableName', None)
 

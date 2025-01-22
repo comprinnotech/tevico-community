@@ -24,18 +24,14 @@ class apigateway_restapi_logging_enabled(Check):
         try:
             # Initialize pagination for REST APIs
             apis = []
-            next_position = None
+            next_token = None
 
             while True:
-                if next_position:
-                    response = client.get_rest_apis(position=next_position)
-                else:
-                    response = client.get_rest_apis()
-
+                response = client.get_rest_apis(position=next_token) if next_token else client.get_rest_apis()
                 apis.extend(response.get('items', []))
-                next_position = response.get('position', None)
+                next_token = response.get('position', None)
 
-                if not next_position:
+                if not next_token:
                     break
 
             # Check each API and its stages for logging configuration

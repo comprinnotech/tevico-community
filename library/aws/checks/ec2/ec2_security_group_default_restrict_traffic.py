@@ -24,10 +24,7 @@ class ec2_security_group_default_restrict_traffic(Check):
             security_groups = []
             next_token = None
             while True:
-                if next_token:
-                    response = client.describe_security_groups(NextToken=next_token)
-                else:
-                    response = client.describe_security_groups()
+                response = client.describe_security_groups(NextToken=next_token) if next_token else client.describe_security_groups()
                 security_groups.extend(response.get('SecurityGroups', []))
                 next_token = response.get('NextToken')
                 if not next_token:

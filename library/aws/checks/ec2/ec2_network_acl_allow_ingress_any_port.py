@@ -25,11 +25,7 @@ class ec2_network_acl_allow_ingress_any_port(Check):
             next_token = None
 
             while True:
-                if next_token:
-                    response = client.describe_network_acls(NextToken=next_token)
-                else:
-                    response = client.describe_network_acls()
-
+                response = client.describe_network_acls(NextToken=next_token) if next_token else client.describe_network_acls()
                 acls.extend(response.get('NetworkAcls', []))
                 next_token = response.get('NextToken', None)
 

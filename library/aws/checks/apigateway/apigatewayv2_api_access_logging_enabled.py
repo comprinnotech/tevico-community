@@ -28,11 +28,7 @@ class apigatewayv2_api_access_logging_enabled(Check):
             next_token = None
 
             while True:
-                if next_token:
-                    response = client.get_apis(NextToken=next_token)
-                else:
-                    response = client.get_apis()
-
+                response = client.get_apis(NextToken=next_token) if next_token else client.get_apis()
                 apis.extend(response.get('Items', []))
                 next_token = response.get('NextToken', None)
 

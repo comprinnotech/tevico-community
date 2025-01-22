@@ -26,11 +26,7 @@ class ec2_network_acl_bidirectional_traffic_restriction_check(Check):
             next_token = None
 
             while True:
-                if next_token:
-                    response = ec2_client.describe_network_acls(NextToken=next_token)
-                else:
-                    response = ec2_client.describe_network_acls()
-
+                response = ec2_client.describe_network_acls(NextToken=next_token) if next_token else ec2_client.describe_network_acls()
                 network_acls.extend(response.get('NetworkAcls', []))
                 next_token = response.get('NextToken', None)
 
@@ -48,10 +44,10 @@ class ec2_network_acl_bidirectional_traffic_restriction_check(Check):
 
                 # Filter out the interal rules (rule number 32767 to 65535 )
                 ingress_rules = [
-                    rule for rule in acl['Entries'] if not rule['Egress'] and rule['RuleNumber'] <= 32767
+                    rule for rule in acl['Entries'] if not rule['Egress'] and rule['RuleNumber'] < 32767
                 ]
                 egress_rules = [
-                    rule for rule in acl['Entries'] if rule['Egress'] and rule['RuleNumber'] <= 32767
+                    rule for rule in acl['Entries'] if rule['Egress'] and rule['RuleNumber'] < 32767
                 ]
 
                 # Check for overly permissive rules in both directions

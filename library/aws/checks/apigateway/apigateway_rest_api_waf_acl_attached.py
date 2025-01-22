@@ -26,11 +26,7 @@ class apigateway_rest_api_waf_acl_attached(Check):
             next_token = None
 
             while True:
-                if next_token:
-                    response = apigw_client.get_rest_apis(position=next_token)
-                else:
-                    response = apigw_client.get_rest_apis()
-
+                response = apigw_client.get_rest_apis(position=next_token) if next_token else apigw_client.get_rest_apis()
                 apis.extend(response.get('items', []))
                 next_token = response.get('position', None)
 
