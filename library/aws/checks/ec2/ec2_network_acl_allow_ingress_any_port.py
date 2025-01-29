@@ -1,42 +1,66 @@
 """
 AUTHOR: Deepak Puri
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-10-09
+DATE: 2025-01-14
 """
+
 import boto3
 from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
+
 class ec2_network_acl_allow_ingress_any_port(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
         client = connection.client('ec2')
-        acls = client.describe_network_acls()['NetworkAcls']
-        
-        report.status = ResourceStatus.PASSED
 
-        for acl in acls:
-            acl_id = acl['NetworkAclId']
-            acl_allows_ingress = False
-            
-            for entry in acl['Entries']:
-                if entry['Egress']:  
-                    continue
-                if entry['RuleAction'] != 'allow' or entry['CidrBlock'] != '0.0.0.0/0':  
-                    continue
-                
-                port_range = entry.get('PortRange')
-                if port_range and port_range['From'] == 0 and port_range['To'] == 65535:  # All network ports
-                    acl_allows_ingress = True
+        # Initialize the report
+        report = CheckReport(name=__name__)
+        report.status =ResourceStatus.PASSED
+        report.resource_ids_status = {}
+
+        try:
+            # Pagination to get all network ACLs
+            acls = []
+            next_token = None
+
+            while True:
+                response = client.describe_network_acls(NextToken=next_token) if next_token else client.describe_network_acls()
+                acls.extend(response.get('NetworkAcls', []))
+                next_token = response.get('NextToken', None)
+
+                if not next_token:
                     break
-                if entry['Protocol'] == '-1':  
-                    acl_allows_ingress = True
-                    break
-            
-            report.resource_ids_status[acl_id] = not acl_allows_ingress
-            if acl_allows_ingress:
-                report.status = ResourceStatus.FAILED
-        
+
+            # Check each ACL for ingress rules allowing any port range
+            for acl in acls:
+                acl_id = acl['NetworkAclId']
+                acl_allows_ingress = False
+
+                for entry in acl['Entries']:
+                    # Skip egress rules
+                    if entry['Egress']:
+                        continue
+
+                    # Skip if not an 'allow' rule or CIDR is not 0.0.0.0/0  
+                    if entry.get('RuleAction') != 'allow' or entry.get('CidrBlock') != '0.0.0.0/0':  
+                        continue  
+
+                    # Check for full port range or all protocols  
+                    port_range = entry.get('PortRange')  
+                    if (port_range and port_range['From'] == 0 and port_range['To'] == 65535) or entry.get('Protocol') == '-1':  
+                        acl_allows_ingress = True  
+                        break  
+
+                # Record the result for this ACL
+                if acl_allows_ingress:
+                    report.resource_ids_status[f"{acl_id} allows ingress on all ports from 0.0.0.0/0"] = False
+                    report.status =ResourceStatus.FAILED
+                else:
+                    report.resource_ids_status[f"{acl_id} does not allow ingress on all ports from 0.0.0.0/0"] = True
+
+        except Exception as e:
+            report.resource_ids_status["Network ACL listing error occurred."] = False
+            report.status =ResourceStatus.FAILED
+
         return report
-

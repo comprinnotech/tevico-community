@@ -1,5 +1,5 @@
 Provider: aws
-CheckID: acl_bidirectional_traffic_restriction_check
+CheckID: ec2_network_acl_bidirectional_traffic_restriction_check
 CheckTitle: Ensure bidirectional traffic restrictions are enforced in Network ACLs.
 CheckType: [Infrastructure Protection]
 ServiceName: ec2
