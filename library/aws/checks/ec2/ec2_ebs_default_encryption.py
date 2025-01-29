@@ -25,7 +25,7 @@ class ec2_ebs_default_encryption(Check):
             # Fetch EBS default encryption status
             
             res = client.get_ebs_encryption_by_default()
-            print(res)
+
             default_encryption_enabled = res.get('EbsEncryptionByDefault', False)
 
             report.resource_ids_status['Default EBS Encryption'] = default_encryption_enabled
