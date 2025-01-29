@@ -51,7 +51,7 @@ class iam_account_maintain_current_contact_details(Check):
             # Validate each required field
             for field in required_fields:
                 if account_details.get(field):
-                    report.resource_ids_status[f"{field} is updated"] = True
+                    report.resource_ids_status[f"{field} is up to date"] = True
                 else:
                     report.resource_ids_status[f"{field} is missing or outdated"] = False
                     report.status = ResourceStatus.FAILED

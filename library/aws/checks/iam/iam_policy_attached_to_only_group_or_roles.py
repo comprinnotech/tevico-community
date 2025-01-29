@@ -40,7 +40,7 @@ class iam_policy_attached_to_only_group_or_roles(Check):
                     # If the policy is attached to users, it fails the check
                     user_list = [user['UserName'] for user in attached_users]
                     report.status = ResourceStatus.FAILED
-                    report.resource_ids_status[f"Policy {policy_name} is attached to users: {', '.join(user_list)}"] = False
+                    report.resource_ids_status[f"Policy {policy_name} is directly attached to users: {', '.join(user_list)}"] = False
                 elif attached_groups or attached_roles:
                     # If the policy is attached only to groups or roles, it passes
                     report.resource_ids_status[f"Policy {policy_name} is only attached to groups or roles"] = True

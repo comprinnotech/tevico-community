@@ -14,38 +14,45 @@ from tevico.engine.entities.check.check import Check
 class iam_user_mfa_enabled_console_access(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-        # Initialize IAM client
         client = connection.client('iam')
         report = CheckReport(name=__name__)
-
-        # Initialize report status as passed unless we find non-compliance
         report.status = ResourceStatus.PASSED
         report.resource_ids_status = {}
 
         try:
-            # Retrieve the list of IAM users
             users = client.list_users()['Users']
 
             for user in users:
                 username = user['UserName']
+                
+                # First check if user has console access
+                try:
+                    # get_login_profile raises NoSuchEntity if user has no console access
+                    client.get_login_profile(UserName=username)
+                    
+                    has_console_access = True
+                except client.exceptions.NoSuchEntityException:
+                    # User doesn't have console access, skip MFA check
+                    report.resource_ids_status[f"User: {username} does not have console access"] = True
+                    continue
+                except Exception as e:
+                    logging.error(f"Error checking login profile for user {username}: {e}")
+                    continue
 
-                # Check if the user has console access
-                response = client.list_mfa_devices(UserName=username)
-                mfa_devices = response['MFADevices']
+                # Only check MFA if user has console access
+                if has_console_access:
+                    response = client.list_mfa_devices(UserName=username)
+                    mfa_devices = response['MFADevices']
 
-                if mfa_devices:
-                    # If the user has MFA enabled, check if they have console access
-                    for mfa_device in mfa_devices:
-                        if mfa_device['EnableDate']:
-                            # User has MFA enabled and console access
-                            report.resource_ids_status[f"User {username} has MFA enabled and console access"] = True
-                else:
-                    # User does not have MFA enabled
-                    report.resource_ids_status[f"User {username} does not have MFA enabled for console access"] = False
-                    report.status = ResourceStatus.FAILED
+                    if mfa_devices:
+                        for mfa_device in mfa_devices:
+                            if mfa_device['EnableDate']:
+                                report.resource_ids_status[f"User: {username} has console access with MFA enabled"] = True
+                    else:
+                        report.resource_ids_status[f"User: {username} has console access but no MFA enabled"] = False
+                        report.status = ResourceStatus.FAILED
 
         except Exception as e:
-            # Handle errors such as network issues or IAM permission issues
             logging.error(f"Error while checking MFA for IAM users: {e}")
             report.status = ResourceStatus.FAILED
             report.resource_ids_status = {}

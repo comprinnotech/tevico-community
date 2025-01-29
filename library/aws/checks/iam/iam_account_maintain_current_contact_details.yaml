@@ -2,9 +2,6 @@
 # For better readability of the metadata file, kindly remove all the comments before using the template.
 ###################################
 
-AUTHOR: RONIT CHAUHAN 
-DATE: 2024-10-17
-
 Provider: aws
 
 CheckID: iam_account_maintain_current_contact_details

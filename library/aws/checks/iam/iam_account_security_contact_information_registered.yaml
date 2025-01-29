@@ -4,61 +4,57 @@
 
 Provider: aws
 
-# Eg: cloudformation_stacks_termination_protection_enabled
 CheckID: iam_account_security_contact_information_registered
 
-# Short title/description of the check
 CheckTitle: Ensure security contact information is registered.
 
-# Check Type
-CheckType: 
-  - "IAM"
+CheckType: [security_contact_information_check]
 
-# Service Name. Eg: cloudformation, ec2, s3, etc.
 ServiceName: account
 
-# Sub Service Name. Eg: ec2_instance, s3_bucket, etc.
-SubServiceName: ""
+SubServiceName: security_contact_details
 
-# Resource Template
-ResourceIdTemplate: arn:partition:access-recorder:region:account-id:recorder/resource-id
+ResourceIdTemplate: arn:aws:account::account-id:*
 
-# Severity of the check. Allowed values: critical, high, medium, low
-Severity: medium
+Severity: high
 
-# Resource Type. Eg: AwsCloudFormationStack, AwsEC2Instance, AwsS3Bucket, etc.
-ResourceType: Other
+ResourceType: AwsAccount
 
-# Description of the check
-Description: Ensure security contact information is registered.
+Description: Ensures that security contact information is registered and up to date for the AWS account.
 
-# Explanation of the risk associated with the check
-Risk: AWS provides customers with the option of specifying the contact information for accounts security team. It is recommended that this information be provided. Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.
+Risk: Lack of registered security contact information may result in missed notifications related to security incidents or account vulnerabilities.
 
-# Related URL for the check
 RelatedUrl: https://tevi.co
 
-# Help section on how to fix the issue
 Remediation:
   Code:
-    CLI:
-      No command available.
-    NativeIaC: ""
-    Other: "https://docs.prowler.com/checks/aws/iam-policies/iam_19#aws-console"
-    Terraform: ""
+    CLI: |
+      # Use the AWS Management Console to update your security contact details:
+      # 1. Sign in to the AWS Management Console
+      # 2. Go to the Billing & Cost Management Dashboard
+      # 3. Select your AWS account name and then My Account
+      # 4. Click Edit next to Security Contact Information
+      # 5. Enter the updated security contact details
+      # 6. Click Update to save the changes
+
+    NativeIaC: |
+      # Ensure your infrastructure as code reflects the necessary security contact details for the account.
+
+    Other: |
+      # Verify that the security contact information is properly registered in your organization's internal systems as well.
+
+    Terraform: |
+      # No specific Terraform commands; update the security contact information via the AWS Management Console.
+
   Recommendation:
-    Text:
-      Go to the My Account section and complete alternate contacts.
-    Url: https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html
+    Text: |
+      Ensure that your security contact information is up-to-date to receive notifications regarding potential threats and incidents.
+    Url: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_contact.html
 
-# Categories for the check. Eg: forensics-ready, security, etc.
-Categories: []
+Categories: [security, incident_response]
 
-# Dependencies on other checks
 DependsOn: []
 
-# Related checks
 RelatedTo: []
 
-# Side notes
-Notes: Infrastructure Protection
+Notes: Security and Incident Response
