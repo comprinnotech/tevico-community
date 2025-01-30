@@ -1,186 +1,87 @@
-"""
-AUTHOR: Mohd Asif <mohd.asif@comprinno.net>
-DATE: 2024-10-10
-"""
-
 import boto3
+import logging
 from tevico.engine.entities.report.check_model import CheckReport, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class iam_policy_allows_privilege_escalation(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
         client = connection.client('iam')
+        report = CheckReport(name=__name__)
+
+        # Initialize the report status
+        report.status = ResourceStatus.PASSED
+        report.resource_ids_status = {}
+
+        # Privilege escalation patterns
+        privilege_escalation_policies_combination = {
+            "OverPermissiveIAM": frozenset({"iam:*"}),
+            "IAMPut": frozenset({"iam:Put*"}),
+            "CreatePolicyVersion": frozenset({"iam:CreatePolicyVersion"}),
+            "SetDefaultPolicyVersion": frozenset({"iam:SetDefaultPolicyVersion"}),
+            "iam:PassRole": frozenset({"iam:PassRole"}),
+            "PassRole+EC2": frozenset({"iam:PassRole", "ec2:RunInstances"}),
+            "PassRole+CreateLambda+Invoke": frozenset({"iam:PassRole", "lambda:CreateFunction", "lambda:InvokeFunction"}),
+            "PassRole+CreateLambda+ExistingDynamo": frozenset({"iam:PassRole", "lambda:CreateFunction", "lambda:CreateEventSourceMapping"}),
+            "PassRole+CreateLambda+NewDynamo": frozenset({"iam:PassRole", "lambda:CreateFunction", "lambda:CreateEventSourceMapping", "dynamodb:CreateTable", "dynamodb:PutItem"}),
+            "PassRole+GlueEndpoint": frozenset({"iam:PassRole", "glue:CreateDevEndpoint", "glue:GetDevEndpoint"}),
+            "PassRole+CloudFormation": frozenset({"iam:PassRole", "cloudformation:CreateStack", "cloudformation:DescribeStacks"}),
+            "PassRole+DataPipeline": frozenset({"iam:PassRole", "datapipeline:CreatePipeline", "datapipeline:PutPipelineDefinition", "datapipeline:ActivatePipeline"}),
+            "iam:CreateAccessKey": frozenset({"iam:CreateAccessKey"}),
+            "iam:CreateLoginProfile": frozenset({"iam:CreateLoginProfile"}),
+            "iam:UpdateLoginProfile": frozenset({"iam:UpdateLoginProfile"}),
+            "iam:AttachUserPolicy": frozenset({"iam:AttachUserPolicy"}),
+            "iam:AttachGroupPolicy": frozenset({"iam:AttachGroupPolicy"}),
+            "iam:AttachRolePolicy": frozenset({"iam:AttachRolePolicy"}),
+            "AssumeRole+AttachRolePolicy": frozenset({"sts:AssumeRole", "iam:AttachRolePolicy"}),
+            "iam:PutGroupPolicy": frozenset({"iam:PutGroupPolicy"}),
+            "iam:PutRolePolicy": frozenset({"iam:PutRolePolicy"}),
+            "AssumeRole+PutRolePolicy": frozenset({"sts:AssumeRole", "iam:PutRolePolicy"}),
+            "iam:PutUserPolicy": frozenset({"iam:PutUserPolicy"}),
+            "iam:AddUserToGroup": frozenset({"iam:AddUserToGroup"}),
+            "iam:UpdateAssumeRolePolicy": frozenset({"iam:UpdateAssumeRolePolicy"}),
+            "AssumeRole+UpdateAssumeRolePolicy": frozenset({"sts:AssumeRole", "iam:UpdateAssumeRolePolicy"}),
+        }
 
         try:
-            # List all IAM users to check their policies
-            users = client.list_users()['Users']
-            # Define a set of actions that may indicate privilege escalation
-            privilege_escalation_actions = set()
+            # List all managed and inline policies
+            policies = client.list_policies(Scope='Local', OnlyAttached=False)['Policies']
 
-            # Get all policies to check for potential privilege escalation actions
-            paginator = client.get_paginator('list_policies')
-            for page in paginator.paginate(Scope='Local'):
-                for policy in page['Policies']:
-                    policy_version = client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['DefaultVersionId']
-                    policy_document = client.get_policy_version(PolicyArn=policy['PolicyArn'], VersionId=policy_version)['PolicyVersion']['Document']
-                    
-                    # Collect actions from each policy document
-                    for statement in policy_document.get('Statement', []):
-                        actions = statement.get('Action', [])
-                        if not isinstance(actions, list):
-                            actions = [actions]
-                        
-                        privilege_escalation_actions.update(actions)
+            for policy in policies:
+                policy_arn = policy['Arn']
+                policy_name = policy['PolicyName']
 
-            def check_policies(policies):
-                """Helper function to check policy documents for escalation actions"""
-                for policy in policies:
-                    policy_arn = policy['PolicyArn']
-                    if not self.is_custom_policy(policy_arn):  # Only check custom policies
-                        continue
+                # Get the policy document
+                policy_version = client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+                policy_document = client.get_policy_version(PolicyArn=policy_arn, VersionId=policy_version)['PolicyVersion']['Document']
 
-                    policy_version = client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
-                    policy_document = client.get_policy_version(PolicyArn=policy_arn, VersionId=policy_version)['PolicyVersion']['Document']
-                    
-                    # Check policy statements for actions that allow privilege escalation
-                    for statement in policy_document.get('Statement', []):
-                        actions = statement.get('Action', [])
-                        if not isinstance(actions, list):
-                            actions = [actions]
-                        
-                        for action in actions:
-                            if action in privilege_escalation_actions:
-                                return True  # Privilege escalation action found
-                return False
+                # Check statements in the policy
+                statements = policy_document.get('Statement', [])
+                if not isinstance(statements, list):
+                    statements = [statements]  # Ensure it's a list for single statements
 
-            # Check users for privilege escalation policies
-            for user in users:
-                username = user['UserName']
-                attached_policies = client.list_attached_user_policies(UserName=username)['AttachedPolicies']
-                inline_policies = client.list_user_policies(UserName=username)['PolicyNames']
-                
-                if check_policies(attached_policies):
-                    report.resource_ids_status[username] = True
-                else:
-                    report.resource_ids_status[username] = False
+                for statement in statements:
+                    actions = statement.get('Action', [])
+                    resources = statement.get('Resource', '*')
+                    if isinstance(actions, str):
+                        actions = [actions]  # Convert single action to a list
 
-            # Set overall check status
-            # report.status = not any(report.resource_ids_status.values())
-            if not any(report.resource_ids_status.values()):
-                report.status = ResourceStatus.FAILED
-            else:
-                report.status = ResourceStatus.PASSED
-        
+                    # Match privilege escalation actions
+                    matched_combinations = []
+                    for comb_name, comb_actions in privilege_escalation_policies_combination.items():
+                        if set(actions) & comb_actions:
+                            matched_combinations.append(comb_name)
+
+                    # Update the report based on matched combinations
+                    if matched_combinations:
+                        report.status = ResourceStatus.FAILED
+                        report.resource_ids_status[f"Policy '{policy_name}' allows privilege escalation with combinations: {matched_combinations}"] = False
+                    else:
+                        report.resource_ids_status[f"Policy '{policy_name}' does not allow privilege escalation"] = True
+
         except Exception as e:
+            logging.error(f"Error while checking privilege escalation in policies: {e}")
             report.status = ResourceStatus.FAILED
-        
+            report.resource_ids_status["Error occurred while checking privilege escalation"] = False
+
         return report
-
-    def is_custom_policy(self, policy_arn):
-        """Check if a policy is custom by examining the ARN"""
-        return not policy_arn.startswith('arn:aws:iam::aws:policy/')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
