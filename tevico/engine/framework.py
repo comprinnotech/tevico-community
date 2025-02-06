@@ -306,7 +306,10 @@ class TevicoFramework():
         print('\nReport Overview:')
         print(f'#️⃣ Total    : {analytics_report.check_status.total}')
         print(f'✅ Passed  : {analytics_report.check_status.passed}')
-        print(f'❌ Failed   : {analytics_report.check_status.failed}')
+        print(f'❌ Failed  : {analytics_report.check_status.failed}')
+        print(f'⏩ Skipped : {analytics_report.check_status.skipped}')
+        print(f'⚠️ Not Applicable: {analytics_report.check_status.not_applicable}')
+        print(f'❓ Unknown : {analytics_report.check_status.unknown}')
         
         print('\n🛠️  Building zipped package')
         

@@ -11,8 +11,14 @@ def __check_status_accumulator(acc: CheckStatusReport, check: CheckReport):
     acc.total += 1
     if check.status is CheckStatus.PASSED:
         acc.passed += 1
-    else:
+    elif check.status is CheckStatus.FAILED:
         acc.failed += 1
+    elif check.status is CheckStatus.SKIPPED:
+        acc.skipped += 1
+    elif check.status is CheckStatus.NOT_APPLICABLE:
+        acc.not_applicable += 1
+    else:
+        acc.unknown += 1
     return acc
 
 def __severity_accumulator(acc: SeverityReport, check: CheckReport):

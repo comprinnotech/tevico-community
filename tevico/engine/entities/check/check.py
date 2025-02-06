@@ -26,8 +26,8 @@ class Check(ABC):
         # Set the check status based on resource_ids_status
         if check_report.has_failed_resources():
             check_report.status = CheckStatus.FAILED
-        else:
-            check_report.status = CheckStatus.PASSED
+        # else:
+        #     check_report.status = CheckStatus.PASSED
         return check_report
     
     @abstractmethod
