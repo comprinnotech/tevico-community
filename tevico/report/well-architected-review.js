@@ -28,6 +28,26 @@ const renderDOM = ({ warDetails, reportsData }) => {
 
     const createTableRow = (checkData, index) => {
         const row = document.createElement('tr');
+        let statusHtml = '';
+        switch (checkData.status) {
+            case 'passed':
+                statusHtml = `<span class="badge bg-softer-success">Passed</span>`;
+                break;
+            case 'failed':
+                statusHtml = `<span class="badge bg-softer-danger">Failed</span>`;
+                break;
+            case 'skipped':
+                statusHtml = `<span class="badge bg-softer-warning">Skipped</span>`;
+                break;
+            case 'not_applicable':
+                statusHtml = `<span class="badge bg-softer-info">Not Applicable</span>`;
+                break;
+            case 'unknown':
+                statusHtml = `<span class="badge bg-softer-secondary">Unknown</span>`;
+                break;
+            default:
+                statusHtml = '-';
+        }
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${checkData.check_metadata.check_title}</td>
@@ -35,7 +55,7 @@ const renderDOM = ({ warDetails, reportsData }) => {
             <td>${checkData.check_metadata.service_name}</td>
             <td>${checkData.section}</td>
             <td>
-                ${checkData.passed ? '<span class="badge bg-softer-success">Passed</span>' : '<span class="badge bg-softer-danger">Failed</span>'}
+                ${statusHtml}
             </td>
             <td><a href="check-details.html?id=${checkData.name}&from=war" class="btn btn-primary btn-sm">View Details</a></td>
         `;

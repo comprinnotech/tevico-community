@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function displayCheckDetails(report) {
-    const { check_metadata: meta = {}, resource_ids_status, passed: status } = report;
+    const { check_metadata: meta = {}, resource_ids_status, status } = report;
 
     updateMetadataElements({ meta, report, status });
 
@@ -57,6 +57,25 @@ function updateMetadataElements({ meta, report, status }) {
             const statusValue = status ? 'Passed' : 'Failed';
             const badgeClass = status ? 'bg-softer-success' : 'bg-softer-danger';
             element.innerHTML = `<span class="badge ${badgeClass}">${statusValue}</span>`;
+            switch (value) {
+                case 'passed':
+                    element.innerHTML = `<span class="badge bg-softer-success">Passed</span>`;
+                    break;
+                case 'failed':
+                    element.innerHTML = `<span class="badge bg-softer-danger">Failed</span>`;
+                    break;
+                case 'skipped':
+                    element.innerHTML = `<span class="badge bg-softer-warning">Skipped</span>`;
+                    break;
+                case 'not_applicable':
+                    element.innerHTML = `<span class="badge bg-softer-info">Not Applicable</span>`;
+                    break;
+                case 'unknown':
+                    element.innerHTML = `<span class="badge bg-softer-secondary">Unknown</span>`;
+                    break;
+                default:
+                    element.textContent = '-';
+            }
         }
     };
 
@@ -80,7 +99,8 @@ function updateMetadataElements({ meta, report, status }) {
 function createResourceStatusTable(resource_ids_status) {
     const headers = [
         { label: '#', key: '#' },
-        { label: 'Resource', key: 'resource' },
+        { label: 'Resource ARN', key: 'resource' },
+        { label: 'Details', key: 'summary' },
         { label: 'Status', key: 'status' }
     ];
 
@@ -115,13 +135,13 @@ function createTableBody(resource_ids_status, headers) {
     const tbody = document.createElement('tbody');
     tbody.className = 'table-tbody';
 
-    Object.entries(resource_ids_status).forEach((item, index) => {
-        const [resource, status] = item;
+    resource_ids_status.forEach((item, index) => {
+        const { exception = "", resource: { arn = "-" }, status, summary = "" } = item;
         const row = document.createElement('tr');
 
         headers.forEach(header => {
             const td = document.createElement('td');
-            td.innerHTML = getCellContent(header.key, { resource, status, index });
+            td.innerHTML = getCellContent(header.key, { resource: arn, status, index, summary, exception: exception || '' });
 
             if (header.key === '#') {
                 td.className = 'row-index';
@@ -138,7 +158,7 @@ function createTableBody(resource_ids_status, headers) {
     return tbody;
 }
 
-function getCellContent(key, { resource, status, index }) {
+function getCellContent(key, { resource, status, index, summary, exception }) {
     switch (key) {
         case 'status':
             return formatStatus(status);
@@ -146,27 +166,33 @@ function getCellContent(key, { resource, status, index }) {
             return index + 1;
         case 'resource':
             return resource;
+        case 'summary':
+            return exception ? `
+                <p style="margin-bottom: 0">${summary}</p>
+                <p style="margin-bottom: 0; margin-top: 1rem;">${exception}</p>
+            ` : '<p style="margin-bottom: 0">' + summary + '</p>';
         default:
             return '';
     }
 }
 
 function formatStatus(status) {
-    if (typeof status === 'boolean') {
-        const statusValue = status ? 'Passed' : 'Failed';
-        const badgeClass = status ? 'bg-softer-success' : 'bg-softer-danger';
-        return `<span class="badge ${badgeClass}">${statusValue}</span>`;
+    switch (status) {
+        case 'passed':
+            return `<span class="badge bg-softer-success">Passed</span>`;
+        case 'failed':
+            return `<span class="badge bg-softer-danger">Failed</span>`;
+        case 'skipped':
+            return `<span class="badge bg-softer-warning">Skipped</span>`;
+        case 'not_applicable':
+            return `<span class="badge bg-softer-info">Not Applicable</span>`;
+        case 'unknown':
+            return `<span class="badge bg-softer-secondary">unknown</span>`;
+        default:
+            return `<span>-</span>`;
     }
-
-    if (typeof status === 'string') {
-        const urlPattern = /^(https?:\/\/)/i;
-        return urlPattern.test(status)
-            ? `<a href="${status}" class="status-link" target="_blank" rel="noopener noreferrer">${status}</a>`
-            : `<span class="status-text">${status}</span>`;
-    }
-
-    return `<span class="status-text">${String(status)}</span>`;
 }
+
 
 function wrapInCard(element) {
     const card = document.createElement('div');

@@ -340,10 +340,30 @@ function createDynamicTable({ reportsData }) {
                     break;
                 case 'status':
                     td.className = `sort-${header.key}`;
-                    const statusValue = item.passed ? 'Passed' : 'Failed';
-                    const badgeClass = item.passed ? 'bg-softer-success' : 'bg-softer-danger';
-                    td.setAttribute('data-status', statusValue);
-                    td.innerHTML = `<span class="badge ${badgeClass}">${statusValue}</span>`;
+                    switch (item.status) {
+                        case 'passed':
+                            td.setAttribute('data-status', 'Passed');
+                            td.innerHTML = `<span class="badge bg-softer-success">Passed</span>`;
+                            break;
+                        case 'failed':
+                            td.setAttribute('data-status', 'Failed');
+                            td.innerHTML = `<span class="badge bg-softer-danger">Failed</span>`;
+                            break;
+                        case 'skipped':
+                            td.setAttribute('data-status', 'Skipped');
+                            td.innerHTML = `<span class="badge bg-softer-warning">Skipped</span>`;
+                            break;
+                        case 'not_applicable':
+                            td.setAttribute('data-status', 'Not Applicable');
+                            td.innerHTML = `<span class="badge bg-softer-info">Not Applicable</span>`;
+                            break;
+                        case 'unknown':
+                            td.setAttribute('data-status', 'Unknown');
+                            td.innerHTML = `<span class="badge bg-softer-secondary">unknown</span>`;
+                            break;
+                        default:
+                            td.innerHTML = `<span>-</span>`;
+                    }
                     break;
                 case '#':
                     td.className = 'row-index';

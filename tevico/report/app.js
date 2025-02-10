@@ -5,10 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function updateUI(reportsData, analyticsData) {
 
-    const reports = reportsData.filter(
-        (check) => check.check_metadata.severity === "critical",
-    )
-
     try {
         if (!analyticsData?.check_status) {
             throw new Error('Invalid data structure');
@@ -114,16 +110,16 @@ function updateUI(reportsData, analyticsData) {
             console.warn(`Element with ID "${id}" not found`);
         }
 
-        createDynamicTable({ reportsData, passed: true, limit: 5, containerId: 'passedChecksTableContainer' })
-        createDynamicTable({ reportsData, passed: false, limit: 5, containerId: 'failedChecksTableContainer' })
+        createDynamicTable({ reportsData, status: 'passed', limit: 5, containerId: 'passedChecksTableContainer' })
+        createDynamicTable({ reportsData, status: 'failed', limit: 5, containerId: 'failedChecksTableContainer' })
 
     } catch (error) {
         console.error('Error updating UI:', error);
     }
 }
 
-function createDynamicTable({ reportsData, passed, limit, containerId }) {
-    const criticalFailingChecks = reportsData.filter(d => d.check_metadata.severity === 'critical' && (d.passed === passed)).slice(0, limit);
+function createDynamicTable({ reportsData, status, limit, containerId }) {
+    const criticalFailingChecks = reportsData.filter(d => d.check_metadata.severity === 'critical' && (d.status === status)).slice(0, limit);
     const headersArray = [{ label: 'section', key: 'section' }, { label: 'check', key: 'check_metadata.check_title' }, { label: 'severity', key: 'check_metadata.severity' }, { label: 'service', key: 'check_metadata.service_name' }]
 
     const table = document.createElement('table');
