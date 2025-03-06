@@ -1,30 +1,38 @@
 """
 AUTHOR: Sheikh Aafaq Rashid
 EMAIL: aafaq.rashid@comprinno.net
-DATE: 2025-1-7
+DATE: 2025-01-14
 """
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
-
 
 class iam_inline_policy_admin_privileges_found(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-        """
-        Check IAM users, groups, and roles for inline policies with administrative privileges.
-
-        :param connection: boto3 session
-        :return: CheckReport
-        """
-        # Initialize IAM client
         client = connection.client('iam')
+        sts_client = connection.client('sts')
 
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.PASSED  # Default to passed until an admin inline policy is found
+        report.status = CheckStatus.NOT_APPLICABLE  # Default to NOT_APPLICABLE
         report.resource_ids_status = []
+
+        try:
+            account_id = sts_client.get_caller_identity()["Account"]  # Get AWS Account ID
+        except (BotoCoreError, ClientError) as e:
+            report.status = CheckStatus.ERRORED
+            report.report_metadata = {"error": "Failed to retrieve AWS account ID."}
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name="AWS Account"),
+                    status=CheckStatus.ERRORED,
+                    summary="Failed to retrieve AWS account ID.",
+                    exception=str(e)
+                )
+            )
+            return report  # Exit early since we cannot construct ARNs
 
         def has_admin_privileges(policy_document):
             """Check if the policy document grants admin privileges."""
@@ -40,101 +48,92 @@ class iam_inline_policy_admin_privileges_found(Check):
                     return True
             return False
 
-        def process_entities(entity_type, list_func, policy_list_func, policy_get_func, name_key):
-            """
-            Generic function to process users, groups, or roles for inline policies.
+        def check_inline_policies(entity_name, entity_type, list_policies_func, get_policy_func):
+            """Helper function to check inline policies for a user, group, or role"""
+            resource = AwsResource(arn=f"arn:aws:iam::{account_id}:{entity_type}/{entity_name}")
+            policy_names = list_policies_func(entity_name)
 
-            :param entity_type: Entity type ('User', 'Group', 'Role')
-            :param list_func: Function to list entities
-            :param policy_list_func: Function to list policies for the entity
-            :param policy_get_func: Function to get a policy document
-            :param name_key: Key to extract the entity name
-            """
-            try:
-                paginator = client.get_paginator(list_func)
-                for page in paginator.paginate():
-                    for entity in page[entity_type + 's']:
-                        entity_name = entity[name_key]
-                        failed_policies = []  # List to store failed policy names
+            if not policy_names:
+                return  # No inline policies found
 
-                        try:
-                            policies = client.__getattribute__(policy_list_func)(
-                                **{entity_type + 'Name': entity_name}
-                            )['PolicyNames']
-
-                            # Check each policy for admin privileges
-                            for policy_name in policies:
-                                policy_document = client.__getattribute__(policy_get_func)(
-                                    **{entity_type + 'Name': entity_name, 'PolicyName': policy_name}
-                                )['PolicyDocument']
-
-
-                                if has_admin_privileges(policy_document):
-                                    # Add the failed policy name to the list
-                                    failed_policies.append(policy_name)
-                                    report.status = CheckStatus.FAILED
-
-                            # If there were failed policies, store them as a comma-separated list
-                            if failed_policies:
-                                # Store the status as False and append policy names
-                                report.resource_ids_status.append(
-                                    ResourceStatus(
-                                        resource=GeneralResource(name=""),
-                                        status=CheckStatus.FAILED,
-                                        summary=f"{entity_type}::{entity_name} has inline policy {', '.join(failed_policies)} with full administrative privileges."
-                                    )
-                                )
-                                
-                            # If no failed policies, store the success status as True
-                            elif f"{entity_type}::{entity_name}" not in report.resource_ids_status:
-                                report.resource_ids_status.append(
-                                    ResourceStatus(
-                                        resource=GeneralResource(name=""),
-                                        status=CheckStatus.FAILED,
-                                        summary=f"{entity_type}::{entity_name} has not any inline policy with full administrative privileges."
-                                    )
-                                )
-
-
-                        except (BotoCoreError, ClientError):
-                            # Mark as fail on error and add to the status
-                            report.status = CheckStatus.FAILED
-                            report.resource_ids_status.append(
-                                ResourceStatus(
-                                    resource=GeneralResource(name=""),
-                                    status=CheckStatus.FAILED,
-                                    summary=f"Error fetching {entity_type}::{entity_name}."
-                                )
+            for policy_name in policy_names:
+                try:
+                    policy_document = get_policy_func(entity_name, policy_name).get('PolicyDocument', {})
+                    if has_admin_privileges(policy_document):
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=resource,
+                                status=CheckStatus.FAILED,
+                                summary=f"{entity_type.capitalize()} '{entity_name}' has an inline policy '{policy_name}' granting admin-level privileges."
                             )
-            except (BotoCoreError, ClientError):
-                report.status = CheckStatus.FAILED
+                        )
+                        report.status = CheckStatus.FAILED
+                        # return  # Stop checking further policies if admin privileges are found
+                except (BotoCoreError, ClientError) as e:
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=resource,
+                            status=CheckStatus.ERRORED,
+                            summary=f"Error retrieving inline policy '{policy_name}' for {entity_type} '{entity_name}'.",
+                            exception=str(e)
+                        )
+                    )
+                    report.status = CheckStatus.ERRORED
 
-        # Process IAM users, groups, and roles
-        process_entities(
-            entity_type='User',
-            list_func='list_users',
-            policy_list_func='list_user_policies',
-            policy_get_func='get_user_policy',
-            name_key='UserName'
-        )
-        # Uncomment and extend to process groups and roles
-        # process_entities(
-        #     entity_type='Group',
-        #     list_func='list_groups',
-        #     policy_list_func='list_group_policies',
-        #     policy_get_func='get_group_policy',
-        #     name_key='GroupName'
-        # )
-        # process_entities(
-        #     entity_type='Role',
-        #     list_func='list_roles',
-        #     policy_list_func='list_role_policies',
-        #     policy_get_func='get_role_policy',
-        #     name_key='RoleName'
-        # )
-        # If any failure was found, the check should fail
-        #if any(status is False for status in report.resource_ids_status.values()):
-        #    report.status = CheckStatus.FAILED  # Ensure this is a boolean
+        try:
+            found_policies = False
+
+            # Check IAM Users
+            paginator = client.get_paginator('list_users')
+            for page in paginator.paginate():
+                for user in page.get('Users', []):
+                    check_inline_policies(
+                        user['UserName'], 'user',
+                        lambda u: client.list_user_policies(UserName=u).get('PolicyNames', []),
+                        lambda u, p: client.get_user_policy(UserName=u, PolicyName=p)
+                    )
+                    found_policies = True
+
+            # # Check IAM Roles
+            # paginator = client.get_paginator('list_roles')
+            # for page in paginator.paginate():
+            #     for role in page.get('Roles', []):
+            #         check_inline_policies(
+            #             role['RoleName'], 'role',
+            #             lambda r: client.list_role_policies(RoleName=r).get('PolicyNames', []),
+            #             lambda r, p: client.get_role_policy(RoleName=r, PolicyName=p)
+            #         )
+            #         found_policies = True
+
+            if not found_policies:
+                report.status = CheckStatus.SKIPPED
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="AWS IAM"),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No inline policies found."
+                    )
+                )
+            elif report.status == CheckStatus.NOT_APPLICABLE:
+                report.status = CheckStatus.PASSED
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="AWS IAM"),
+                        status=CheckStatus.PASSED,
+                        summary="Inline policies found, but none grant admin privileges."
+                    )
+                )
+
+        except (BotoCoreError, ClientError) as e:
+            report.status = CheckStatus.ERRORED
+            report.report_metadata = {"error": str(e)}
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name="AWS IAM"),
+                    status=CheckStatus.ERRORED,
+                    summary="Error occurred while checking inline admin policies.",
+                    exception=str(e)
+                )
+            )
 
         return report
- 
