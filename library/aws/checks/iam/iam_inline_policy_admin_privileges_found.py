@@ -16,7 +16,6 @@ class iam_inline_policy_admin_privileges_found(Check):
         sts_client = connection.client('sts')
 
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.NOT_APPLICABLE  # Default to NOT_APPLICABLE
         report.resource_ids_status = []
 
         try:
@@ -94,19 +93,19 @@ class iam_inline_policy_admin_privileges_found(Check):
                     )
                     found_policies = True
 
-            # # Check IAM Roles
-            # paginator = client.get_paginator('list_roles')
-            # for page in paginator.paginate():
-            #     for role in page.get('Roles', []):
-            #         check_inline_policies(
-            #             role['RoleName'], 'role',
-            #             lambda r: client.list_role_policies(RoleName=r).get('PolicyNames', []),
-            #             lambda r, p: client.get_role_policy(RoleName=r, PolicyName=p)
-            #         )
-            #         found_policies = True
+            # Check IAM Roles
+            paginator = client.get_paginator('list_roles')
+            for page in paginator.paginate():
+                for role in page.get('Roles', []):
+                    check_inline_policies(
+                        role['RoleName'], 'role',
+                        lambda r: client.list_role_policies(RoleName=r).get('PolicyNames', []),
+                        lambda r, p: client.get_role_policy(RoleName=r, PolicyName=p)
+                    )
+                    found_policies = True
 
             if not found_policies:
-                report.status = CheckStatus.SKIPPED
+                report.status = CheckStatus.NOT_APPLICABLE
                 report.resource_ids_status.append(
                     ResourceStatus(
                         resource=GeneralResource(name="AWS IAM"),
@@ -114,7 +113,7 @@ class iam_inline_policy_admin_privileges_found(Check):
                         summary="No inline policies found."
                     )
                 )
-            elif report.status == CheckStatus.NOT_APPLICABLE:
+            else:
                 report.status = CheckStatus.PASSED
                 report.resource_ids_status.append(
                     ResourceStatus(
