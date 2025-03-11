@@ -8,31 +8,31 @@ Provider: aws
 CheckID: iam_account_security_contact_information_registered
 
 # Short title/description of the check
-CheckTitle: Check for Attached Administrator Policies
+CheckTitle: Ensure security contact information is registered
 
 # Check Type
 CheckType: []
 
 # Service Name. Eg: cloudformation, ec2, s3, etc.
-ServiceName: iam
+ServiceName: account
 
 # Sub Service Name. Eg: ec2_instance, s3_bucket, etc.
-SubServiceName: IAM User and Role Policies
+SubServiceName: contact_details
 
 # Resource Template
-ResourceIdTemplate: arn:aws:iam::account-id:user/resource-id
+ResourceIdTemplate: arn:aws:account::account-id:*
 
 # Severity of the check. Allowed values: critical, high, medium, low
-Severity: high
+Severity: medium
 
 # Resource Type. Eg: AwsCloudFormationStack, AwsEC2Instance, AwsS3Bucket, etc.
-ResourceType: AwsIAMUser
+ResourceType: AwsAccount
 
 # Description of the check
-Description: Ensures that no IAM user or role has an Administrator policy attached.
+Description: Ensure security contact information is registered.
 
 # Explanation of the risk associated with the check
-Risk: Attaching administrative privileges to users and roles increases the security risk.
+Risk: AWS provides customers with the option of specifying the contact information for accounts security team. It is recommended that this information be provided. Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.
 
 # Related URL for the check
 RelatedUrl: https://tevi.co
@@ -40,18 +40,33 @@ RelatedUrl: https://tevi.co
 # Help section on how to fix the issue
 Remediation:
   Code:
-    CLI:
-      aws iam detach-user-policy --user-name <user-name> --policy-arn <policy-arn>
-    NativeIaC: ""
-    Other: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html
-    Terraform: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policies-attach
+    CLI: |
+      # Use the AWS Management Console to update your contact details:
+      # 1. Sign in to the AWS Management Console
+      # 2. Go to the Billing & Cost Management Dashboard
+      # 3. Select your AWS account name and then My Account
+      # 4. Click add on Security contact under Alternate contacts 
+      # 5. Enter your updated Security contact information 
+      # 6. Click Update to save the changes
+
+    NativeIaC: |
+      # Ensure your infrastructure as code is updated with the correct Security contact information.
+
+    Other: |
+      # Verify that all relevant contacts are updated in your organization’s internal systems as well.
+
+    Terraform: |
+      # No specific Terraform commands; update Security contact information via AWS Management Console.
+
   Recommendation:
-    Text:
-      Regularly audit IAM policies and remove any unnecessary Administrator permissions. Use IAM best practices to define least privilege access.
-    Url: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+    Text: |
+      Enable automated backup for production data. Define a retention period and
+      periodically test backup restoration. A Disaster Recovery process should be
+      in place to govern Data Protection approach.
+    Url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html
 
 # Categories for the check. Eg: forensics-ready, security, etc.
-Categories: []
+Categories: [infrastructure_protection, security]
 
 # Dependencies on other checks
 DependsOn: []
