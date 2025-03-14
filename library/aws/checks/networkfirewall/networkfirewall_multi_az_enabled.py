@@ -1,88 +1,95 @@
 """
-AUTHOR: SUPRIYO BHAKAT
-EMAIL: supriyo.bhakat@comprinno.net
-DATE: 2024-11-08
+AUTHOR: deepak-puri-comprinno
+EMAIL: deepak.puri@comprinno.net
+DATE: 2025-03-13
 """
-
 import boto3
-from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
 class networkfirewall_multi_az_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('network-firewall')
+        # Initialize Network Firewall client
+        client = connection.client("network-firewall")
         report = CheckReport(name=__name__)
         report.status = CheckStatus.PASSED
         report.resource_ids_status = []
 
         try:
-            firewalls = client.list_firewalls().get('Firewalls', [])
+            # Pagination for listing all firewalls
+            firewalls = []
+            next_token = None
 
+            while True:
+                response = client.list_firewalls(NextToken=next_token) if next_token else client.list_firewalls()
+                firewalls.extend(response.get("Firewalls", []))
+                next_token = response.get("NextToken")
+
+                if not next_token:
+                    break
+
+            # If no firewalls exist, mark as NOT_APPLICABLE
             if not firewalls:
                 report.status = CheckStatus.NOT_APPLICABLE
                 report.resource_ids_status.append(
                     ResourceStatus(
                         resource=GeneralResource(name=""),
                         status=CheckStatus.NOT_APPLICABLE,
-                        summary="No Network Firewall resources found."
+                        summary="No Network Firewall resources found.",
                     )
                 )
                 return report
 
+            # Check each firewall for Multi-AZ configuration
             for firewall_info in firewalls:
-                firewall_name = firewall_info['FirewallName']
+                # Fetch firewall details
+                firewall_name = firewall_info["FirewallName"]
                 firewall_details = client.describe_firewall(FirewallName=firewall_name)
-                firewall_arn = firewall_details['Firewall']['FirewallArn']
+                firewall_arn = firewall_details["Firewall"]["FirewallArn"]
 
                 try:
-                    
-                    subnet_mappings = firewall_details['Firewall'].get('SubnetMappings', [])
-
+                    subnet_mappings = firewall_details["Firewall"].get("SubnetMappings", [])
                     is_multi_az = len(subnet_mappings) > 1
 
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=AwsResource(arn=firewall_arn),
-                            status=CheckStatus.PASSED if is_multi_az else CheckStatus.FAILED,
-                            summary=f"Multi-AZ {'enabled' if is_multi_az else 'not enabled'} for {firewall_name}."
-                        )
-                    )
-
-                    if not is_multi_az:
+                    if is_multi_az:
+                        summary = f"Multi-AZ is enabled for Network Firewall {firewall_name}."
+                        status = CheckStatus.PASSED
+                    else:
+                        summary = f"Multi-AZ is not enabled for Network Firewall {firewall_name}."
+                        status = CheckStatus.FAILED
                         report.status = CheckStatus.FAILED  # At least one firewall is non-compliant
 
-                except client.exceptions.ResourceNotFoundException as e:
+                    # Append result to report
                     report.resource_ids_status.append(
                         ResourceStatus(
                             resource=AwsResource(arn=firewall_arn),
-                            status=CheckStatus.FAILED,
-                            summary=f"Firewall {firewall_name} not found.",
-                            exception=str(e)
+                            status=status,
+                            summary=summary,
                         )
                     )
-                    report.status = CheckStatus.FAILED
 
-                except ClientError as e:
+
+                except Exception as e:
                     report.resource_ids_status.append(
                         ResourceStatus(
                             resource=AwsResource(arn=firewall_arn),
-                            status=CheckStatus.FAILED,
-                            summary=f"Error retrieving firewall details for {firewall_name}: {str(e)}",
-                            exception=str(e)
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error retrieving firewall details for {firewall_name}.",
+                            exception=str(e),
                         )
                     )
-                    report.status = CheckStatus.FAILED
+                    report.status = CheckStatus.UNKNOWN
 
-        except ClientError as e:
-            report.status = CheckStatus.FAILED
+        except Exception as e:
+            # Handle errors in firewall listing
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
-                    summary=f"Error retrieving firewall list: {str(e)}",
-                    exception=str(e)
+                    status=CheckStatus.UNKNOWN,
+                    summary="Error retrieving firewall list.",
+                    exception=str(e),
                 )
             )
 
