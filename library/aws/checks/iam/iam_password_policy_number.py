@@ -1,56 +1,77 @@
 """
-AUTHOR: Supriyo Bhakat <supriyo.bhakat@comprinno.net>
-DATE: 2024-10-10
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-31
 """
 
 import boto3
-
+from botocore.exceptions import BotoCoreError, ClientError
 from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
+
 
 class iam_password_policy_number(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
         report.resource_ids_status = []
+
         try:
+            # Create an IAM client using the provided boto3 session
             client = connection.client('iam')
+
+            # Fetch the account's IAM password policy
             account_password_policy = client.get_account_password_policy()
             password_policy = account_password_policy['PasswordPolicy']
-            requires_number = password_policy.get('RequireNumbers', False)
-            
-            status = CheckStatus.PASSED
-            summary = 'Password contains a number as a good practice.'
-            
-            if requires_number:
-                status = CheckStatus.FAILED
-                summary = 'Password does not contain a number as a good practice.'
 
-            report.status = status
+            # Check if passwords require at least one numeric character
+            require_numbers = password_policy.get('RequireNumbers', False)
+
+            if require_numbers:
+                report.status = CheckStatus.PASSED
+                summary_msg = "Password policy requires at least one numeric character."
+            else:
+                report.status = CheckStatus.FAILED
+                summary_msg = "Password policy does NOT enforce at least one numeric character."
+
             report.resource_ids_status.append(
                 ResourceStatus(
-                    resource=GeneralResource(name='password_policy'),
-                    status=status,
-                    summary=summary
+                    resource=GeneralResource(name="password_policy"),
+                    status=report.status,
+                    summary=summary_msg
                 )
             )
 
-        except client.exceptions.NoSuchEntityException as e:
+        except client.exceptions.NoSuchEntityException:
+            # No password policy exists
+            report.status = CheckStatus.FAILED
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name="password_policy"),
+                    status=CheckStatus.FAILED,
+                    summary="No password policy found. It is recommended to enforce password policies requiring at least one numeric character."
+                )
+            )
+
+        except (BotoCoreError, ClientError) as e:
+            # Handle AWS API errors
             report.status = CheckStatus.ERRORED
             report.resource_ids_status.append(
                 ResourceStatus(
-                    resource=GeneralResource(name='password_policy'),
-                    status=CheckStatus.ERRORED,
-                    summary='No such entity exception was found during the execution of this check.',
+                    resource=GeneralResource(name="password_policy"),
+                    status=CheckStatus.UNKNOWN,
+                    summary="Error occurred while fetching the password policy.",
                     exception=str(e)
                 )
             )
+
         except Exception as e:
+            # Catch-all for unexpected errors
             report.status = CheckStatus.ERRORED
             report.resource_ids_status.append(
                 ResourceStatus(
-                    resource=GeneralResource(name='password_policy'),
-                    status=CheckStatus.ERRORED,
-                    summary='An unknown error occurred during the execution of this check.',
+                    resource=GeneralResource(name="password_policy"),
+                    status=CheckStatus.UNKNOWN,
+                    summary="Unhandled exception occurred while checking the password policy.",
                     exception=str(e)
                 )
             )
