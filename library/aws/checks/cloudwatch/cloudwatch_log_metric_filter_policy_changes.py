@@ -5,91 +5,91 @@ DATE: 2025-01-13
 """
 
 import boto3
-import logging
 import re
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+from botocore.exceptions import BotoCoreError, ClientError
+
+from tevico.engine.entities.report.check_model import (
+    CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+)
 from tevico.engine.entities.check.check import Check
 
 
 class cloudwatch_log_metric_filter_policy_changes(Check):
-    
     def execute(self, connection: boto3.Session) -> CheckReport:
-        # Initialize CloudWatch client
-        client = connection.client('logs')
-        
+        logs_client = connection.client('logs')
         report = CheckReport(name=__name__)
-        
-        # Initialize report status as 'Passed' unless we find a missing filter
-        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
 
-        # Define the custom pattern for IAM policy changes (Put/Attach/Delete actions)
-        pattern = r"\$\.eventName\s*=\s*.?DeleteGroupPolicy.+\$\.eventName\s*=\s*.?DeleteRolePolicy.+\$\.eventName\s*=\s*.?DeleteUserPolicy.+\$\.eventName\s*=\s*.?PutGroupPolicy.+\$\.eventName\s*=\s*.?PutRolePolicy.+\$\.eventName\s*=\s*.?PutUserPolicy.+\$\.eventName\s*=\s*.?CreatePolicy.+\$\.eventName\s*=\s*.?DeletePolicy.+\$\.eventName\s*=\s*.?CreatePolicyVersion.+\$\.eventName\s*=\s*.?DeletePolicyVersion.+\$\.eventName\s*=\s*.?AttachRolePolicy.+\$\.eventName\s*=\s*.?DetachRolePolicy.+\$\.eventName\s*=\s*.?AttachUserPolicy.+\$\.eventName\s*=\s*.?DetachUserPolicy.+\$\.eventName\s*=\s*.?AttachGroupPolicy.+\$\.eventName\s*=\s*.?DetachGroupPolicy.?"
-        
         try:
-            # Get all log groups in the account
             log_groups = []
             next_token = None
 
             while True:
-                # Fetch log groups with pagination
-                response = client.describe_log_groups(nextToken=next_token) if next_token else client.describe_log_groups()
+                response = logs_client.describe_log_groups(nextToken=next_token) if next_token else logs_client.describe_log_groups()
                 log_groups.extend(response.get('logGroups', []))
-                next_token = response.get('nextToken', None)
-
+                next_token = response.get('nextToken')
                 if not next_token:
                     break
 
-            # Track if any log group has a matching filter
-            any_matching_filter_found = False
-
-            # Check for Metric Filters for policy changes in each log group
-            for log_group in log_groups:
-                log_group_name = log_group['logGroupName']
-                log_group_arn = log_group['arn']
-                
-                # Fetch metric filters for the log group
-                filters = client.describe_metric_filters(logGroupName=log_group_name)
-                
-                # Look for filters related to IAM policy changes with the custom pattern
-                matching_filters = []
-                for filter in filters.get('metricFilters', []):
-                    filter_pattern = filter.get('filterPattern', '')
-                    # Check if the filter pattern matches the custom pattern for policy changes
-                    if re.search(pattern, filter_pattern):
-                        matching_filters.append(filter.get('filterName'))
-
-                if matching_filters:
-                    # If a matching filter is found, update the report status and details
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=AwsResource(arn=log_group_arn),
-                            status=CheckStatus.PASSED,
-                            summary=f"{log_group_name} has Metric Filters for Policy Changes: [{', '.join(matching_filters)}]"
-                        )
-                    )
-                    any_matching_filter_found = True
-
-
-            # If no matching filter was found in any log group, set the report as failed
-            if not any_matching_filter_found:
-                report.status = CheckStatus.FAILED
+            if not log_groups:
+                report.status = CheckStatus.NOT_APPLICABLE
                 report.resource_ids_status.append(
                     ResourceStatus(
                         resource=GeneralResource(name=""),
-                        status=CheckStatus.FAILED,
-                        summary=f"No matching filters found for IAM Policy Changes in any log group"
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No CloudWatch log groups found."
                     )
                 )
+                return report
 
+            # Define the custom pattern for IAM policy changes (Put/Attach/Delete actions)
+            policy_change_pattern = r"\$\.eventName\s*=\s*.?DeleteGroupPolicy.+\$\.eventName\s*=\s*.?DeleteRolePolicy.+\$\.eventName\s*=\s*.?DeleteUserPolicy.+\$\.eventName\s*=\s*.?PutGroupPolicy.+\$\.eventName\s*=\s*.?PutRolePolicy.+\$\.eventName\s*=\s*.?PutUserPolicy.+\$\.eventName\s*=\s*.?CreatePolicy.+\$\.eventName\s*=\s*.?DeletePolicy.+\$\.eventName\s*=\s*.?CreatePolicyVersion.+\$\.eventName\s*=\s*.?DeletePolicyVersion.+\$\.eventName\s*=\s*.?AttachRolePolicy.+\$\.eventName\s*=\s*.?DetachRolePolicy.+\$\.eventName\s*=\s*.?AttachUserPolicy.+\$\.eventName\s*=\s*.?DetachUserPolicy.+\$\.eventName\s*=\s*.?AttachGroupPolicy.+\$\.eventName\s*=\s*.?DetachGroupPolicy.?"
+   
+            for log_group in log_groups:
+                log_group_name = log_group.get('logGroupName')
+                log_group_arn = log_group.get('arn')[0:-2]
+               
+
+                try:
+                    metric_filters = logs_client.describe_metric_filters(logGroupName=log_group_name).get('metricFilters', [])
+                    matching_filters = [
+                        filter.get('filterName') for filter in metric_filters if re.search(policy_change_pattern, filter.get("filterPattern", ""))
+                    ]
+                    
+                    if matching_filters:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=AwsResource(arn=log_group_arn),
+                                status=CheckStatus.PASSED,
+                                summary=f"Log group {log_group_name} has policy change metric filters: {', '.join(matching_filters)}."
+                            )
+                        )
+                    else:
+                        report.status = CheckStatus.FAILED
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=AwsResource(arn=log_group_arn),
+                                status=CheckStatus.FAILED,
+                                summary=f"Log group {log_group_name} does not have policy change metric filters."
+                            )
+                        )
+                except (BotoCoreError, ClientError) as e:
+                    report.status = CheckStatus.UNKNOWN
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=AwsResource(arn=log_group_arn),
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error retrieving metric filters for log group {log_group_name}.",
+                            exception=str(e)
+                        )
+                    )
         except Exception as e:
-            logging.error(f"Error while fetching CloudWatch logs and metric filters: {e} | check_name = {__name__}")
-            report.status = CheckStatus.FAILED
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
-                    summary=f"Error while fetching CloudWatch logs and metric filters: {e} | check_name = {__name__}",
+                    status=CheckStatus.UNKNOWN,
+                    summary="Error retrieving CloudWatch log groups.",
                     exception=str(e)
                 )
             )
