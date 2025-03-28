@@ -1,198 +1,133 @@
 """
-AUTHOR: Mohd Asif <mohd.asif@comprinno.net>
-DATE: 2024-10-10
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-14
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, GeneralResource, ResourceStatus
+from botocore.exceptions import BotoCoreError, ClientError
+from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
+PRIVILEGE_ESCALATION_ACTIONS = {
+    "iam:CreatePolicyVersion",
+    "iam:SetDefaultPolicyVersion",
+    "iam:AttachUserPolicy",
+    "iam:AttachGroupPolicy",
+    "iam:AttachRolePolicy",
+    "iam:PutUserPolicy",
+    "iam:PutGroupPolicy",
+    "iam:PutRolePolicy",
+    "iam:AddUserToGroup",
+    "iam:UpdateAssumeRolePolicy",
+    "iam:PassRole",
+    "sts:AssumeRole",
+    "iam:CreateUser",
+    "iam:CreateAccessKey",
+    "iam:UpdateLoginProfile",
+    "iam:ResetServiceSpecificCredential",
+    "iam:CreateServiceLinkedRole",
+    "iam:UpdateUser",
+    "iam:UpdateRole",
+    "iam:UpdateGroup",
+    "iam:PutRolePermissionsBoundary",
+    "iam:PutUserPermissionsBoundary",
+    "iam:PutGroupPermissionsBoundary",
+    "iam:DeleteUserPermissionsBoundary",
+    "iam:DeleteRolePermissionsBoundary",
+    "iam:DeleteGroupPermissionsBoundary",
+    "iam:DeletePolicyVersion",
+    "iam:DeletePolicy",
+    "iam:CreateInstanceProfile",
+    "iam:AddRoleToInstanceProfile",
+    "iam:UpdateInstanceProfile",
+    "iam:RemoveRoleFromInstanceProfile",
+    "iam:DeleteInstanceProfile"
+}
+
 class iam_policy_allows_privilege_escalation(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
         client = connection.client('iam')
+        policies_found = False
 
         try:
-            # List all IAM users to check their policies
-            users = client.list_users()['Users']
-            # Define a set of actions that may indicate privilege escalation
-            privilege_escalation_actions = set()
+            paginator = client.get_paginator("list_policies")
+            policies_iterator = paginator.paginate(Scope="Local")
 
-            # Get all policies to check for potential privilege escalation actions
-            paginator = client.get_paginator('list_policies')
-            for page in paginator.paginate(Scope='Local'):
-                for policy in page['Policies']:
-                    policy_version = client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['DefaultVersionId']
-                    policy_document = client.get_policy_version(PolicyArn=policy['PolicyArn'], VersionId=policy_version)['PolicyVersion']['Document']
+            for page in policies_iterator:
+                for policy in page.get("Policies", []):
+                    policies_found = True
+                    policy_arn = policy.get("Arn")
+                    policy_name = policy.get("PolicyName")
                     
-                    # Collect actions from each policy document
-                    for statement in policy_document.get('Statement', []):
-                        actions = statement.get('Action', [])
-                        if not isinstance(actions, list):
-                            actions = [actions]
-                        
-                        privilege_escalation_actions.update(actions)
-
-            def check_policies(policies):
-                """Helper function to check policy documents for escalation actions"""
-                for policy in policies:
-                    policy_arn = policy['PolicyArn']
-                    if not self.is_custom_policy(policy_arn):  # Only check custom policies
+                    try:
+                        policy_version = client.get_policy_version(
+                            PolicyArn=policy_arn, VersionId=policy["DefaultVersionId"]
+                        )
+                        statements = policy_version["PolicyVersion"]["Document"].get("Statement", [])
+                        if isinstance(statements, dict):
+                            statements = [statements]  # Ensure it's a list
+                    except (BotoCoreError, ClientError) as e:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=AwsResource(arn=policy_arn),
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"Failed to retrieve policy version for {policy_name}",
+                                exception=str(e)
+                            )
+                        )
                         continue
-
-                    policy_version = client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
-                    policy_document = client.get_policy_version(PolicyArn=policy_arn, VersionId=policy_version)['PolicyVersion']['Document']
                     
-                    # Check policy statements for actions that allow privilege escalation
-                    for statement in policy_document.get('Statement', []):
-                        actions = statement.get('Action', [])
-                        if not isinstance(actions, list):
-                            actions = [actions]
-                        
-                        for action in actions:
-                            if action in privilege_escalation_actions:
-                                return True  # Privilege escalation action found
-                return False
-
-            # Check users for privilege escalation policies
-            for user in users:
-                username = user['UserName']
-                attached_policies = client.list_attached_user_policies(UserName=username)['AttachedPolicies']
-                inline_policies = client.list_user_policies(UserName=username)['PolicyNames']
-                
-                if check_policies(attached_policies):
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=GeneralResource(name=username),
-                            status=CheckStatus.PASSED,
-                            summary=''
+                    privilege_escalation_found = False
+                    for statement in statements:
+                        if statement.get("Effect") == "Allow":
+                            actions = statement.get("Action", [])
+                            if isinstance(actions, str):
+                                actions = [actions]  # Ensure it's a list
+                            
+                            if any(action in PRIVILEGE_ESCALATION_ACTIONS for action in actions):
+                                privilege_escalation_found = True
+                                break
+                    
+                    if privilege_escalation_found:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=AwsResource(arn=policy_arn),
+                                status=CheckStatus.FAILED,
+                                summary=f"Policy '{policy_name}' allows privilege escalation actions."
+                            )
                         )
-                    )
-                else:
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=GeneralResource(name=username),
-                            status=CheckStatus.FAILED,
-                            summary=''
+                    else:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=AwsResource(arn=policy_arn),
+                                status=CheckStatus.PASSED,
+                                summary=f"Policy '{policy_name}' does not allow privilege escalation actions."
+                            )
                         )
+            
+            if not policies_found:
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name=""),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No IAM policies found in the account."
                     )
-
-            # Set overall check status
-            # report.status = not any(report.resource_ids_status.values())
-            if not report.resource_ids_status:
-                report.status = CheckStatus.FAILED
-            else:
-                report.status = CheckStatus.PASSED
+                )
+                return report
         
-        except Exception as e:
-            report.status = CheckStatus.FAILED
+        except (BotoCoreError, ClientError) as e:
+            report.status = CheckStatus.UNKNOWN
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name=""),
+                    status=CheckStatus.UNKNOWN,
+                    summary="Failed to retrieve IAM policies.",
+                    exception=str(e)
+                )
+            )
         
         return report
-
-    def is_custom_policy(self, policy_arn):
-        """Check if a policy is custom by examining the ARN"""
-        return not policy_arn.startswith('arn:aws:iam::aws:policy/')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
