@@ -5,29 +5,55 @@ DATE: 2025-01-10
 """
 
 import boto3
-import logging
+from botocore.exceptions import BotoCoreError, ClientError
 
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+from tevico.engine.entities.report.check_model import (
+    CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+)
 from tevico.engine.entities.check.check import Check
 
 
 class cloudtrail_s3_bucket_access_logging_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
         cloudtrail_client = connection.client('cloudtrail')
+        s3_client = connection.client('s3')
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
 
         try:
-            trail_info = cloudtrail_client.describe_trails()
-            if not trail_info['trailList']:
-                logging.info("No CloudTrails found")
-                return report
+            
+            trails = []
+            next_token = None
 
-            for trail in trail_info['trailList']:
+            while True:
+                response = cloudtrail_client.describe_trails(includeShadowTrails=False, NextToken=next_token) if next_token else cloudtrail_client.describe_trails(includeShadowTrails=False)
+                trails.extend(response.get('trailList', []))
+                next_token = response.get('NextToken')
+                
+                if not next_token:
+                    break
+
+            if not trails:
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name=""),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No CloudTrail trails found."
+                    )
+                )
+                return report  # Early exit since there are no trails to check
+            
+            
+            
+            
+            # trail_info = cloudtrail_client.describe_trails()
+            # if not trail_info['trailList']:
+            #     return report  # No CloudTrails found, nothing to check.
+
+            for trail in trails:
                 trail_name = trail.get('Name')
                 trail_arn = trail.get('TrailARN')
-
                 s3_bucket_name = trail.get('S3BucketName')
                 is_org_trail = trail.get('IsOrganizationTrail', False)
 
@@ -41,47 +67,27 @@ class cloudtrail_s3_bucket_access_logging_enabled(Check):
                     )
                     continue
 
-                # Check if it's an organization trail and we're in a member account
-                if is_org_trail:
-                    # Get the trail status to verify if it's actively logging
-                    trail_status = cloudtrail_client.get_trail_status(Name=trail['TrailARN'])
-                    is_logging = trail_status.get('IsLogging', False)
 
-                    if is_logging:
-                        report.resource_ids_status.append(
-                            ResourceStatus(
-                                resource=AwsResource(arn=trail_arn),
-                                status=CheckStatus.PASSED,
-                                summary=f"CloudTrail {trail_name} - Organization trail, S3 bucket {s3_bucket_name} access logging should be verified in management account."
-                            )
-                        )
-                        logging.info(
-                            f"CloudTrail {trail_name} is an organization trail. "
-                            f"S3 bucket {s3_bucket_name} access logging should be verified "
-                            "in the management account or delegated administrator account."
-                        )
-                        continue
-                    else:
-                        report.status = CheckStatus.FAILED
-                        report.resource_ids_status.append(
-                            ResourceStatus(
-                                resource=AwsResource(arn=trail_arn),
-                                status=CheckStatus.FAILED,
-                                summary=f"CloudTrail {trail_name} - Organization trail is not logging."
-                            )
-                        )
-                        continue
-
-                # For non-organization trails or if bucket is in same account, 
-                # proceed with original bucket logging check
+                # Get the bucket's region
                 try:
-                    bucket_location = connection.client('s3').get_bucket_location(
-                        Bucket=s3_bucket_name
+                    bucket_location = s3_client.get_bucket_location(Bucket=s3_bucket_name)
+                    bucket_region = bucket_location.get('LocationConstraint', 'us-east-1')  # Default to us-east-1
+                    s3_client_regional = connection.client('s3', region_name=bucket_region)
+                except (BotoCoreError, ClientError) as e:
+                    report.status = CheckStatus.UNKNOWN
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=AwsResource(arn=trail_arn),
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"CloudTrail {trail_name} - Error retrieving S3 bucket location.",
+                            exception=str(e)
+                        )
                     )
-                    bucket_region = bucket_location.get('LocationConstraint')
-                    s3_client = connection.client('s3', region_name=bucket_region)
-                    
-                    logging_config = s3_client.get_bucket_logging(Bucket=s3_bucket_name)
+                    continue
+
+                # Check if access logging is enabled on the bucket
+                try:
+                    logging_config = s3_client_regional.get_bucket_logging(Bucket=s3_bucket_name)
                     logging_enabled = logging_config.get('LoggingEnabled', None)
 
                     if logging_enabled:
@@ -89,57 +95,39 @@ class cloudtrail_s3_bucket_access_logging_enabled(Check):
                             ResourceStatus(
                                 resource=AwsResource(arn=trail_arn),
                                 status=CheckStatus.PASSED,
-                                summary=f"CloudTrail {trail_name} - Organization trail, S3 bucket {s3_bucket_name} Access Logging: Enabled."
+                                summary=f"CloudTrail {trail_name} - S3 bucket {s3_bucket_name} access logging is ENABLED."
                             )
                         )
                     else:
-                        # Access logging is disabled
                         report.status = CheckStatus.FAILED
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=AwsResource(arn=trail_arn),
                                 status=CheckStatus.FAILED,
-                                summary=f"CloudTrail {trail_name} - Organization trail, S3 bucket {s3_bucket_name} Access Logging: Disabled."
+                                summary=f"CloudTrail {trail_name} - S3 bucket {s3_bucket_name} access logging is DISABLED."
                             )
                         )
 
-                except Exception as e:
-                    if "Access Denied" in str(e):
-                        logging.info(
-                            f"CloudTrail {trail_name} - S3 bucket {s3_bucket_name} "
-                            "is in a different account. Skipping bucket logging check."
-                        )
+                except ClientError as e:
+                        report.status = CheckStatus.UNKNOWN
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=AwsResource(arn=trail_arn),
-                                status=CheckStatus.SKIPPED,
-                                summary=f"CloudTrail {trail_name} - Organization trail, S3 bucket {s3_bucket_name} is in a different account. Please verify access logging in the bucket owner's account."
-                            )
-                        )
-                    else:
-                        logging.info(
-                            f"CloudTrail {trail_name} - S3 bucket {s3_bucket_name} "
-                            "is in a different account. Skipping bucket logging check."
-                        )
-                        report.status = CheckStatus.FAILED
-                        report.resource_ids_status.append(
-                            ResourceStatus(
-                                resource=AwsResource(arn=trail_arn),
-                                status=CheckStatus.FAILED,
-                                summary=f"CloudTrail {trail_name} - Error checking S3 bucket {s3_bucket_name}.",
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"CloudTrail {trail_name} - Error checking S3 bucket logging.",
                                 exception=str(e)
                             )
                         )
 
-        except Exception as e:
-            logging.error(f"Error while retrieving CloudTrail trails: {e}")
-            report.status = CheckStatus.FAILED
+        except (BotoCoreError, ClientError) as e:
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
-                    resource=AwsResource(arn=trail_arn),
-                    status=CheckStatus.FAILED,
-                    summary=f"Error while retrieving CloudTrail trails.",
+                    resource=GeneralResource(name=""),
+                    status=CheckStatus.UNKNOWN,
+                    summary="Error retrieving CloudTrail trails.",
                     exception=str(e)
                 )
-            )        
+            )
+
         return report
