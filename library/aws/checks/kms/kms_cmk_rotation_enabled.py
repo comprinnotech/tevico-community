@@ -1,89 +1,102 @@
 """
 AUTHOR: deepak-puri-comprinno
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-12
+DATE: 2025-03-28
 """
 
 import boto3
-from botocore.exceptions import ClientError
-from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, ResourceStatus, GeneralResource
+from tevico.engine.entities.report.check_model import AwsResource, GeneralResource, CheckReport, CheckStatus, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
+
 class kms_cmk_rotation_enabled(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
+        client = connection.client("kms")
+
+        # Initialize the report
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.PASSED  # Default to PASSED unless non-compliant keys are found
+        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
 
         try:
-            client = connection.client('kms')
-            paginator = client.get_paginator('list_keys')
+            keys = []
+            next_token = None
 
-            non_compliant_keys_found = False
+            # Fetch all KMS CMKs with pagination
+            while True:
+                response = client.list_keys(Marker=next_token) if next_token else client.list_keys()
+                keys.extend(response.get("Keys", []))
+                next_token = response.get("NextMarker")
+                if not next_token:
+                    break  # Exit loop when no more pages
 
-            for page in paginator.paginate():
-                for key in page.get('Keys', []):
-                    key_id = key['KeyId']
-                    # Get key details to check if it's customer-managed and enabled
-                    key_info = client.describe_key(KeyId=key_id)
-                    key_metadata = key_info.get('KeyMetadata', {})
+            if not keys:
+                # No customer-managed CMKs found, mark as NOT_APPLICABLE
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="KMS"),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No customer-managed CMKs found."
+                    )
+                )
+                return report
 
-                    try:
-                        key_manager = key_metadata.get('KeyManager')
-                        key_state = key_metadata.get('KeyState')
+            for key in keys:
+                key_id = key["KeyId"]
 
-                        # Skip AWS-managed keys and disabled keys
-                        if key_manager != 'CUSTOMER' or key_state != 'Enabled':
-                            continue
+                # Get key metadata
+                key_metadata = client.describe_key(KeyId=key_id)["KeyMetadata"]
 
-                    except ClientError as e:
+                # Skip AWS-managed and disabled keys
+                if key_metadata.get("KeyManager") != "CUSTOMER" or key_metadata.get("KeyState") != "Enabled":
+                    continue  
+
+                key_arn = key_metadata.get("Arn", key_id)
+
+                try:
+                    # Check rotation status
+                    rotation_status = client.get_key_rotation_status(KeyId=key_id)
+                    rotation_enabled = rotation_status.get("KeyRotationEnabled", False)
+
+                    if rotation_enabled:
                         report.resource_ids_status.append(
                             ResourceStatus(
-                                resource=AwsResource(arn=key_id),
-                                status=CheckStatus.FAILED,
-                                summary=f"Failed to describe CMK {key_id}: {str(e)}"
+                                resource=AwsResource(arn=key_arn),
+                                status=CheckStatus.PASSED,
+                                summary=f"Key rotation is enabled for CMK {key_id}."
                             )
                         )
-                        non_compliant_keys_found = True
-                        continue
-
-                    # Check rotation status for customer-managed keys
-                    try:
-                        rotation_status = client.get_key_rotation_status(KeyId=key_id)
-                        rotation_enabled = rotation_status.get('KeyRotationEnabled', False)
-
-                        resource_status = ResourceStatus(
-                            resource=AwsResource(arn=key_metadata.get('Arn', key_id)),
-                            status=CheckStatus.PASSED if rotation_enabled else CheckStatus.FAILED,
-                            summary=f"Key rotation {'enabled' if rotation_enabled else 'not enabled'} for CMK {key_id}."
-                        )
-
-                        report.resource_ids_status.append(resource_status)
-
-                        if not rotation_enabled:
-                            non_compliant_keys_found = True
-
-                    except ClientError as e:
+                    else:
+                        report.status = CheckStatus.FAILED
                         report.resource_ids_status.append(
                             ResourceStatus(
-                                resource=AwsResource(arn=key_metadata.get('Arn')),
+                                resource=AwsResource(arn=key_arn),
                                 status=CheckStatus.FAILED,
-                                summary=f"Failed to retrieve rotation status for CMK {key_id}: {str(e)}"
+                                summary=f"Key rotation is not enabled for CMK {key_id}."
                             )
                         )
-                        non_compliant_keys_found = True
 
-            # Set overall check status based on non-compliant keys
-            if non_compliant_keys_found:
-                report.status = CheckStatus.FAILED
+                except Exception as e:
+                    report.status = CheckStatus.UNKNOWN
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=AwsResource(arn=key_arn),
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error retrieving rotation status for CMK {key_id}: {str(e)}",
+                            exception=str(e)
+                        )
+                    )
 
         except Exception as e:
-            report.status = CheckStatus.FAILED
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
-                    resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
-                    summary=f"Unexpected error: {str(e)}"
+                    resource=GeneralResource(name="KMS"),
+                    status=CheckStatus.UNKNOWN,
+                    summary=f"Error fetching KMS keys: {str(e)}",
+                    exception=str(e)
                 )
             )
 
