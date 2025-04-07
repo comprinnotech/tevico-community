@@ -121,7 +121,7 @@ class vpc_security_group_port_restriction_check(Check):
                                     failed_ports.append(str(port))
 
                     # -------------------------------------------------------------------
-                    # Records the Evaluation Result for This Security Group.
+                    # Records the Evaluation Result for this security group.
                     # If a violation is found, mark as FAILED; otherwise, mark as PASSED.
                     # Also updates the overall report status if any group fails.
                     # -------------------------------------------------------------------
@@ -151,7 +151,7 @@ class vpc_security_group_port_restriction_check(Check):
                         )
                 except Exception as e:
                     # -------------------------------------------------------------------
-                    # Handles Exceptions for Individual Security Group Processing.
+                    # Handles exceptions for individual security group processing.
                     # If an error occurs while processing a specific security group,
                     # marks its status as UNKNOWN and record the error details.
                     # -------------------------------------------------------------------
@@ -166,7 +166,7 @@ class vpc_security_group_port_restriction_check(Check):
                     )
         except Exception as e:
             # -------------------------------------------------------------------
-            # Global Exception Handling.
+            # Global exception handling.
             # If an error occurs during the retrieval of security groups,
             # marks the overall check status as UNKNOWN and log the error.
             # -------------------------------------------------------------------
