@@ -1,27 +1,73 @@
 Provider: "aws"
 CheckID: "s3_bucket_secure_transport_policy"
-CheckTitle: "Ensure S3 buckets have secure transport policy."
+CheckTitle: "Ensure S3 buckets enforce secure transport (HTTPS)"
 CheckType:
   - "Data Protection"
+  - "Encryption in Transit"
 ServiceName: "s3"
 SubServiceName: ""
 ResourceIdTemplate: "arn:partition:s3:::bucket_name"
 Severity: medium
 ResourceType: "AwsS3Bucket"
-Description: "Ensure S3 buckets have secure transport policy."
-Risk: "If HTTPS is not enforced on the bucket policy, communication between clients and S3 buckets can use unencrypted HTTP. As a result, sensitive information could be transmitted in clear text over the network or internet."
+Description: "Ensure S3 buckets have policies that enforce the use of secure transport (HTTPS) for all requests, preventing unencrypted HTTP access."
+Risk: "If HTTPS is not enforced on the bucket policy, communication between clients and S3 buckets can use unencrypted HTTP. As a result, sensitive information could be transmitted in clear text over the network or internet, potentially exposing it to interception, eavesdropping, or man-in-the-middle attacks."
 RelatedUrl: ""
 Remediation:
   Code:
-    CLI: ""
+    CLI: |
+      aws s3api put-bucket-policy --bucket my-bucket-name --policy '{
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "DenyHTTP",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": [
+              "arn:aws:s3:::my-bucket-name",
+              "arn:aws:s3:::my-bucket-name/*"
+            ],
+            "Condition": {
+              "Bool": {
+                "aws:SecureTransport": "false"
+              }
+            }
+          }
+        ]
+      }'
     NativeIaC: ""
-    Other: "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/"
-    Terraform: ""
+    Other: ""
+    Terraform: |
+      resource "aws_s3_bucket_policy" "secure_transport" {
+        bucket = aws_s3_bucket.example.id
+        
+        policy = jsonencode({
+          Version = "2012-10-17"
+          Statement = [
+            {
+              Sid       = "DenyHTTP"
+              Effect    = "Deny"
+              Principal = "*"
+              Action    = "s3:*"
+              Resource = [
+                aws_s3_bucket.example.arn,
+                "${aws_s3_bucket.example.arn}/*",
+              ]
+              Condition = {
+                Bool = {
+                  "aws:SecureTransport" = "false"
+                }
+              }
+            },
+          ]
+        })
+      }
   Recommendation:
-    Text: "Ensure that S3 buckets have encryption in transit enabled."
-    Url: "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/"
+    Text: "Implement a bucket policy that denies all HTTP requests by using the aws:SecureTransport condition. This ensures that all access to the S3 bucket requires encryption in transit via HTTPS. Be careful when implementing this policy to ensure it doesn't interfere with existing legitimate access patterns."
+    Url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html#security-best-practices-prevent"
 Categories:
   - "encryption"
+  - "security"
 DependsOn: []
 RelatedTo: []
-Notes: ""
+Notes: "This check verifies that a bucket policy exists with a Deny statement for non-HTTPS requests. Note that even with this policy in place, S3 will still accept HTTPS requests that don't validate the server certificate, so additional client-side validation may be needed for complete security."

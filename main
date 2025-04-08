@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env .venv/bin/python
 
 from tevico.cli.arg_parser import parse_args
 

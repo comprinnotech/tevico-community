@@ -1,25 +1,36 @@
 Provider: "aws"
 CheckID: "route53_domains_privacy_protection_enabled"
-CheckTitle: "Enable Privacy Protection for a Route53 Domain."
-CheckType: []
+CheckTitle: "Ensure Route53 domains have privacy protection enabled"
+CheckType:
+  - "Security"
+  - "Privacy"
 ServiceName: "route53"
-SubServiceName: ""
-ResourceIdTemplate: ""
+SubServiceName: "domains"
+ResourceIdTemplate: "arn:aws:route53domains:::{domain_name}"
 Severity: medium
-ResourceType: "Other"
-Description: "Enable Privacy Protection for a Route53 Domain."
-Risk: "Without privacy protection enabled, one's personal information is published to the public WHOIS database."
+ResourceType: "AwsRoute53Domain"
+Description: "Ensure all Route53 domains have complete privacy protection enabled for Admin, Registrant, and Technical contacts."
+Risk: "Without privacy protection enabled, personal contact information is published to the public WHOIS database, potentially exposing domain owners to spam, phishing, identity theft, and social engineering attacks."
 RelatedUrl: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html"
 Remediation:
   Code:
-    CLI: "aws route53domains update-domain-contact-privacy --domain-name domain.com --registrant-privacy"
+    CLI: "aws route53domains update-domain-contact-privacy --domain-name example.com --admin-privacy --registrant-privacy --tech-privacy"
     NativeIaC: ""
-    Other: "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/privacy-protection.html"
-    Terraform: ""
+    Other: ""
+    Terraform: |
+      resource "aws_route53domains_registered_domain" "example" {
+        domain_name = "example.com"
+        
+        admin_privacy = true
+        registrant_privacy = true
+        tech_privacy = true
+      }
   Recommendation:
-    Text: "Ensure default Privacy is enabled."
+    Text: "Enable privacy protection for all contact types (Admin, Registrant, and Technical) for each Route53 domain. This prevents personal information from being publicly accessible in the WHOIS database."
     Url: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html"
-Categories: []
+Categories:
+  - "security"
+  - "privacy"
 DependsOn: []
 RelatedTo: []
-Notes: ""
+Notes: "Privacy protection is available for most TLDs but may not be available for all domain extensions. Some country-code TLDs do not support privacy protection due to registry policies."

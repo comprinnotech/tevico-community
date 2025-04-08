@@ -1,54 +1,70 @@
 """
-AUTHOR: SUPRIYO BHAKAT
-EMAIL: supriyo.bhakat@comprinno.net
-DATE: 2024-11-11
+AUTHOR: deepak-puri-comprinno
+EMAIL: deepak.puri@comprinno.net
+DATE: 2024-03-21
 """
 
 import boto3
 
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, GeneralResource, ResourceStatus
+from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 
 class securityhub_enabled(Check):
     def execute(self, connection: boto3.Session) -> CheckReport:
+        # Initialize report
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.PASSED
-        securityhub_client = connection.client('securityhub')
+        report.status = CheckStatus.PASSED  # Default to PASSED
+        securityhub_client = connection.client("securityhub")
 
-        regions = connection.client('ec2').describe_regions()['Regions']
-        
-        for region in regions:
-            region_name = region['RegionName']
-            regional_securityhub_client = connection.client('securityhub', region_name=region_name)
-            
-            try:
-                hub_status = regional_securityhub_client.describe_hub()
-                report.resource_ids_status.append(
-                    ResourceStatus(
-                        resource=GeneralResource(name=region_name),
-                        status=CheckStatus.PASSED,
-                        summary=''
-                    )
+        # Check if Security Hub is enabled
+        try:
+            response = securityhub_client.describe_hub()
+            hub_arn = response.get("HubArn")
+            summary = "AWS Security Hub is enabled in this region."
+
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=AwsResource(arn=hub_arn),
+                    status=CheckStatus.PASSED,
+                    summary=summary
                 )
-            except regional_securityhub_client.exceptions.ResourceNotFoundException:
-                report.resource_ids_status.append(
-                    ResourceStatus(
-                        resource=GeneralResource(name=region_name),
-                        status=CheckStatus.FAILED,
-                        summary=''
-                    )
+            )
+        except securityhub_client.exceptions.ResourceNotFoundException:
+            report.status = CheckStatus.FAILED
+            summary = "AWS Security Hub is not enabled in this region."
+
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name=""),
+                    status=CheckStatus.FAILED,
+                    summary=summary
                 )
-                report.status = CheckStatus.FAILED
-            except regional_securityhub_client.exceptions.InvalidAccessException:
-                report.resource_ids_status.append(
-                    ResourceStatus(
-                        resource=GeneralResource(name=region_name),
-                        status=CheckStatus.FAILED,
-                        summary=''
-                    )
+            )
+
+        except securityhub_client.exceptions.InvalidAccessException:
+            report.status = CheckStatus.FAILED
+            summary = "AWS Security Hub is not enabled in this region."
+
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name=""),
+                    status=CheckStatus.FAILED,
+                    summary=summary
                 )
-                report.status = CheckStatus.FAILED
+            )
+
+        except Exception as e:
+            report.status = CheckStatus.UNKNOWN
+            summary = f"Error retrieving Security Hub status: {str(e)}"
+
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name=""),
+                    status=CheckStatus.UNKNOWN,
+                    summary=summary,
+                    exception=str(e)
+                )
+            )
 
         return report
-

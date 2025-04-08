@@ -22,67 +22,19 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
         report.resource_ids_status = []
 
         try:
-            # Pagination to list all DynamoDB tables
-            paginator = dynamodb_client.get_paginator('list_tables')
+            table_names = []
+            next_token = None
 
-            for page in paginator.paginate():
-                table_names = page.get('TableNames', [])
+            # Fetch all tables using pagination
+            while True:
+                response = dynamodb_client.list_tables(ExclusiveStartTableName=next_token) if next_token else dynamodb_client.list_tables()
+                table_names.extend(response.get("TableNames", []))
+                next_token = response.get("LastEvaluatedTableName")
+                if not next_token:
+                    break  # Exit loop when no more pages
 
-                for table_name in table_names:
-                    
-                    # Describe the table
-                    table_desc = dynamodb_client.describe_table(TableName=table_name)['Table']
-                    resource = AwsResource(arn=table_desc.get('TableArn'))
-
-                    try:
-                        
-                        # Retrieve the encryption settings
-                        sse_description = table_desc.get('SSEDescription', {})
-                        encryption_status = sse_description.get('Status')
-                        kms_key_arn = sse_description.get('KMSMasterKeyArn')
-
-                        if encryption_status == 'ENABLED' and kms_key_arn:
-                            key_metadata = kms_client.describe_key(KeyId=kms_key_arn)['KeyMetadata']
-
-                            if key_metadata.get('KeyManager') == 'CUSTOMER':
-                                report.resource_ids_status.append(
-                                    ResourceStatus(
-                                        resource=resource,
-                                        status=CheckStatus.PASSED,
-                                        summary=f"DynamoDB table {table_name} is encrypted with a CMK."
-                                    )
-                                )
-                            else:
-                                report.resource_ids_status.append(
-                                    ResourceStatus(
-                                        resource=resource,
-                                        status=CheckStatus.FAILED,
-                                        summary=f"DynamoDB table {table_name} is encrypted with an AWS managed key."
-                                    )
-                                )
-                                report.status = CheckStatus.FAILED
-                        else:
-                            report.resource_ids_status.append(
-                                ResourceStatus(
-                                    resource=resource,
-                                    status=CheckStatus.FAILED,
-                                    summary=f"DynamoDB table {table_name} is encrypted with an Amazon DynamoDB owned key."
-                                )
-                            )
-                            report.status = CheckStatus.FAILED
-
-                    except Exception as e:
-                        report.resource_ids_status.append(
-                            ResourceStatus(
-                                resource=resource,
-                                status=CheckStatus.FAILED,
-                                summary=f"Error processing DynamoDB table {table_name}: {str(e)}",
-                                exception=str(e)
-                            )
-                        )
-                        report.status = CheckStatus.FAILED
-
-            if not report.resource_ids_status:
+            if not table_names:
+                # No DynamoDB tables found, mark as NOT_APPLICABLE
                 report.status = CheckStatus.NOT_APPLICABLE
                 report.resource_ids_status.append(
                     ResourceStatus(
@@ -91,16 +43,72 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
                         summary="No DynamoDB tables found."
                     )
                 )
+                return report
+
+            for table_name in table_names:
+                # Describe the table
+                table_desc = dynamodb_client.describe_table(TableName=table_name)["Table"]
+                resource = AwsResource(arn=table_desc.get("TableArn"))
+
+                try:
+
+                    # Retrieve the encryption settings
+                    sse_description = table_desc.get("SSEDescription", {})
+                    encryption_status = sse_description.get("Status")
+                    kms_key_arn = sse_description.get("KMSMasterKeyArn")
+
+                    if encryption_status == "ENABLED" and kms_key_arn:
+                        key_metadata = kms_client.describe_key(KeyId=kms_key_arn)["KeyMetadata"]
+                        key_manager = key_metadata.get("KeyManager")
+
+                        if key_manager == "CUSTOMER":
+                            report.resource_ids_status.append(
+                                ResourceStatus(
+                                    resource=resource,
+                                    status=CheckStatus.PASSED,
+                                    summary=f"DynamoDB table {table_name} is encrypted with a Customer Managed KMS Key."
+                                )
+                            )
+                        else:
+                            report.status = CheckStatus.FAILED
+                            report.resource_ids_status.append(
+                                ResourceStatus(
+                                    resource=resource,
+                                    status=CheckStatus.FAILED,
+                                    summary=f"DynamoDB table {table_name} is encrypted with an AWS managed key."
+                                )
+                            )
+
+                    else:
+                        report.status = CheckStatus.FAILED
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=resource,
+                                status=CheckStatus.FAILED,
+                                summary=f"DynamoDB table {table_name} is encrypted with an Amazon DynamoDB owned key."
+                            )
+                        )
+
+                except Exception as e:
+                    report.status = CheckStatus.UNKNOWN
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=resource,
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error processing DynamoDB table {table_name}: {str(e)}",
+                            exception=str(e)
+                        )
+                    )
 
         except Exception as e:
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
+                    status=CheckStatus.UNKNOWN,
                     summary=f"DynamoDB table listing error occurred: {str(e)}",
                     exception=str(e)
                 )
             )
-            report.status = CheckStatus.FAILED
-            
+
         return report

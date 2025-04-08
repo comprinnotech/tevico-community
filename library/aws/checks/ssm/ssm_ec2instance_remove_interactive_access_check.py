@@ -32,7 +32,9 @@ class ssm_ec2instance_remove_interactive_access_check(Check):
                         instance_role = instance.get('IamInstanceProfile', {}).get('Arn', '')
 
                         
-                        session_access_info = ssm_client.list_associations(Filters=[{'Key': 'InstanceId', 'Values': [instance_id]}])
+                        session_access_info = ssm_client.list_associations(
+                            AssociationFilterList=[{'key': 'InstanceId', 'value': instance_id}]
+                        )
                         interactive_access_enabled = False
 
                         for association in session_access_info['Associations']:

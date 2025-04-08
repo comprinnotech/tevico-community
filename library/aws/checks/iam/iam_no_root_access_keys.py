@@ -1,11 +1,12 @@
 """
-AUTHOR: Supriyo Bhakat <supriyo.bhakat@comprinno.net>
-DATE: 2024-10-10
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-14
 """
 
-
 import boto3
-
+import time
+from botocore.exceptions import BotoCoreError, ClientError
 from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
@@ -14,59 +15,67 @@ class iam_no_root_access_keys(Check):
         report = CheckReport(name=__name__)
         client = connection.client('iam')
 
+        report.resource_ids_status = []
+
         try:
-            response = client.list_access_keys()
-            has_active_root_keys = any(
-                access_key['Status'] == 'Active' for access_key in response['AccessKeyMetadata']
-            )
-
-            if has_active_root_keys:
-                report.status = CheckStatus.FAILED
-                report.resource_ids_status.append(
-                    ResourceStatus(
-                        resource=GeneralResource(name='root_account'),
-                        status=CheckStatus.FAILED,
-                        summary='',
-                    )
-                )
+            
+            # Wait for the credential report to be ready
+            for _ in range(10):  # Retry up to 10 times (approx 30 seconds max wait time)
+                response = client.generate_credential_report()
+                state = response["State"]
+                if state == "COMPLETE":
+                    break
+                time.sleep(3)  # Wait before retrying
             else:
-                report.resource_ids_status.append(
-                    ResourceStatus(
-                        resource=GeneralResource(name='root_account'),
-                        status=CheckStatus.PASSED,
-                        summary='',
-                    )
-                )
+                raise ValueError("Credential report generation timed out.")
 
-            iam_users = client.list_users()['Users']
+            # Step 2: Retrieve the credential report
+            response = client.get_credential_report()["Content"]
+            decoded_report = response.decode("utf-8").splitlines()
 
-            for user in iam_users:
-                user_name = user['UserName']
-                response = client.list_access_keys(UserName=user_name)
+            # Step 3: Validate and parse the credential report
+            if len(decoded_report) < 2:
+                raise ValueError("Credential report is empty or invalid.")
 
-                has_active_iam_keys = any(
-                    access_key['Status'] == 'Active' for access_key in response['AccessKeyMetadata']
-                )
+            headers = decoded_report[0].split(',')
+            rows = decoded_report[1:]
 
-                if has_active_iam_keys:
-                    report.status = CheckStatus.FAILED
+            access_key_1_active_idx = headers.index("access_key_1_active") if "access_key_1_active" in headers else None
+            access_key_2_active_idx = headers.index("access_key_2_active") if "access_key_2_active" in headers else None
+
+            for row in rows:
+                user_info = row.split(',')
+
+                if user_info[0] == "<root_account>":
+                    access_key_1_active = user_info[access_key_1_active_idx].strip().lower() if access_key_1_active_idx is not None else "false"
+                    access_key_2_active = user_info[access_key_2_active_idx].strip().lower() if access_key_2_active_idx is not None else "false"
+
+                    if access_key_1_active == "true" or access_key_2_active == "true":
+                        report.status = CheckStatus.FAILED
+                        summary = "Root account has active access keys. Immediate removal is recommended."
+                    else:
+                        report.status = CheckStatus.PASSED
+                        summary = "Root account has no active access keys."
+
                     report.resource_ids_status.append(
                         ResourceStatus(
-                            resource=GeneralResource(name=user_name),
-                            status=CheckStatus.FAILED,
-                            summary=''
+                            resource=GeneralResource(name="RootAccount"),
+                            status=report.status,
+                            summary=summary
                         )
                     )
-                else:
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=GeneralResource(name=user_name),
-                            status=CheckStatus.PASSED,
-                            summary=''
-                        )
-                    )
+                    break  # Stop processing after the root account
 
-        except Exception:
-            report.status = CheckStatus.FAILED
+        except (BotoCoreError, ClientError) as e:
+            # Set status to UNKNOWN when API call fails
+            report.status = CheckStatus.UNKNOWN
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name="RootAccount"),
+                    status=CheckStatus.UNKNOWN,
+                    summary="IAM API request failed. Unable to verify root access keys.",
+                    exception=str(e)
+                )
+            )
 
         return report
