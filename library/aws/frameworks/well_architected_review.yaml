@@ -74,6 +74,7 @@ sections:
           - iam_user_mfa_enabled_console_access
           - iam_user_multiple_active_access_keys
           - organizations_account_part_of_organizations
+          - ssm_document_secrets_present
       - name: Data Protection
         description: |
           The Data Protection section includes the ability to protect data at rest and in transit.
