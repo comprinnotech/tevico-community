@@ -1,32 +1,39 @@
 Provider: aws
 CheckID: "cloudwatch_log_metric_filter_security_group_changes"
-CheckTitle: Ensure CloudWatch Log Metric Filter for Security Group Changes is in place
+CheckTitle: Ensure a log metric filter and alarm exist for security group changes
 CheckType:
   - Software and Configuration Checks
-  - Security Best Practices
+  - Industry and Regulatory Standards
   - CIS AWS Foundations Benchmark
 ServiceName: cloudwatch
-SubServiceName: ""
-ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name:filter-name
+SubServiceName: logs
+ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name:*
 Severity: high
-ResourceType: AwsLogsMetricFilter
-Description: Ensure that CloudWatch Log Metric Filter is created to detect and alert on security group changes or root actions in your environment.
+ResourceType: AwsCloudWatchLogMetricFilter
+Description: Ensure that CloudWatch log metric filters and alarms are configured to detect changes to security groups
 Risk:
-  Security group changes and root actions could indicate unauthorized access or misconfigurations in your environment. Ensuring the creation of metric filters for such changes helps to monitor and alert on suspicious activities promptly.
-RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
+  Security groups control the ingress and egress traffic to AWS resources. Changes to security groups could potentially expose resources to unauthorized network access or indicate malicious activity. Without proper monitoring and alerting, these changes could go undetected, leading to security vulnerabilities.
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html
 Remediation:
   Code:
-    CLI:
-      aws logs put-metric-filter --log-group-name <log-group-name> --filter-name <filter-name> --filter-pattern '{ $.eventName = "AuthorizeSecurityGroupIngress" || $.eventName = "AuthorizeSecurityGroupEgress" || $.userIdentity.type = "Root" }' --metric-name SecurityGroupChanges --metric-namespace "MySecurityMetrics" --metric-value 1
-    Other: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
-    Terraform: ""
+    CLI: |
+      aws logs put-metric-filter \
+        --log-group-name <log-group-name> \
+        --filter-name SecurityGroupChangesFilter \
+        --filter-pattern '{ ($.eventName = AuthorizeSecurityGroupIngress) || ($.eventName = AuthorizeSecurityGroupEgress) || ($.eventName = RevokeSecurityGroupIngress) || ($.eventName = RevokeSecurityGroupEgress) || ($.eventName = CreateSecurityGroup) || ($.eventName = DeleteSecurityGroup) }' \
+        --metric-transformations \
+            metricName=SecurityGroupChangesCount,metricNamespace=CloudTrailMetrics,metricValue=1
+    NativeIaC: ""
+    Other: ""
   Recommendation:
-    Text:
-      Ensure that CloudWatch metric filters are configured to capture security group changes and root actions, and that alerts are triggered for suspicious activities.
+    Text: |
+      Set up CloudWatch metric filters with patterns to capture security group changes and ensure they are monitored with alarms. This enables automatic alerting for potential security-related changes to your network configuration.
     Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
 Categories:
   - security
   - monitoring
+  - compliance
+  - network
 DependsOn: []
 RelatedTo: []
-Notes: "This check ensures that CloudWatch Log Metric Filters are used to detect and alert on security group changes and root actions in your AWS environment."
+Notes: "This check is part of the CIS AWS Foundations Benchmark and helps ensure that security group changes are properly monitored."

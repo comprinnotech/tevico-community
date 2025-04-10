@@ -5,114 +5,108 @@ DATE: 2025-01-13
 """
 
 import boto3
-import logging
 import re
+from botocore.exceptions import BotoCoreError, ClientError
 
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+from tevico.engine.entities.report.check_model import (
+    CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+)
 from tevico.engine.entities.check.check import Check
 
 
 class cloudwatch_log_metric_filter_root_usage(Check):
+    
+    def get_alarm_names(self, cloudwatch_client, metric_name, namespace):
+        """Retrieve associated alarm names for a given metric name and namespace."""
+        try:
+            response = cloudwatch_client.describe_alarms_for_metric(
+                MetricName=metric_name,
+                Namespace=namespace
+            )
+            alarms = response.get("MetricAlarms", [])
+            return [alarm["AlarmName"] for alarm in alarms]
+        except Exception as e:
+            return []
+
     def execute(self, connection: boto3.Session) -> CheckReport:
-        # Initialize CloudWatch client
-        client = connection.client('logs')
-        cloudwatch = connection.client('cloudwatch')
+        logs_client = connection.client('logs')
+        cloudwatch_client = connection.client('cloudwatch')
         report = CheckReport(name=__name__)
-        
-        # Initialize report status as 'Passed' unless no filter/alarm is found
-        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
 
-        # Define the custom pattern for root account usage
-        pattern = r"\$\.userIdentity\.type\s*=\s*.?Root.+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*.?AwsServiceEvent.?"
-
         try:
-            # Fetch all log groups
-            log_groups = []
-            next_token = None
+            # Define the root account usage pattern
+            pattern = re.compile(r"\$\.userIdentity\.type\s*=\s*.?Root.+\$\.userIdentity\.invokedBy NOT EXISTS.+\$\.eventType\s*!=\s*.?AwsServiceEvent.?")
+            
+            # Fetch all metric filters with pagination
+            metric_filters = []
+            paginator = logs_client.get_paginator('describe_metric_filters')
+            for page in paginator.paginate():
+                metric_filters.extend(page.get('metricFilters', []))
 
-            while True:
-                response = client.describe_log_groups(nextToken=next_token) if next_token else client.describe_log_groups()
-                log_groups.extend(response.get('logGroups', []))
-                next_token = response.get('nextToken', None)
-                if not next_token:
-                    break
+            # Filter metric filters that match the root account usage pattern
+            filtered_metric_filters = [f for f in metric_filters if re.search(pattern, f.get("filterPattern", ""))]
 
-            # Check for metric filters and alarms in each log group
-            for log_group in log_groups:
-                log_group_name = log_group['logGroupName']
-                log_group_arn = log_group['arn']
-
-                # Check for metric filters
-                filters_response = client.describe_metric_filters(logGroupName=log_group_name)
-                filters = filters_response.get('metricFilters', [])
-
-                filter_found = False
-                filter_name = None
-                for metric_filter in filters:
-                    if re.search(pattern, metric_filter.get('filterPattern', '')):
-                        filter_found = True
-                        filter_name = metric_filter['filterName']
-                        # print(filter_name)
-                        break
-
-                # If a filter is found, check for associated alarms
-                if filter_found:
-                    alarm_found = False
-                    alarm_name = None
-
-                    alarms_response = cloudwatch.describe_alarms(AlarmNamePrefix=filter_name)
-                    alarms = alarms_response.get('MetricAlarms', [])
-                    for alarm in alarms:
-                        if alarm.get('AlarmName', '').startswith(filter_name):
-                            alarm_found = True
-                            alarm_name = alarm['AlarmName']
-                            break
-
-                    if alarm_found:
-                        # Log group has the required filter and alarm
-                        report.resource_ids_status.append(
-                            ResourceStatus(
-                                resource=AwsResource(arn=log_group_arn),
-                                status=CheckStatus.PASSED,
-                                summary=f"{log_group_name} (Filter: {filter_name}, Alarm: {alarm_name})"
-                            )
-                        )
-                    else:
-                        # Filter exists but no alarm is found
-                        report.status = CheckStatus.FAILED
-                        report.resource_ids_status.append(
-                            ResourceStatus(
-                                resource=AwsResource(arn=log_group_arn),
-                                status=CheckStatus.FAILED,
-                                summary=f"{log_group_name} (Filter: {filter_name}, No Alarm Found)"
-                            )
-                        )
-                else:
-                    # No filter found for the log group
-                    report.status = CheckStatus.FAILED
-
-            # If no log groups have filters and alarms, mark the report as failed
-            if not report.resource_ids_status:
-                report.status = CheckStatus.FAILED
+            # If no matching metric filters are found, exit early
+            if not filtered_metric_filters:
                 report.resource_ids_status.append(
                     ResourceStatus(
                         resource=GeneralResource(name=""),
                         status=CheckStatus.FAILED,
-                        summary=f"No log group with the required filter and alarm found"
+                        summary="No metric filters found matching the root account usage pattern."
                     )
                 )
+                return report  # Early exit
 
-        except Exception as e:
-            logging.error(f"Error while checking log metric filters and alarms: {e}")
-            report.status = CheckStatus.FAILED
+            # Fetch all log groups dynamically with pagination (to get ARNs)
+            log_groups = []
+            paginator = logs_client.get_paginator('describe_log_groups')
+            for page in paginator.paginate():
+                log_groups.extend(page.get('logGroups', []))
+            
+            log_group_arns = {lg["logGroupName"]: lg["arn"][0:-2] for lg in log_groups}
+
+            # Iterate over log groups with root account usage metric filters
+            for metric_filter in filtered_metric_filters:
+                log_group_name = metric_filter["logGroupName"]
+                log_group_arn = log_group_arns.get(log_group_name, f"Unknown ARN for {log_group_name}")
+                filter_name = metric_filter["filterName"]
+                
+                metric_transformations = metric_filter.get("metricTransformations", [])
+                if not metric_transformations:
+                    continue  # Skip if no metric transformation exists
+                
+                metric_name = metric_transformations[0].get("metricName")
+                namespace = metric_transformations[0].get("metricNamespace")
+
+                # Fetch associated alarm names
+                alarm_names = self.get_alarm_names(cloudwatch_client, metric_name, namespace)
+
+                if alarm_names:
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=AwsResource(arn=log_group_arn),
+                            status=CheckStatus.PASSED,
+                            summary=f"Log group {log_group_name} has metric filter '{filter_name}' for root account usage and associated alarms: {', '.join(alarm_names)}."
+                        )
+                    )
+                else:
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=AwsResource(arn=log_group_arn),
+                            status=CheckStatus.FAILED,
+                            summary=f"Log group {log_group_name} has metric filter '{filter_name}' for root account usage but no associated alarms."
+                        )
+                    )
+
+        except (BotoCoreError, ClientError) as e:
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
-                    summary=f"Error while checking log metric filters and alarms",
+                    status=CheckStatus.UNKNOWN,
+                    summary="Encountered an error while retrieving CloudWatch data.",
                     exception=str(e)
                 )
-            )            
+            )
 
         return report

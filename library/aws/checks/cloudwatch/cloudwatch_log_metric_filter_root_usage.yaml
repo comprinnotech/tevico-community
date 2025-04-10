@@ -1,29 +1,33 @@
 Provider: aws
 CheckID: "cloudwatch_log_metric_filter_root_usage"
-CheckTitle: Ensure a log metric filter and alarm exist for usage of root account.
+CheckTitle: Ensure a log metric filter and alarm exist for usage of root account
 CheckType:
-  - Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark
+  - Software and Configuration Checks
+  - Industry and Regulatory Standards
+  - CIS AWS Foundations Benchmark
 ServiceName: cloudwatch
 SubServiceName: logs
 ResourceIdTemplate: arn:partition:cloudwatch:region:account-id:certificate/resource-id
 Severity: medium
-ResourceType: AwsCloudWatchAlarm
-Description: Ensure a log metric filter and alarm exist for usage of root account.
+ResourceType: AwsCloudWatchLogMetricFilter
+Description: Ensure a log metric filter and alarm exist for usage of root account
 Risk: 
-  Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.
+  Root account usage should be monitored as it has unrestricted access to all resources. Unauthorized use of the root account could lead to severe security incidents and compliance violations.
 RelatedUrl: "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
 Remediation:
   Code:
-    CLI:
-      https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#procedure
+    CLI: |
+      aws logs put-metric-filter --log-group-name <log-group-name> --filter-name <filter-name> --filter-pattern '{ $.userIdentity.type = "Root" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != "AwsServiceEvent" }' --metric-name <metric-name> --metric-namespace <namespace>
     NativeIaC: ""
     Other: ""
     Terraform: "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#fix---buildtime"
   Recommendation:
-    Text:
-      It is recommended that a metric filter and alarm be established for unauthorized requests.
+    Text: |
+      Set up CloudWatch metric filters with patterns to capture root account usage and ensure they are monitored with alarms. This enables automatic alerting for critical security events.
     Url: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html
 Categories:
+  - security
+  - monitoring
   - forensics-ready
 DependsOn: []
 RelatedTo: []

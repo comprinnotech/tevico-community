@@ -3,24 +3,35 @@ CheckID: "s3_bucket_object_versioning"
 CheckTitle: "Ensure S3 buckets have object versioning enabled"
 CheckType:
   - "Data Protection"
+  - "Disaster Recovery"
 ServiceName: "s3"
 SubServiceName: ""
 ResourceIdTemplate: "arn:partition:s3:::bucket_name"
 Severity: medium
 ResourceType: "AwsS3Bucket"
-Description: "Ensure S3 buckets have object versioning enabled"
-Risk: "With versioning, you can easily recover from both unintended user actions and application failures."
+Description: "Ensure S3 buckets have object versioning enabled to protect against accidental deletion and provide data recovery capabilities."
+Risk: "Without versioning, accidentally deleted or overwritten objects cannot be recovered, potentially resulting in data loss. Versioning helps protect against both unintended user actions and application failures."
 RelatedUrl: ""
 Remediation:
   Code:
-    CLI: ""
+    CLI: "aws s3api put-bucket-versioning --bucket my-bucket-name --versioning-configuration Status=Enabled"
     NativeIaC: ""
-    Other: "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
-    Terraform: ""
+    Other: ""
+    Terraform: |
+      resource "aws_s3_bucket" "example" {
+        bucket = "my-bucket-name"
+      }
+      
+      resource "aws_s3_bucket_versioning" "example" {
+        bucket = aws_s3_bucket.example.id
+        versioning_configuration {
+          status = "Enabled"
+        }
+      }
   Recommendation:
-    Text: "Configure versioning using the Amazon console or API for buckets with sensitive information that is changing frequently, and backup may not be enough to capture all the changes."
-    Url: "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
+    Text: "Enable versioning for S3 buckets containing important data that changes frequently. Consider implementing lifecycle policies to manage the cost of storing multiple versions of objects. For buckets with sensitive information, versioning provides an additional layer of protection beyond regular backups."
+    Url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html"
 Categories: []
 DependsOn: []
 RelatedTo: []
-Notes: ""
+Notes: "While versioning provides significant data protection benefits, it can increase storage costs as multiple versions of objects are retained. Consider implementing lifecycle rules to transition older versions to lower-cost storage classes or expire them after an appropriate retention period."
