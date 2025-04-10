@@ -64,7 +64,7 @@ class vpc_flowlogs_traffic_inspection(Check):
                 return report
 
             # -------------------------------------------------------------------
-            # For each VPC, evaluates whether it has an active flow log capturing all traffic.
+            # For each VPC, evaluate whether it has an active flow log capturing all traffic.
             # Acceptable cases:
             #   - A flow log with TrafficType "ALL"
             #   - OR separate active flow logs with TrafficType "ACCEPT" and "REJECT"
@@ -75,40 +75,56 @@ class vpc_flowlogs_traffic_inspection(Check):
                 resource = AwsResource(arn=vpc_arn)
 
                 # -------------------------------------------------------------------
-                # Retrieves flow logs for the current VPC using pagination.
+                # Retrieve flow logs for the current VPC using pagination.
                 # Use a filter on 'resource-id' to get only flow logs for this VPC.
                 # -------------------------------------------------------------------
-                flow_logs = []
-                next_token_fl = None
-                while True:
-                    if next_token_fl:
-                        response = ec2_client.describe_flow_logs(
-                            Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}],
-                            NextToken=next_token_fl
+                try:
+                    flow_logs = []
+                    next_token_fl = None
+                    while True:
+                        if next_token_fl:
+                            response = ec2_client.describe_flow_logs(
+                                Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}],
+                                NextToken=next_token_fl
+                            )
+                        else:
+                            response = ec2_client.describe_flow_logs(
+                                Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}]
+                            )
+                        flow_logs.extend(response.get("FlowLogs", []))
+                        next_token_fl = response.get("NextToken")
+                        if not next_token_fl:
+                            break
+                except Exception as fl_e:
+                    # -------------------------------------------------------------------
+                    # Exception Handling for Flow Log Retrieval.
+                    # If an error occurs while retrieving flow logs for this VPC,
+                    # records the error and mark this VPC's result as UNKNOWN.
+                    # -------------------------------------------------------------------
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=resource,
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error retrieving flow logs for VPC {vpc_id}: {str(fl_e)}",
+                            exception=str(fl_e)
                         )
-                    else:
-                        response = ec2_client.describe_flow_logs(
-                            Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}]
-                        )
-                    flow_logs.extend(response.get("FlowLogs", []))
-                    next_token_fl = response.get("NextToken")
-                    if not next_token_fl:
-                        break
+                    )
+                    continue
 
                 # -------------------------------------------------------------------
-                # Determine which flow logs are active.
+                # Determines which flow logs are active.
                 # A flow log is considered active if its FlowLogStatus is "ACTIVE".
                 # -------------------------------------------------------------------
                 active_flow_logs = [fl for fl in flow_logs if fl.get("FlowLogStatus", "").upper() == "ACTIVE"]
 
                 # -------------------------------------------------------------------
-                # Collect the TrafficType values from active flow logs.
+                # Collects the TrafficType values from active flow logs.
                 # Valid TrafficType values are typically "ALL", "ACCEPT", or "REJECT".
                 # -------------------------------------------------------------------
                 active_traffic_types = {fl.get("TrafficType", "").upper() for fl in active_flow_logs}
 
                 # -------------------------------------------------------------------
-                # Determine if the VPC's flow logs capture all traffic.
+                # Determines if the VPC's flow logs captures all traffic.
                 # Acceptable conditions:
                 #   - There is at least one active flow log with TrafficType "ALL", or
                 #   - Both "ACCEPT" and "REJECT" are present in the active flow logs.
@@ -144,7 +160,7 @@ class vpc_flowlogs_traffic_inspection(Check):
         except Exception as e:
             # -------------------------------------------------------------------
             # Global Exception Handling.
-            # If an error occurs during processing, mark the overall check as UNKNOWN
+            # If an error occurs during processing (e.g. retrieving VPCs), mark the overall check as UNKNOWN
             # and record the error details in the report.
             # -------------------------------------------------------------------
             report.status = CheckStatus.UNKNOWN
@@ -152,7 +168,7 @@ class vpc_flowlogs_traffic_inspection(Check):
                 ResourceStatus(
                     resource=GeneralResource(name=""),
                     status=CheckStatus.UNKNOWN,
-                    summary=f"Error retrieving VPCs or flow logs: {str(e)}",
+                    summary=f"Error retrieving VPCs: {str(e)}",
                     exception=str(e)
                 )
             )
