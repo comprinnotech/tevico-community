@@ -12,9 +12,13 @@ Risk: If termination protection is not enabled, EC2 instances can be accidentall
 RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
 Remediation:
   Code:
-    CLI: aws ec2 modify-instance-attribute --instance-id <INSTANCE_ID> --no-disable-api-termination
+    CLI: aws ec2 modify-instance-attribute --instance-id <INSTANCE_ID> --disable-api-termination
     Other: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
-    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
+    Terraform: |
+      resource "aws_instance" "example" {
+        # ... other configuration ...
+        disable_api_termination = true
+      }
   Recommendation:
     Text: Enable termination protection for EC2 instances managed by SSM.
     Url: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
