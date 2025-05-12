@@ -198,6 +198,7 @@ sections:
         checks:
           - ssm_ec2instance_automatic_protection_check
           - ssm_ec2instance_remove_interactive_access_check
+          - ec2_detailed_monitoring_enabled
 
   - name: Operational Excellence
     description: |
