@@ -7,6 +7,33 @@ from tevico.engine.entities.provider.provider import CheckReport, CheckStatus
 from tevico.engine.configs.config import TevicoConfig
 
 
+def get_check_reports() -> List[CheckReport]:
+    """Fetches check reports by executing the provider.
+
+    Returns:
+        List[CheckReport]: A list of check reports.
+    """
+    provider = AWSProvider()
+    return provider.start_execution()
+
+# Get the check reports
+try:
+    check_reports = get_check_reports()
+    if not check_reports:
+        print("No check reports were retrieved")
+except Exception as e:
+    print(f"Failed to get check reports: {str(e)}")
+    check_reports = []
+@pytest.mark.parametrize("report", check_reports)
+
+
+
+
+
+
+
+
+
 # Add a pytest fixture to mock ConfigUtils.get_config globally
 @pytest.fixture(autouse=True)
 def mock_config_utils_get_config():
@@ -26,6 +53,15 @@ def pytest_generate_tests(metafunc):
             reports = []
 
         metafunc.parametrize("report", reports)
+
+
+
+
+
+
+
+
+
 
 
 def test_check_report(report: CheckReport):
