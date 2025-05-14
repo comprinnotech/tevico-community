@@ -3,7 +3,7 @@ import boto3
 from typing import Any, Dict
 from tevico.engine.configs.config import ConfigUtils
 from tevico.engine.entities.provider.provider import Provider
-from library.aws.checks.ec2.check_ec2_detailed_monitoring import check_ec2_detailed_monitoring  # Import the check function
+from library.aws.checks.ec2.check_ec2_detailed_monitoring import ec2_detailed_monitoring  # Import the check function
 
 class AWSProvider(Provider):
     __provider_name: str = 'AWS'
@@ -16,7 +16,7 @@ class AWSProvider(Provider):
         results = []
 
         # Run the EC2 detailed monitoring check
-        results.append(check_ec2_detailed_monitoring())  # Add the results from the check
+        results.append(ec2_detailed_monitoring(session))  # Add the results from the check
 
         return results
 
