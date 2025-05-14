@@ -9,9 +9,8 @@ import library.aws.checks.ec2.check_ec2_detailed_monitoring as mod
 from library.aws.checks.ec2.check_ec2_detailed_monitoring import check_ec2_detailed_monitoring
 from tevico.engine.entities.report.check_model import CheckStatus, CheckMetadata
 
-# ----------------------------
 # Fixtures and Helpers
-# ----------------------------
+
 
 @pytest.fixture(autouse=True)
 def stub_out_checkreport(monkeypatch):
@@ -83,9 +82,8 @@ def prepare_stubbed_ec2(session, responses=None, client_error=None):
     session.client = lambda service_name, **kwargs: real_ec2
     return stub
 
-# ----------------------------
+
 # Test Cases
-# ----------------------------
 
 def test_no_instances(boto_session):
     """
