@@ -1,6 +1,0 @@
-check_id: ec2_detailed_monitoring_enabled
-title: Ensure EC2 instances have detailed monitoring enabled
-service: ec2
-severity: medium
-risk: Enabling detailed monitoring helps with better observability and alerting.
-recommendation: Enable detailed monitoring for EC2 instances through AWS Console or CLI.

@@ -1,0 +1,35 @@
+Provider: aws
+CheckID: lambda_deprecated_runtime
+CheckTitle: Ensure AWS Lambda Functions Are Not Using Deprecated Runtimes
+CheckType:
+  - Security
+  - BestPractice
+ServiceName: lambda
+SubServiceName: compute
+ResourceIdTemplate: arn:aws:lambda:region:account-id:function:function-name
+Severity: high
+ResourceType: AwsLambdaFunction
+Description: |
+  Verifies that AWS Lambda functions are not using deprecated runtimes such as Node.js 10.x, Python 2.7, etc.
+Risk: |
+  Deprecated runtimes no longer receive security updates and may pose a security risk.
+RelatedUrl: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+Remediation:
+  Code:
+    CLI: "aws lambda update-function-configuration --function-name <name> --runtime <new-runtime>"
+    Terraform: |
+      resource "aws_lambda_function" "example" {
+        function_name = "my-function"
+        runtime       = "python3.9"
+        ...
+      }
+    Other: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+  Recommendation:
+    Text: Upgrade Lambda runtimes to supported versions to maintain security and functionality.
+    Url: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+Categories:
+  - Security
+  - Runtime Management
+DependsOn: []
+RelatedTo: []
+Notes: Keep runtime versions up-to-date to avoid vulnerabilities.
