@@ -5,7 +5,6 @@ from typing import Any, Dict
 from tevico.engine.configs.config import ConfigUtils
 from tevico.engine.entities.provider.provider import Provider
 
-
 class AWSProvider(Provider):
     
     __provider_name: str = 'AWS'
