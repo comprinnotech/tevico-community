@@ -1,15 +1,15 @@
 Provider: aws
 CheckID: guardduty_is_enabled
-CheckTitle: Ensure GuardDuty is enabled in all regions
+CheckTitle: Ensure GuardDuty is enabled
 CheckType: [Detective Control]
 ServiceName: guardduty
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:guardduty:region:account-id/detector-id
 Severity: high
 ResourceType: AwsGuardDutyDetector
-Description: Ensure that Amazon GuardDuty is enabled in all regions to ensure monitoring and threat detection capabilities.
+Description: Ensure that Amazon GuardDuty is enabled to ensure monitoring and threat detection capabilities.
 Risk: Without GuardDuty enabled, threats and unauthorized activities may go undetected, exposing the environment to risks.
-RelatedUrl: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_detectors.html
+RelatedUrl: "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html#guardduty_enable-gd"
 Remediation:
   Code:
     CLI: 
@@ -17,9 +17,9 @@ Remediation:
     Other: ""
     Terraform: ""
   Recommendation:
-    Text: Enable Amazon GuardDuty in all AWS regions to ensure continuous monitoring and threat detection.
+    Text: Enable Amazon GuardDuty to ensure continuous monitoring and threat detection.
     Url: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_detectors.html
 Categories: [Detective Control]
 DependsOn: []
 RelatedTo: []
-Notes: This check ensures that GuardDuty is enabled across all regions for comprehensive security monitoring.
+Notes: This check ensures that GuardDuty is enabled for comprehensive security monitoring.

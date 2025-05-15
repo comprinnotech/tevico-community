@@ -1,15 +1,15 @@
 Provider: aws
 CheckID: dynamodb_tables_kms_cmk_encryption_enabled
-CheckTitle: Ensure DynamoDB table has encryption at rest enabled using CMK KMS
+CheckTitle: Ensure DynamoDB tables have encryption at rest enabled using KMS CMK
 CheckType: [Infrastructure Protection]
 ServiceName: dynamodb
 SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: medium
 ResourceType: AwsDynamoDbTable
-Description: Check if DynamoDB table has encryption at rest enabled using CMK KMS
+Description: Ensure that DynamoDB tables have encryption at rest enabled using KMS CMK for enhanced data security.
 Risk: All user data stored in Amazon DynamoDB is fully encrypted at rest. This functionality helps reduce the operational burden and complexity involved in protecting sensitive data.
-RelatedUrl: https://docs.aws.amazon.com/amazondynamodbdb/latest/developerguide/EncryptionAtRest.html
+RelatedUrl: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/encryption.tutorial.html
 Remediation:
   Code: 
     CLI: ""

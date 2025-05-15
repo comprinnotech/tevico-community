@@ -1,13 +1,13 @@
 Provider: aws
 CheckID: vpc_flowlogs_traffic_inspection
-CheckTitle: Ensure VPC Flow Logs are enabled for traffic inspection.
+CheckTitle: Ensure VPC flow logs are enabled for all traffic inspection.
 CheckType: []
 ServiceName: ec2
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:vpc/vpc-id
 Severity: medium
 ResourceType: AwsVpc
-Description: Ensure that VPC flow logs are enabled for traffic inspection. This check verifies if flow logs are active and capturing traffic in the VPC for inspection.
+Description: Ensure that VPC flow logs are enabled for all traffic inspection. This check verifies if flow logs are active and capturing traffic in the VPC for inspection.
 Risk: If VPC flow logs are not enabled, network traffic within the VPC will not be captured, making it difficult to monitor and troubleshoot network issues, and increasing the risk of undetected malicious activity.
 RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
 Remediation:

@@ -2,7 +2,7 @@ Provider: aws
 
 CheckID: organizations_account_part_of_organizations
 
-CheckTitle: Ensure that account is part of an AWS Organizations
+CheckTitle: Ensure that account is part of an AWS Organization
 
 CheckType:
   - Logging and Monitoring
@@ -34,7 +34,7 @@ Remediation:
   Recommendation:
     Text: 
       Create or Join an AWS Organization for effective account management.
-    Url: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html
+    Url: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_invites.html
 
 Categories: []
 

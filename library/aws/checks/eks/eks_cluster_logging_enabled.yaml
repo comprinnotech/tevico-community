@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: eks_cluster_logging_enabled
-CheckTitle: Ensure EKS cluster logging is enabled for Control Plane components
+CheckTitle: Ensure EKS cluster logging is enabled for control plane components
 CheckType: [Infrastructure Protection]
 ServiceName: eks
 SubServiceName: ""
@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEksCluster
 Description: Ensure that EKS clusters have logging enabled for control plane components, which is important for monitoring, auditing, and troubleshooting purposes.
 Risk: Without logging enabled, critical data about the cluster's control plane may be inaccessible, hindering security analysis and monitoring capabilities.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/prescriptive-guidance/latest/implementing-logging-monitoring-cloudwatch/kubernetes-eks-logging.html"
 Remediation: 
   Code:
     CLI: ""

@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEc2Instance
 Description: Ensure EC2 instances managed by SSM have termination protection enabled to prevent accidental termination.
 Risk: If termination protection is not enabled, EC2 instances can be accidentally terminated, leading to data loss or downtime.
-RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managed-instances.html
+RelatedUrl: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html
 Remediation:
   Code:
     CLI: aws ec2 modify-instance-attribute --instance-id <INSTANCE_ID> --disable-api-termination

@@ -14,7 +14,7 @@ Remediation:
   Code:
     CLI: "aws rds create-db-instance --db-instance-identifier <db_instance_id> --db-instance-class <instance_class> --engine <engine> --storage-encrypted true"
     NativeIaC: ""
-    Other: "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-encryption-enabled.html"
+    Other: ""
     Terraform: ""
   Recommendation:
     Text: "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits."

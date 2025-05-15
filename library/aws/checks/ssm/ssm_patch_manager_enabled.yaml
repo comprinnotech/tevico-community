@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEc2Instance
 Description: Ensure that AWS Systems Manager (SSM) Patch Manager is enabled on all managed instances.
 Risk: Instances without SSM Patch Manager enabled may not have automated patching, leading to security vulnerabilities.
-RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-patch-patchgroup.html
+RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager.html
 Remediation:
   Code:
     CLI: aws ssm register-managed-instance --instance-id <INSTANCE_ID>

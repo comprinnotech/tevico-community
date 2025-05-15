@@ -2,7 +2,7 @@ Provider: aws
 
 CheckID: iam_customer_attached_policy_admin_privileges_found
 
-CheckTitle: Ensure IAM users do not have Administrator Access policy attached
+CheckTitle: Check no attached customer-managed policies for a user, group, or role grant admin-level privileges.
 
 CheckType:
   - Software and Configuration Checks
@@ -19,18 +19,17 @@ Severity: high
 
 ResourceType: AwsIamUser
 
-Description: Ensure that no IAM user has the AdministratorAccess policy attached.
-
+Description: Ensure customer managed policies that allow full "*:*" administrative privileges are not attached to users, roles or groups.
 Risk: Attaching administrative privileges to users, roles or groups increases the security risk.
 
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_controlling.html
 
 Remediation:
   Code:
     CLI: "aws iam detach-user-policy --user-name <user_name> --policy-arn <policy_arn>"
     NativeIaC: ""
     Other: "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html"
-    Terraform: "https://docs.prowler.com/checks/aws/iam-policies/iam_47/#terraform"
+    Terraform: ""
   Recommendation:
     Text: "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that are too lenient and then trying to tighten them later. List policies and analyze if permissions are the least possible to conduct business activities."
     Url: "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"

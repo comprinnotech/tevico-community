@@ -1,6 +1,6 @@
 Provider: "aws"
 CheckID: "s3_bucket_acl_prohibited"
-CheckTitle: "Ensure S3 buckets have ACLs enabled"
+CheckTitle: "Ensure S3 buckets have ACLs prohibited"
 CheckType:
   - "Logging and Monitoring"
 ServiceName: "s3"
@@ -8,9 +8,9 @@ SubServiceName: ""
 ResourceIdTemplate: "arn:partition:s3:::bucket_name"
 Severity: medium
 ResourceType: "AwsS3Bucket"
-Description: "Ensure S3 buckets have ACLs enabled"
+Description: "Ensure S3 buckets have ACLs prohibited."
 Risk: "S3 ACLs are a legacy access control mechanism that predates IAM. IAM and bucket policies are currently the preferred methods."
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html"
 Remediation:
   Code:
     CLI: "aws s3api put-bucket-ownership-controls --bucket <bucket-name> --ownership-controls Rules=[{ObjectOwnership=BucketOwnerEnforced}]"

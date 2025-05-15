@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsCertificateManagerCertificate
 Description: Checks if ACM certificates are nearing expiration, which could result in service disruptions if not renewed.
 Risk: Expiring certificates may lead to downtime, service disruptions, or trust issues if not renewed in time.
-RelatedUrl: https://docs.aws.amazon.com/acm/latest/userguide/check-certificate-expiration.html
+RelatedUrl: https://docs.aws.amazon.com/acm/latest/userguide/managed-renewal.html
 Remediation: 
   Code:
     CLI: aws acm renew-certificate --certificate-arn <certificate-arn>
@@ -18,7 +18,7 @@ Remediation:
     Terraform: ""
   Recommendation:
     Text: Regularly monitor and renew expiring ACM certificates to avoid service disruptions.
-    Url: https://docs.aws.amazon.com/acm/latest/userguide/check-certificate-expiration.html
+    Url: https://docs.aws.amazon.com/acm/latest/userguide/managed-renewal.html
 Categories: [Data Protection]
 DependsOn: []
 RelatedTo: []

@@ -12,7 +12,7 @@ Severity: medium
 ResourceType: AwsCloudTrailTrail
 Description: Ensure CloudTrail is configured to capture logs from all AWS regions to ensure multi-region coverage.
 Risk: If CloudTrail is not enabled for multi-region logging, logs might be missed for regions where CloudTrail is not set up. This can lead to gaps in security logging and auditing, increasing the risk of undetected malicious activity.
-RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-a-multi-region-trail.html
+RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-multi-region-trails.html
 Remediation:
   Code:
     CLI:

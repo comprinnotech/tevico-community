@@ -2,7 +2,7 @@ Provider: aws
 
 CheckID: iam_account_maintain_current_contact_details
 
-CheckTitle: Verify AWS Account contact details
+CheckTitle: Verify AWS account has all required contact details
 
 CheckType: [contact_information_check]
 
@@ -20,7 +20,7 @@ Description: Checks whether the AWS account has all required contact details upd
 
 Risk: Incomplete or outdated contact information may hinder communication during critical account issues or security incidents.
 
-RelatedUrl: https://tevi.co
+RelatedUrl: "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact-primary.html"
 
 # Help section on how to fix the issue
 Remediation:

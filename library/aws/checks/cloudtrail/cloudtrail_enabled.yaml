@@ -13,13 +13,13 @@ ResourceType: AwsCloudTrailTrail
 Description: Ensure CloudTrail trails are enabled for logging to capture all account activity.
 Risk:
   Enabling logging for CloudTrail ensures that all API activity is recorded and can be used for auditing, security analysis, and troubleshooting. If logging is not enabled, critical actions within the account may go unnoticed, increasing security risks.
-RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation.html
+RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and-update-a-trail.html
 Remediation:
   Code:
     CLI:
       aws cloudtrail update-trail --name <trail_name> --is-logging
     NativeIaC: ""
-    Other: https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console
+    Other: ""
     Terraform: ""
   Recommendation:
     Text:

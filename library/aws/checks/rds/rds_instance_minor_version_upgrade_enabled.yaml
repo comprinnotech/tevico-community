@@ -13,7 +13,7 @@ RelatedUrl: "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-
 Remediation:
   Code:
     CLI: "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --auto-minor-version-upgrade --apply-immediately"
-    Other: "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html"
+    Other: ""
   Recommendation:
     Text: "Enable auto minor version upgrade for all databases and environments."
     Url: "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/"

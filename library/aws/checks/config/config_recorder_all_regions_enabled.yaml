@@ -13,7 +13,7 @@ ResourceType: AwsConfigConfigurationRecorder
 Description: Ensure that AWS Config recorder is enabled in all regions to ensure continuous recording of resource configuration changes.
 Risk:
   AWS Config is a key service for auditing and compliance. If AWS Config is not enabled across all regions, you might miss critical changes in your resources, potentially impacting governance and compliance audits.
-RelatedUrl: https://docs.aws.amazon.com/config/latest/developerguide/easy-setup.html
+RelatedUrl: https://docs.aws.amazon.com/config/latest/developerguide/stop-start-recorder.html
 Remediation:
   Code:
     CLI:

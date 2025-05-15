@@ -1,13 +1,13 @@
 Provider: aws
 CheckID: cloudformation_stacks_termination_protection_enabled
-CheckTitle: Enable termination protection for Cloudformation Stacks
+CheckTitle: Check if termination protection is enabled for Cloudformation Stacks
 CheckType: []
 ServiceName: cloudformation
 SubServiceName: ""
 ResourceIdTemplate: arn:partition:cloudformation:region:account-id:stack/resource-id
 Severity: medium
 ResourceType: AwsCloudFormationStack
-Description: Enable termination protection for Cloudformation Stacks
+Description: Ensure termination protection is enabled for CloudFormation stacks to prevent accidental deletion.
 Risk:
   Without termination protection enabled, a critical cloudformation stack can
   be accidently deleted.

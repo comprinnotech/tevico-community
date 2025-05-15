@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: elb_logging_enabled
-CheckTitle: Ensure Access Logging is enabled for Classic LB
+CheckTitle: Ensure access logging is enabled for Classic Load Balancers
 CheckType: [Detective Control]
 ServiceName: elb
 SubServiceName: ""
@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsElbLoadBalancer
 Description: Ensure access logging is enabled for Classic Load Balancers (ELB) to monitor and analyze traffic.
 Risk: Without access logging, visibility into request patterns and troubleshooting may be limited, impacting security and operational analysis.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html"
 Remediation: 
   Code:
     CLI: aws elb modify-load-balancer-attributes --load-balancer-name <lb-name> --load-balancer-attributes '{"AccessLog":{"Enabled":true,"S3BucketName":"<bucket-name>","EmitInterval":5}}'

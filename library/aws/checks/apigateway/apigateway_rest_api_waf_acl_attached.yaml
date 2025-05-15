@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsApiGatewayRestApi
 Description: This check ensures that a WAF Web ACL is attached to API Gateway REST APIs to provide protection against web attacks.
 Risk: Without a WAF Web ACL, the API Gateway REST API is vulnerable to common web exploits like SQL injection and XSS.
-RelatedUrl: "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-web-acl.html"
+RelatedUrl: "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-control-access-aws-waf.html"
 Remediation: 
   Code:
     CLI: aws waf-regional associate-web-acl --web-acl-id <waf_acl_id> --resource-arn <api_arn>
@@ -18,7 +18,7 @@ Remediation:
     Terraform: ""
   Recommendation:
     Text: Attach a WAF Web ACL to your API Gateway REST APIs to mitigate common web vulnerabilities.
-    Url: https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-web-acl.html
+    Url: https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-control-access-aws-waf.html
 Categories: [Infrastructure Protection]
 DependsOn: []
 RelatedTo: []

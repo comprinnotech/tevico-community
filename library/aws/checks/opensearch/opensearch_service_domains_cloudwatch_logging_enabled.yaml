@@ -1,7 +1,7 @@
 Provider: aws
 CheckID: opensearch_service_domains_cloudwatch_logging_enabled
 CheckTitle:
-  Ensure Amazon OpenSearch Service domains have logging enabled
+  Ensure Amazon OpenSearch domains have logging enabled
 CheckType:
   - Identify
   - Logging
@@ -11,17 +11,17 @@ ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: medium
 ResourceType: AwsOpenSearchDomain
 Description:
-  Ensure that Amazon Opensearch Service domains have logging enabled
+  Ensure that Amazon Opensearch domains have logging enabled
 Risk:
   "Amazon ES exposes four Elasticsearch/Opensearch logs through Amazon CloudWatch
   Logs: error logs, search slow logs, index slow logs, and audit logs."
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html"
 Remediation:
   Code:
-    CLI: https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cli-command
-    NativeIaC: https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cloudformation
-    Other: https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#fix---runtime
-    Terraform: https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#fix---buildtime
+    CLI: ""
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
   Recommendation:
     Text:
       Enable Elasticsearch/Opensearch log. Create use cases for them. Using audit

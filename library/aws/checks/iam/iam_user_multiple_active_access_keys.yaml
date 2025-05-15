@@ -10,7 +10,7 @@ ResourceType: AwsIamUser
 Description: Ensure no IAM user has multiple active access keys. AWS recommends having only one active access key per user to reduce the potential attack surface. Multiple active access keys can increase the risk of unauthorized access or compromise, as it becomes harder to manage and track which keys are being used.
 Risk: >-
  Having multiple active access keys can lead to security risks, such as difficulty in key rotation and potential unauthorized access. If one key gets compromised, an attacker could gain access to the user's account without the organization's knowledge. It also makes it harder to monitor and audit key usage. To mitigate these risks, limit the number of active access keys to one per user and regularly rotate them.
-RelatedUrl: ''
+RelatedUrl: 'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html'
 Remediation:
   Code:
     CLI: ''

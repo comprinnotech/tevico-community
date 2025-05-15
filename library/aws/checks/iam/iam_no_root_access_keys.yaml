@@ -9,7 +9,7 @@ Severity: "critical"
 ResourceType: "AwsIamAccessKey"
 Description: "Ensure no root account access keys exist"
 Risk: "The root account is the most privileged user in an AWS account. AWS Access Keys provide programmatic access to a given AWS account. It is recommended that all access keys associated with the root account be removed. Removing access keys associated with the root account limits vectors by which the account can be compromised. Removing the root access keys encourages the creation and use of role-based accounts that are least privileged."
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html"
 Remediation:
   Code:
     CLI: ""

@@ -2,7 +2,7 @@ Provider: aws
 
 CheckID: iam_customer_unattached_policy_admin_privileges_found
 
-CheckTitle: Ensure IAM policies that allow full "*:*" administrative privileges are not created
+CheckTitle: Check no unattached customer-managed policy grants admin-level privileges.
 
 CheckType: 
   - Software and Configuration Checks
@@ -19,7 +19,7 @@ Severity: high
 
 ResourceType: AwsIamPolicy
 
-Description: Ensure IAM policies that allow full "*:*" administrative privileges are not created.
+Description: Ensure customer managed policies that allow full "*:*" administrative privileges are not created.
 
 Risk: |
   IAM policies are the means by which privileges are granted to users, groups, or roles. 
@@ -29,14 +29,14 @@ Risk: |
   allowing full administrative privileges. Providing full administrative privileges instead of 
   restricting to the minimum set of permissions exposes the resources to potentially unwanted actions.
 
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_controlling.html
 
 Remediation:
   Code:
     CLI: "aws iam list-policies --scope Local"
     NativeIaC: ""
-    Other: "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/iam-unattached-policies.html"
-    Terraform: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+    Other: ""
+    Terraform: ""
   Recommendation:
     Text: |
       It is more secure to start with a minimum set of permissions and grant additional permissions 

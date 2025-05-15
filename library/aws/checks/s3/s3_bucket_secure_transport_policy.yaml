@@ -11,7 +11,7 @@ Severity: medium
 ResourceType: "AwsS3Bucket"
 Description: "Ensure S3 buckets have policies that enforce the use of secure transport (HTTPS) for all requests, preventing unencrypted HTTP access."
 Risk: "If HTTPS is not enforced on the bucket policy, communication between clients and S3 buckets can use unencrypted HTTP. As a result, sensitive information could be transmitted in clear text over the network or internet, potentially exposing it to interception, eavesdropping, or man-in-the-middle attacks."
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-policies.html"
 Remediation:
   Code:
     CLI: |

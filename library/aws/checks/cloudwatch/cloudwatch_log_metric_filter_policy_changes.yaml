@@ -13,7 +13,7 @@ ResourceType: AwsCloudWatchLogMetricFilter
 Description: Ensure CloudWatch metric filters are in place to detect IAM policy changes
 Risk:
   CloudWatch log metric filters help in detecting IAM policy changes by capturing events like policy creation, modification, or deletion. If no such filters exist, changes might go unnoticed, posing a security risk.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html"
 Remediation:
   Code:
     CLI: |

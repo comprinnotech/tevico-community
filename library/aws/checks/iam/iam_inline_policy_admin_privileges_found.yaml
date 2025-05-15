@@ -22,14 +22,14 @@ Description: Ensure IAM inline policies with full administrative privileges (`*:
 Risk: > 
   Attaching full administrative privileges to IAM users exposes the account to significant risk, as the user can perform unrestricted actions across all AWS services.
 
-RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_controlling.html#access_controlling-policies
 
 Remediation:
   Code:
-    CLI: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#cli-command"
+    CLI: ""
     NativeIaC: 
-    Other: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#aws-console"
-    Terraform: "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+    Other: ""
+    Terraform: ""
   Recommendation:
     Text: "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that are too lenient and then trying to tighten them later. List policies an analyze if permissions are the least possible to conduct business activities."
     Url: "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"

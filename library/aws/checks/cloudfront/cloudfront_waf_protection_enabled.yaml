@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsCloudFrontDistribution
 Description: Ensure that AWS CloudFront distributions are protected by AWS WAF to prevent unwanted traffic and potential attacks.
 Risk: Without WAF protection, CloudFront distributions are vulnerable to common web exploits, which could compromise security and expose resources to unauthorized access.
-RelatedUrl: https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-protection.html
+RelatedUrl: https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html
 Remediation:
   Code:
     CLI:
@@ -19,7 +19,7 @@ Remediation:
   Recommendation:
     Text:
       Enable AWS WAF for CloudFront distributions to protect against common web exploits and improve security. Attach a web ACL to your CloudFront distribution for enhanced protection.
-    Url: https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-protection.html
+    Url: https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html
 Categories: [security]
 DependsOn: []
 RelatedTo: []

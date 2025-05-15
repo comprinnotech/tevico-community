@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsVpc
 Description: Ensure that VPC has enabled service endpoints (e.g., S3, DynamoDB, etc.). This check verifies that VPC endpoints are available and functional for services within the VPC.
 Risk: If a VPC does not have any enabled service endpoints, resources in the VPC may not have direct access to the services they need, which can hinder functionality and performance.
-RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/privatelink/configure-endpoint-service.html
 Remediation:
   Code:
     CLI:

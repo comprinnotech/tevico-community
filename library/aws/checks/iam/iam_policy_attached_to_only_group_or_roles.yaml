@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: iam_policy_attached_to_only_group_or_roles
-CheckTitle: Ensure IAM policies are only attached to Groups or Roles
+CheckTitle: Ensure IAM policies are only attached to groups or roles
 CheckType: []
 ServiceName: iam
 SubServiceName: ''
@@ -11,7 +11,7 @@ Description: Ensure IAM policies are only attached to groups or roles, and not d
 
 Risk: >-
  Attaching policies directly to users increases the complexity of managing permissions and the risk of accidentally assigning excessive permissions. It bypasses the principle of least privilege and makes it difficult to audit and manage access control effectively. Policies should be attached to groups or roles, which can then be assigned to users, ensuring more controlled and scalable permission management across the AWS environment.
-RelatedUrl: ''
+RelatedUrl: 'https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html'
 Remediation:
   Code:
     CLI: ''

@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsNetworkFirewall
 Description: Ensure that logging is enabled for AWS Network Firewall to monitor and review security-related events.
 Risk: Without logging enabled, potential security breaches or unusual traffic patterns may go undetected, compromising the network's security.
-RelatedUrl: https://docs.aws.amazon.com/network-firewall/latest/developerguide/logging-configuration.html
+RelatedUrl: https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-logging.html
 Remediation: 
   Code:
     CLI: aws network-firewall update-logging-configuration --firewall-arn <firewall-arn> --logging-configuration file://logging_configuration.json

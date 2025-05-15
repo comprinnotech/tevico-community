@@ -1,18 +1,18 @@
 
 Provider: aws
 CheckID: ec2_microsoft_sql_server_end_of_support
-CheckTitle: Ensure no EC2 instance is using AMI with Microsoft SQL Server that has reached end of support
+CheckTitle: Ensure no EC2 instance is using AMI with Microsoft SQL server that has reached end of support
 CheckType: []
 ServiceName: ec2
 SubServiceName:  ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: medium
 ResourceType: AwsEc2Instance
-Description: Ensure that no EC2 instance is using AMI with Microsoft SQL Server that has reached end of support
-Risk: Running EC2 instances with unsupported SQL Server versions can lead to security vulnerabilities, non-compliance with best practices, and lack of vendor support in case of issues. This could result in potential data breaches or disruptions in service
-RelatedUrl: https://tevi.co
-Remediation:
-  Code: 
+Description: Ensure that no EC2 instance is using AMI with Microsoft SQL server that has reached end of support
+Risk: Running EC2 instances with unsupported SQL server versions can lead to security vulnerabilities, non-compliance with best practices, and lack of vendor support in case of issues. This could result in potential data breaches or disruptions in service
+RelatedUrl: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_protect_compute_vulnerability_management.html
+Remediation: 
+  Code:
     CLI: ""
     NativeIaC: ""
     Other: ""

@@ -10,12 +10,12 @@ Severity: medium
 ResourceType: AwsEc2Instance
 Description: Ensure that EC2 instances are managed by Systems Manager.
 Risk: AWS Config provides AWS Managed Rules, which are predefined, customizable rules that AWS Config uses to evaluate whether your AWS resource configurations comply with common best practices.
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up-ec2.html
 Remediation:
   Code:
     CLI: ""
     NativeIaC: "" 
-    Other: https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SSM/ssm-managed-instances.html
+    Other: ""
     Terraform: ""
   Recommendation:
     Text: Verify and apply Systems Manager Prerequisites

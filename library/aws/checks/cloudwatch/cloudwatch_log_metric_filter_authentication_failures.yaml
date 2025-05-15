@@ -13,7 +13,7 @@ ResourceType: AwsCloudWatchLogMetricFilter
 Description: Ensure that CloudWatch log metric filters and alarms are configured to detect AWS Management Console authentication failures
 Risk: 
   Authentication failures may indicate attempted unauthorized access to AWS resources. Without proper monitoring and alerting, these events could go undetected, potentially leading to security breaches, account compromises, or unauthorized access to sensitive data.
-RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringPolicyExamples.html
 Remediation:
   Code:
     CLI: |
@@ -28,7 +28,7 @@ Remediation:
   Recommendation:
     Text: |
       Set up CloudWatch metric filters with patterns to capture AWS Management Console authentication failures and ensure they are monitored with alarms. This enables automatic alerting for potential security incidents.
-    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
+    Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringPolicyExamples.html
 Categories:
   - security
   - monitoring

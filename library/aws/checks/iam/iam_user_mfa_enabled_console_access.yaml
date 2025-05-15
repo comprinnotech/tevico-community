@@ -11,7 +11,7 @@ Description: Ensure MFA (Multi-Factor Authentication) is enabled for all IAM use
 
 Risk: >-
  Without MFA enabled, accounts with console access are more vulnerable to unauthorized access. MFA ensures that even if a password is compromised, an attacker would still need a second authentication factor (such as an MFA device) to gain access. Failure to enable MFA increases the risk of unauthorized access, potentially leading to data breaches or privilege misuse. Additionally, using a non-personal MFA device reduces risks associated with device loss or employee turnover.
-RelatedUrl: ''
+RelatedUrl: 'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html'
 Remediation:
   Code:
     CLI: ''

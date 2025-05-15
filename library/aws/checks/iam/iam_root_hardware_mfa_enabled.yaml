@@ -7,8 +7,8 @@ SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: high
 ResourceType: AwsIamUser
-Description: AwsIamUser
-RelatedUrl: https://tevi.co
+Description: Ensure hardware MFA is enabled for the root account
+RelatedUrl: https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html
 Risk: >-
   The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled when a user signs in to an AWS website they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2 it is recommended that the root account be protected with a hardware MFA.
 Remediation:
@@ -18,8 +18,8 @@ Remediation:
     Other: ""
     Terraform: ""
   Recommendation:
-    Text: Using IAM console navigate to Dashboard and expand Activate MFA on your root account.
-    Url: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa
+    Text: Enable hardware MFA for the root account to enhance security.
+    Url: https://docs.aws.amazon.com/IAM/latest/UserGuide/enable-hw-mfa-for-root.html
 Categories:
  - Identity and Access Management
 DependsOn: []

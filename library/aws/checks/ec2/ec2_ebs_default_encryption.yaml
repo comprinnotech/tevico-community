@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: ec2_ebs_default_encryption
-CheckTitle: Ensure EBS Default Encryption is activated.
+CheckTitle: Ensure EBS default encryption is activated.
 CheckType:
   - Data Protection
 ServiceName: ec2
@@ -8,15 +8,15 @@ SubServiceName: ebs
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: medium
 ResourceType: Other
-Description: Ensure that EBS Default Encryption is activated.
+Description: Ensure that EBS default encryption is activated.
 Risk: If not enabled sensitive information at rest is not protected.
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html
 Remediation:
   Code:
     CLI: aws ec2 enable-ebs-encryption-by-default
     NativeIaC: ""
-    Other: https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#aws-console
-    Terraform: https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#terraform
+    Other: ""
+    Terraform: ""
   Recommendation:
     Text: Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.
     Url: https://aws.amazon.com/premiumsupport/knowledge-center/ebs-automatic-encryption/

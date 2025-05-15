@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: kms_cmk_are_used
-CheckTitle: Ensure Customer Managed KMS Keys (CMKs) are in use.
+CheckTitle: Ensure customer managed KMS keys (CMKs) are in use.
 CheckType: [Data Protection]
 ServiceName: kms
 SubServiceName: ""
