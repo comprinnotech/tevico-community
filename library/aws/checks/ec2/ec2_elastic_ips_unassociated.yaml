@@ -1,0 +1,29 @@
+Provider: aws
+CheckID: ec2_elastic_ips_unassociated
+CheckTitle: Detect unassociated Elastic IPs (EIPs)
+CheckType: []
+ServiceName: ec2
+SubServiceName: elastic-ip
+ResourceIdTemplate: arn:aws:ec2:region:account-id:elastic-ip/public-ip
+Severity: medium
+ResourceType: AwsEc2ElasticIp
+Description: Identifies Elastic IP addresses that are not associated with any EC2 instance or network interface and may be incurring unnecessary costs.
+Risk: Unassociated EIPs are charged on a per-hour basis, leading to unnecessary cost if not monitored.
+RelatedUrl: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
+Remediation:
+  Code:
+    CLI: "aws ec2 release-address --allocation-id <allocation-id>"
+    NativeIaC: ""
+    Other: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html#using-instance-addressing-limit
+    Terraform: |
+      resource "aws_eip" "example" {
+        instance = aws_instance.example.id
+      }
+  Recommendation:
+    Text: Regularly audit Elastic IPs and release those that are unassociated to avoid unnecessary charges.
+    Url: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
+Categories:
+  - Cost Optimization
+DependsOn: []
+RelatedTo: []
+Notes:
