@@ -2,6 +2,7 @@
 AUTHOR: Ninad Lunge
 EMAIL: ninad.lunge@comprinno.net
 DATE: 2025-05-15
+
 """
 
 import boto3
@@ -13,78 +14,83 @@ from tevico.engine.entities.report.check_model import (
 from tevico.engine.entities.check.check import Check
 
 
-# Check class to identify unassociated Elastic IPs in the AWS account
 class ec2_elastic_ips_unassociated(Check):
+    """Check to identify unassociated Elastic IPs in an AWS account."""
 
-    # Main method that runs the check logic
     def execute(self, connection: boto3.Session) -> CheckReport:
-        # Initialize a report for check
+        """Executes the check to find unassociated Elastic IPs.
+
+        Args:
+            connection (boto3.Session): The boto3 session used to create the EC2 client.
+
+        Returns:
+            CheckReport: The report containing the results of the EIP association check.
+        """
         report = CheckReport(name=__name__)
         report.resource_ids_status = []
 
         try:
-            # Create EC2 client using the provided connection
+            # Create EC2 client from the given session
             ec2 = connection.client("ec2")
 
-            # Retrieve list of Elastic IPs (EIPs)
+            # Retrieve all allocated Elastic IPs
             response = ec2.describe_addresses()
             addresses = response.get("Addresses", [])
 
-            # If no EIPs are found, the check is not applicable
+            # If there are no EIPs, mark the check as not applicable
             if not addresses:
                 report.status = CheckStatus.NOT_APPLICABLE
                 report.resource_ids_status.append(
                     ResourceStatus(
-                        resource=GeneralResource(name=""),
-                        status=CheckStatus.NOT_APPLICABLE,
-                        summary="No Elastic IPs allocated in this account."
+                        resource = GeneralResource(name=""),
+                        status = CheckStatus.NOT_APPLICABLE,
+                        summary = "No Elastic IPs allocated in this account."
                     )
                 )
                 return report
 
-            # Flag to track if any unassociated EIPs were found
+            # Track if any unassociated EIPs are found
             found_unassociated = False
 
-            # Iterate through all EIPs
+            # Analyze each EIP to determine if it is associated
             for addr in addresses:
-                public_ip = addr.get("PublicIp", "Unknown")           # Get EIP address
-                allocation_id = addr.get("AllocationId", "Unknown")   # Get allocation ID
-                associated = addr.get("InstanceId") or addr.get("NetworkInterfaceId")  # Check if EIP is associated
+                public_ip = addr.get("PublicIp", "Unknown")
+                allocation_id = addr.get("AllocationId", "Unknown")
+                associated = addr.get("InstanceId") or addr.get("NetworkInterfaceId")
 
                 if not associated:
-                    # If EIP is unassociated, flag it as FAILED
+                    # EIP is not associated with any resource
                     found_unassociated = True
                     report.resource_ids_status.append(
                         ResourceStatus(
-                            resource=GeneralResource(name=allocation_id),
-                            status=CheckStatus.FAILED,
-                            summary=f"EIP {public_ip} is unassociated and may incur charges."
+                            resource = GeneralResource(name=allocation_id),
+                            status = CheckStatus.FAILED,
+                            summary = f"EIP {public_ip} is unassociated and may incur charges."
                         )
                     )
                 else:
-                    # If EIP is associated, mark it as PASSED
+                    # EIP is associated with a resource (instance or network interface)
                     report.resource_ids_status.append(
                         ResourceStatus(
-                            resource=GeneralResource(name=allocation_id),
-                            status=CheckStatus.PASSED,
-                            summary=f"EIP {public_ip} is associated with a resource."
+                            resource = GeneralResource(name=allocation_id),
+                            status = CheckStatus.PASSED,
+                            summary = f"EIP {public_ip} is associated with a resource."
                         )
                     )
 
-            # Final check result is FAILED if any unassociated EIPs were found
+            # Determine overall check status based on individual results
             report.status = CheckStatus.FAILED if found_unassociated else CheckStatus.PASSED
 
         except (BotoCoreError, ClientError) as e:
-            # Handle exceptions from AWS SDK
+            # AWS API call failed, mark the status as UNKNOWN and include the exception
             report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
-                    resource=GeneralResource(name=""),
-                    status=CheckStatus.UNKNOWN,
-                    summary="Error retrieving Elastic IPs.",
-                    exception=str(e)
+                    resource = GeneralResource(name=""),
+                    status = CheckStatus.UNKNOWN,
+                    summary = "Error retrieving Elastic IPs.",
+                    exception = str(e)
                 )
             )
 
-        # Return the completed report
         return report
