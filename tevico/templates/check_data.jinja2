@@ -1,3 +1,5 @@
+var account_id = "{{ account_id | default("") }}"
+var account_name = "{{ account_name | default("") }}"
 var check_reports = {{ check_reports | tojson }};
 var check_analytics = {{ check_analytics | tojson }};
 var war_report = {{ war_report | tojson }};

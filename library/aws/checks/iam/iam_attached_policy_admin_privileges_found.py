@@ -1,99 +1,196 @@
 """
-AUTHOR: RONIT CHAUHAN 
-DATE: 2024-10-11
+AUTHOR: Sheikh Aafaq Rashid
+EMAIL: aafaq.rashid@comprinno.net
+DATE: 2025-01-14
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, GeneralResource, ResourceStatus
+from botocore.exceptions import BotoCoreError, ClientError
+from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
+
 class iam_attached_policy_admin_privileges_found(Check):
+
     def execute(self, connection: boto3.Session) -> CheckReport:
-        report = CheckReport(name=__name__)
+        client = connection.client('iam')
+        sts_client = connection.client('sts')
         
+        report = CheckReport(name=__name__)
+        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
 
-        # Initialize the IAM client
-        iam_client = connection.client('iam')
-        # print("[INFO] Initialized IAM client.")
+        ADMIN_POLICIES = {"AdministratorAccess", "PowerUserAccess"}
 
-        # Fetch all users and their attached policies
-        users = iam_client.list_users()['Users']
-        # print(f"[INFO] Retrieved {len(users)} IAM users.")
-        
-        findings = []
-
-        for user in users:
-            user_name = user['UserName']
-            # print(f"[INFO] Processing IAM user: {user_name}")
-            
-            policies = iam_client.list_attached_user_policies(UserName=user_name)['AttachedPolicies']
-            # print(f"[INFO] {user_name} has {len(policies)} attached policies.")
-
-            for policy in policies:
-                policy_arn = policy['PolicyArn']
-                policy_details = iam_client.get_policy(PolicyArn=policy_arn)
-                policy_name = policy_details['Policy']['PolicyName']
-                # print(f"[INFO] Fetching details for policy: {policy_name} (ARN: {policy_arn})")
-                
-                if not policy_arn.startswith('arn:aws:iam::aws:policy/'):
-                    continue
-
-                # print(f"[INFO] Policy {policy_name} is an AWS-managed policy.")
-                    
-                # Specifically check for AdministratorAccess policy
-                if policy_name == 'AdministratorAccess':
-                    # print(f"[WARNING] User {user_name} has AdministratorAccess policy attached, which grants full admin privileges.")
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            status=CheckStatus.FAILED,
-                            resource=GeneralResource(name=user_name),
-                            summary=f"User {user_name} has attached AWS-managed AdministratorAccess policy with full administrative privileges."
-                        )
-                    )
-                    continue
-                    
-                # Check for full administrative privileges (*:*)
-                policy_version = iam_client.get_policy_version(
-                    PolicyArn=policy_arn,
-                    VersionId=policy_details['Policy']['DefaultVersionId']
+        try:
+            account_id = sts_client.get_caller_identity()["Account"]
+        except (BotoCoreError, ClientError) as e:
+            report.status = CheckStatus.UNKNOWN
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name="AWS Account"),
+                    status=CheckStatus.UNKNOWN,
+                    summary="Failed to retrieve AWS account ID.",
+                    exception=str(e)
                 )
-                policy_document = policy_version['PolicyVersion']['Document']
-                
-                if 'Statement' not in policy_document:
+            )
+            return report
+
+        def check_policies(entity_name, entity_type, list_policies_func):
+            resource = AwsResource(arn=f"arn:aws:iam::{account_id}:{entity_type}/{entity_name}")
+            
+            try:
+                paginator = list_policies_func()
+                attached_policies = []
+                for page in paginator:
+                    attached_policies.extend(page.get('AttachedPolicies', []))
+
+                if not attached_policies:
                     report.resource_ids_status.append(
                         ResourceStatus(
-                            status=CheckStatus.PASSED,
-                            resource=GeneralResource(name=user_name),
-                            summary=f"User {user_name} has no policy with admin privileges."
+                            resource=resource,
+                            status=CheckStatus.NOT_APPLICABLE,
+                            summary=f"{entity_type.capitalize()} '{entity_name}' has no attached policies."
                         )
                     )
-                    continue
-                
-                for statement in policy_document['Statement']:
-                    if statement.get('Effect') == 'Allow' and '*:*' in statement.get('Action', []):
-                        # print(f"[WARNING] Policy {policy_name} grants full administrative privileges (*:*) to user {user_name}.")
-                        # findings.append()
+                    return
+
+                for policy in attached_policies:
+                    if policy['PolicyName'] in ADMIN_POLICIES:
                         report.resource_ids_status.append(
                             ResourceStatus(
+                                resource=resource,
                                 status=CheckStatus.FAILED,
-                                resource=GeneralResource(name=user_name),
-                                summary=f"User {user_name} has attached AWS-managed policy {policy_name} with full administrative privileges."
+                                summary=f"{entity_type.capitalize()} '{entity_name}' has attached high-privilege policy '{policy['PolicyName']}'."
                             )
                         )
-                        break  # Stop after detecting full admin privileges
-                    else:
+                        report.status = CheckStatus.FAILED
+                        return
+
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=resource,
+                        status=CheckStatus.PASSED,
+                        summary=f"{entity_type.capitalize()} '{entity_name}' does not have admin or power user privileges."
+                    )
+                )
+            except (BotoCoreError, ClientError) as e:
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=resource,
+                        status=CheckStatus.UNKNOWN,
+                        summary=f"Failed to retrieve policies for {entity_type} '{entity_name}'.",
+                        exception=str(e)
+                    )
+                )
+
+        entities_checked = 0
+        users_checked = 0
+        roles_checked = 0
+        groups_checked = 0
+        
+        try:
+            # Check IAM Users
+            paginator = client.get_paginator('list_users')
+            for page in paginator.paginate():
+                for user in page.get('Users', []):
+                    users_checked += 1
+                    entities_checked += 1
+                    try:
+                        check_policies(user['UserName'], 'user', lambda: client.get_paginator('list_attached_user_policies').paginate(UserName=user['UserName']))
+                    except (BotoCoreError, ClientError) as e:
                         report.resource_ids_status.append(
                             ResourceStatus(
-                                status=CheckStatus.PASSED,
-                                resource=GeneralResource(name=user_name),
-                                summary=f"User {user_name} has no policy with admin privileges."
+                                resource=GeneralResource(name=f"User: {user['UserName']}"),
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"Error checking policies for user '{user['UserName']}'.",
+                                exception=str(e)
                             )
                         )
+
+            if users_checked == 0:
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="IAM Users"),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No IAM users found in the account."
+                    )
+                )
+
+            # Check IAM Roles
+            paginator = client.get_paginator('list_roles')
+            for page in paginator.paginate():
+                for role in page.get('Roles', []):
+                    roles_checked += 1
+                    entities_checked += 1
+                    try:
+                        check_policies(role['RoleName'], 'role', lambda: client.get_paginator('list_attached_role_policies').paginate(RoleName=role['RoleName']))
+                    except (BotoCoreError, ClientError) as e:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=GeneralResource(name=f"Role: {role['RoleName']}"),
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"Error checking policies for role '{role['RoleName']}'.",
+                                exception=str(e)
+                            )
+                        )
+
+            if roles_checked == 0:
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="IAM Roles"),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No IAM roles found in the account."
+                    )
+                )
+
+            # Check IAM Groups
+            paginator = client.get_paginator('list_groups')
+            for page in paginator.paginate():
+                for group in page.get('Groups', []):
+                    groups_checked += 1
+                    entities_checked += 1
+                    try:
+                        check_policies(group['GroupName'], 'group', lambda: client.get_paginator('list_attached_group_policies').paginate(GroupName=group['GroupName']))
+                    except (BotoCoreError, ClientError) as e:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=GeneralResource(name=f"Group: {group['GroupName']}"),
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"Error checking policies for group '{group['GroupName']}'.",
+                                exception=str(e)
+                            )
+                        )
+
+            if groups_checked == 0:
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="IAM Groups"),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No IAM groups found in the account."
+                    )
+                )
+
+            if entities_checked == 0:
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name="IAMEntities"),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No IAM users, roles, or groups found in the account."
+                    )
+                )
+
+        except (BotoCoreError, ClientError) as e:
+            report.status = CheckStatus.UNKNOWN
+            report.report_metadata = {"error": str(e)}
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=GeneralResource(name="AWS IAM"),
+                    status=CheckStatus.UNKNOWN,
+                    summary="Error occurred while checking attached admin policies.",
+                    exception=str(e)
+                )
+            )
 
         return report
-
-
-# The check will pass if no users have attached AWS-managed policies that grant full administrative privileges (*: * or AdministratorAccess).
-
-# It will fail if any user has an attached AWS-managed policy that grants full administrative privileges, such as the AdministratorAccess policy or any policy with *: * actions.

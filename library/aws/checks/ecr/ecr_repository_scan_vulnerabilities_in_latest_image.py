@@ -1,27 +1,36 @@
 """
-AUTHOR: deepak-puri-comprinno
+AUTHOR: Deepak Puri
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-07
+DATE: 2025-04-28
 """
 
 import boto3
-from tevico.engine.entities.report.check_model import AwsResource, GeneralResource, CheckReport, CheckStatus, ResourceStatus
+from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 
 class ecr_repository_scan_vulnerabilities_in_latest_image(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('ecr')
-        paginator = client.get_paginator('describe_repositories')
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
+        report.status = CheckStatus.PASSED
+
+        client = connection.client("ecr")
+        sts_client = connection.client("sts")
 
         try:
-            # List all ECR repositories
+            account_id = sts_client.get_caller_identity()["Account"]
+            region = client.meta.region_name
             repositories = []
-            for page in paginator.paginate():
-                repositories.extend(page.get('repositories', []))
+
+            # Paginate through all ECR repositories
+            next_token = None
+            while True:
+                response = client.describe_repositories(nextToken=next_token) if next_token else client.describe_repositories()
+                repositories.extend(response.get("repositories", []))
+                next_token = response.get("nextToken")
+                if not next_token:
+                    break
 
             if not repositories:
                 report.status = CheckStatus.NOT_APPLICABLE
@@ -35,102 +44,101 @@ class ecr_repository_scan_vulnerabilities_in_latest_image(Check):
                 return report
 
             for repo in repositories:
-                repo_name = repo['repositoryName']
-                resource = AwsResource(arn=repo.get('repositoryArn'))
+                repo_name = repo["repositoryName"]
+                repo_arn = repo["repositoryArn"]
+                resource = AwsResource(arn=repo_arn)
+
                 try:
-                    images = client.list_images(
-                        repositoryName=repo_name,
-                        filter={'tagStatus': 'TAGGED'}
-                    ).get('imageIds', [])
+                    # Paginate through image details
+                    images = []
+                    image_token = None
+                    while True:
+                        image_response = client.describe_images(
+                            repositoryName=repo_name,
+                            nextToken=image_token
+                        ) if image_token else client.describe_images(repositoryName=repo_name)
+
+                        images.extend(image_response.get("imageDetails", []))
+                        image_token = image_response.get("nextToken")
+                        if not image_token:
+                            break
 
                     if not images:
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=resource,
                                 status=CheckStatus.NOT_APPLICABLE,
-                                summary=f"No images found in repository {repo_name}."
+                                summary=f"No images found in repository '{repo_name}'."
                             )
                         )
                         continue
 
-                    image_details = client.describe_images(
-                        repositoryName=repo_name,
-                        imageIds=images
-                    ).get('imageDetails', [])
+                    # Get the most recently pushed image
+                    latest_image = max(images, key=lambda x: x.get("imagePushedAt", 0))
+                    image_digest = latest_image["imageDigest"]
 
-                    if not image_details:
+                    # Get scan findings
+                    scan_findings = client.describe_image_scan_findings(
+                        repositoryName=repo_name,
+                        imageId={"imageDigest": image_digest}
+                    )
+                    
+                    findings = scan_findings.get("imageScanFindings", {})
+                    if not findings:
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=resource,
-                                status=CheckStatus.NOT_APPLICABLE,
-                                summary=f"No image details available for repository {repo_name}."
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"No scan findings for image '{image_digest}' in repository '{repo_name}'."
                             )
                         )
                         continue
+                    severity_counts = findings.get("findingSeverityCounts", {})
 
-                    latest_image = sorted(image_details, key=lambda x: x['imagePushedAt'], reverse=True)[0]
+                    # If any severity is found, mark as failed
+                    if any(severity_counts.get(level, 0) > 0 for level in ["CRITICAL", "HIGH", "MEDIUM"]):
+                        report.status = CheckStatus.FAILED
+                        summary_parts = [f"{level}: {severity_counts.get(level, 0)}"
+                                         for level in ["CRITICAL", "HIGH", "MEDIUM"]
+                                         if severity_counts.get(level, 0) > 0]
+                        summary_text = ", ".join(summary_parts)
 
-                    scan_result = client.describe_image_scan_findings(
-                        repositoryName=repo_name,
-                        imageId={'imageDigest': latest_image['imageDigest']}
-                    )
-
-                    findings_summary = scan_result.get('imageScanFindingsSummary', {})
-                    vulnerabilities_found = findings_summary.get('findingSeverityCounts', {})
-
-                    if vulnerabilities_found:
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=resource,
                                 status=CheckStatus.FAILED,
-                                summary=f"Vulnerabilities found in latest image of repository {repo_name}."
+                                summary=f"Repository '{repo_name}' most recently pushed image has vulnerabilities: {summary_text}."
                             )
                         )
-                        report.status = CheckStatus.FAILED
                     else:
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=resource,
                                 status=CheckStatus.PASSED,
-                                summary=f"No vulnerabilities found in latest image of repository {repo_name}."
+                                summary=f"Repository '{repo_name}' most recently pushed image has no critical, high, or medium vulnerabilities."
                             )
                         )
-
-                except client.exceptions.RepositoryNotFoundException:
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=resource,
-                            status=CheckStatus.FAILED,
-                            summary=f"ECR repository {repo_name} not found."
-                        )
-                    )
-                    report.status = CheckStatus.FAILED
-                except client.exceptions.ImageNotFoundException:
-                    report.resource_ids_status.append(
-                        ResourceStatus(
-                            resource=resource,
-                            status=CheckStatus.NOT_APPLICABLE,
-                            summary=f"No scanned image found in repository {repo_name}."
-                        )
-                    )
+                
                 except Exception as e:
+                    report.status = CheckStatus.UNKNOWN
                     report.resource_ids_status.append(
                         ResourceStatus(
                             resource=resource,
-                            status=CheckStatus.FAILED,
-                            summary=f"Error checking scan results for repository {repo_name}: {str(e)}",
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error processing repository '{repo_name}': {str(e)}",
+                            exception=str(e)
                         )
                     )
-                    report.status = CheckStatus.FAILED
 
         except Exception as e:
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
-                    summary=f"Error listing ECR repositories: {str(e)}"
+                    status=CheckStatus.UNKNOWN,
+                    summary=f"An error occurred while listing ECR repositories: {str(e)}",
+                    exception=str(e)
                 )
             )
-            report.status = CheckStatus.FAILED
 
         return report

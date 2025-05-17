@@ -13,7 +13,7 @@ from tevico.engine.entities.report.check_model import (
 )
 
 
-# === Dynamic import to bypass 'lambda' reserved keyword issue ===
+# Dynamic import to bypass 'lambda' reserved keyword issue
 file_path = (
     Path(__file__).resolve().parent.parent
     / "library"
@@ -32,7 +32,7 @@ spec.loader.exec_module(module) # type: ignore
 # Access the class from the module
 check_lambda_deprecated_runtime = module.check_lambda_deprecated_runtime
 
-# === Pytest Fixtures and Tests ===
+# Pytest Fixtures and Tests
 
 matadata = CheckMetadata(
     Provider="AWS",

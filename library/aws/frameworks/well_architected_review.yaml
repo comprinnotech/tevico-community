@@ -32,7 +32,6 @@ sections:
           This section checks for the presence of a Well Architected Review in the AWS account.
         checks:
           - ec2_instance_managed_by_ssm
-          - ec2_managed_instance_patch_compliance_status
           - ec2_microsoft_sql_server_end_of_support
           - ssm_managed_compliant_patching
           - ssm_patch_manager_enabled
@@ -88,6 +87,7 @@ sections:
           - rds_instance_storage_encrypted
           - route53_domains_privacy_protection_enabled
           - s3_bucket_default_encryption
+          - s3_bucket_acl_prohibited
           - s3_bucket_mfa_delete_enabled
           - s3_bucket_object_versioning
           - s3_bucket_secure_transport_policy
@@ -114,7 +114,6 @@ sections:
           - acl_bidirectional_traffic_restriction_check
           - apigateway_rest_api_waf_acl_attached
           - apigateway_rest_api_client_certificate_enabled
-          - apigateway_waf_protection_enabled
           - cloudfront_distributions_https_enabled
           - cloudfront_distributions_using_deprecated_ssl_protocols
           - ec2_network_acl_allow_ingress_any_port
@@ -125,7 +124,6 @@ sections:
           # @deepak.puri - Fix ARN issue for WAF ACL
           - elb_v2_waf_acl_attached
           - lambda_function_not_publicly_accessible
-          - networkfirewall_multi_az_enabled
           - vpc_default_security_group_closed
           - vpc_endpoint_services_allowed_principals_trust_boundaries
           - vpc_security_group_port_restriction_check
@@ -144,7 +142,6 @@ sections:
           - macie_auto_sensitive_data_discovery_check
           - macie_status_check
           - securityhub_enabled
-          - ecr_image_private_image_scanning_enabled
           - ecr_repository_scan_images_on_push_enabled
           - ecr_repository_scan_vulnerabilities_in_latest_image
           - wellarchitected_workload_no_high_or_medium_risks
@@ -215,11 +212,9 @@ sections:
           This section checks for the presence of a Well Architected Review in the AWS account.
         checks:
           - acm_certificates_transparency_logs_enabled
-          - apigateway_execution_logging_enabled
           - apigateway_restapi_logging_enabled
           - apigatewayv2_api_access_logging_enabled
           - cloudfront_access_logging_enabled
-          - cloudfront_cloudwatch_logging_enabled
           - eks_cluster_logging_enabled
           - elb_v2_logging_enabled
           - rds_instance_integration_cloudwatch_logging_enabled
@@ -243,6 +238,7 @@ sections:
           - opensearch_service_domains_audit_logging_enabled
           - opensearch_service_domains_cloudwatch_logging_enabled
           - elb_logging_enabled
+          - lambda_function_invoke_api_operations_cloudtrail_logging_enabled
       - name: Backup and Recovery
         description: |
           The Backup and Recovery section includes the ability to recover data and systems in the event of a failure or
@@ -250,7 +246,6 @@ sections:
 
           This section checks for the presence of a Well Architected Review in the AWS account.
         checks:
-          - dynamodb_tables_pitr_enabled
           - rds_instance_backup_enabled
           - rds_instance_minor_version_upgrade_enabled
       - name: Change Management

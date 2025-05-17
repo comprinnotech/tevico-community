@@ -94,8 +94,8 @@
         </div>
       </div>
     </aside>
+
     <div class="page-wrapper">
-      <!-- Page header -->
       <div class="page-header d-print-none">
         <div class="container-xl">
           <div class="row g-2 align-items-center">
@@ -116,70 +116,171 @@
         <div class="container-xl">
           <div class="row row-deck row-cards">
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
                   <h3 class="card-title">Total Checks</h3>
-                  <div class="h1 mb-0 me-2" id="total_checks"></div>
+                  <a href="./browse.html?clear=true" class="h1 mb-0 me-2" id="total_checks"></a>
                   <div class="text-secondary">Successfully Executed</div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
                   <h3 class="card-title">Passed</h3>
-                  <div class="h1 mb-0 me-2" id="passed_checks"></div>
+                  <a href="./browse.html?status=passed" class="h1 mb-0 me-2" id="passed_checks"></a>
                   <div class="text-secondary" id="passed"></div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
                   <h3 class="card-title">Failed</h3>
-                  <div class="h1 mb-0 me-2" id="failed_checks"></div>
+                  <a href="./browse.html?status=failed" class="h1 mb-0 me-2" id="failed_checks"></a>
                   <div class="text-secondary" id="failed"></div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
-                  <h3 class="card-title">Severity Score</h3>
+                  <h3 class="card-title">
+                    Severity Score
+                    <button type="button" class="btn p-0 border-0 ms-1 shadow-none" data-bs-toggle="modal"
+                      data-bs-target="#calculationModal">
+                      <span data-bs-toggle="tooltip" data-bs-placement="top" title="View Calculations">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                          class="icon icon-tabler icons-tabler-outline icon-tabler-info-circle m-0">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                          <path d="M12 9h.01" />
+                          <path d="M11 12h1v4h1" />
+                        </svg>
+                      </span>
+                    </button>
+                    <div class="modal modal-lg" id="calculationModal" tabindex="-1">
+                      <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Severity Score</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body fw-normal" style="max-height: 25rem; overflow: auto;">
+                            <div class="mb-3">
+                              <p class="mb-0">
+                                The Severity Score indicates your environtment's status <strong>based only on the
+                                  failed checks</strong>. The score is calculated in a way where more critical checks
+                                contribute more to the score than less critical checks. This allows you to quickly
+                                understand the overall infra posture of your environment and prioritize remediation
+                                efforts.
+                                <br><br>
+                                Each failed check contributes to the score based on its severity level, while
+                                passed checks do not affect the score. The higher the score, the more severe the
+                                issues are in your environment.
+                                <br><br>
+                              </p>
+                              <p class="mb-0">
+                                The weightage of each severity level is as follows:
+                              </p>
+                              <ul class="m-0">
+                                <li>Critical: 4</li>
+                                <li>High: 3</li>
+                                <li>Medium: 2</li>
+                                <li>Low: 1</li>
+                              </ul>
+                            </div>
+                            <div class="mb-3">
+                              Total score based on severity is calculated as follows:
+                              <ul class="m-0">
+                                <li>Critical: 4 * Critical Checks Failed</li>
+                                <li>High: 3 * High Checks Failed</li>
+                                <li>Medium: 2 * Medium Checks Failed</li>
+                                <li>Low: 1 * Low Checks Failed</li>
+                              </ul>
+                            </div>
+                            <div class="mb-3">
+                              <p class="mb-0">Severity Score is then calculated based on the following formula:</p>
+                              <span>
+                                ( (Total score based on severity / Total number of checks executed) / 4) * 100
+                              </span>
+                            </div>
+                            <p>
+                              For example, if you have 10 failed checks executed with 2 critical, 3 high, 2 medium and 3
+                              low severity checks, the calculation would be:
+                            </p>
+                            <div>
+                              <div class="mb-0 me-2">
+                                ( ( ( (2 * 4) + (3 * 3) + (2 * 2) + (3 * 1) ) / 10) / 4) * 100 = 60
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </h3>
                   <div class="h1 mb-0 me-2" id="severity_score"></div>
                   <div class="text-secondary">Lower the better!</div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
                   <h3 class="card-title">Critical Checks Failed</h3>
-                  <div class="h1 mb-0 me-2" id="critical_checks_failing"></div>
+                  <a href="./browse.html?status=failed&severity=critical" class="h1 mb-0 me-2"
+                    id="critical_checks_failing"></a>
                   <div class="text-secondary" id="critical_checks_failing_subheading"></div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
-                  <h3 class="card-title">Major Impact On</h3>
-                  <div class="h1 mb-0 me-2" id="impacted_service_name"></div>
+                  <h3 class="card-title">
+                    Major Impact On
+                    <span data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="Based on the service with most failed checks">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-info-circle">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M12 9h.01" />
+                        <path d="M11 12h1v4h1" />
+                      </svg>
+                    </span>
+                  </h3>
+                  <a class="h1 mb-0 me-2" id="impacted_service_name"></a>
                   <div class="text-secondary" id="impacted_service_count"></div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
-                  <h3 class="card-title">Area of Focus</h3>
-                  <div class="h1 mb-0 me-2" id="area_of_focus"></div>
+                  <h3 class="card-title">
+                    Area of Focus
+                    <span data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="Based on the section with most failed checks">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-info-circle">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M12 9h.01" />
+                        <path d="M11 12h1v4h1" />
+                      </svg>
+                    </span>
+                  </h3>
+                  <a class="h1 mb-0 me-2" id="area_of_focus"></a>
                   <div class="text-secondary" id="area_of_focus_count"></div>
                 </div>
               </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-              <div class="card card-link card-link-pop">
+              <div class="card card-link">
                 <div class="card-body">
                   <h3 class="card-title">Most Impacted CSP</h3>
                   <div class="h1 mb-0 me-2">AWS</div>
@@ -237,7 +338,9 @@
                   <div class="card-body">
                     <div class="d-flex justify-content-between">
                       <h3 class="card-title">Critical Checks</h3>
-                      <a href="browse.html?severity=critical&status=failed" class="btn btn-primary btn-sm">View All</a>
+                      <a href="browse.html?severity=critical&status=failed" class="btn btn-primary btn-sm">
+                        View All
+                      </a>
                     </div>
                     <div class="table-responsive" id="failedChecksTableContainer"
                       style="min-height: 257px; max-height: 257px; overflow: scroll;">
@@ -294,7 +397,9 @@
                   <div class="card-body">
                     <div class="d-flex justify-content-between">
                       <h3 class="card-title">Critical Checks</h3>
-                      <a href="browse.html?severity=critical&status=passed" class="btn btn-primary btn-sm">View All</a>
+                      <a href="browse.html?severity=critical&status=passed" class="btn btn-primary btn-sm">
+                        View All
+                      </a>
                     </div>
                     <div class="table-responsive" id="passedChecksTableContainer"
                       style="min-height: 257px; max-height: 257px; overflow: scroll;">
@@ -307,15 +412,15 @@
         </div>
       </div>
     </div>
-  </div>
-  <script src="./lib/libs/apexcharts/dist/apexcharts.min.js" defer></script>
-  <script src="./lib/js/tabler.min.js?1692870487" defer></script>
+    <script src="./lib/libs/apexcharts/dist/apexcharts.min.js" defer></script>
+    <script src="./lib/js/tabler.min.js?1692870487" defer></script>
 
-  <script src="./lib/tevico/js/summary-charts.js"></script>
+    <script src="./lib/tevico/js/summary-charts.js"></script>
 
-  <script src="./data/check_report.js"></script>
-  <script src="./utils/utils.js"></script>
-  <script src="./app.js"></script>
+    <script src="./data/check_report.js"></script>
+    <script src="./utils/utils.js"></script>
+    <script src="./common/components/navbar/navbar.js"></script>
+    <script src="./app.js"></script>
 
 </body>
 

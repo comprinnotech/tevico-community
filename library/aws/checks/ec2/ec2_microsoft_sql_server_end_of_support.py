@@ -1,7 +1,7 @@
 """
 AUTHOR: Deepak Puri
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-10-11
+DATE: 2025-04-29
 """
 
 import boto3
@@ -13,54 +13,97 @@ class ec2_microsoft_sql_server_end_of_support(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
         report = CheckReport(name=__name__)
-        report.status = CheckStatus.PASSED  # Initialize as passed
+        report.status = CheckStatus.PASSED
         report.resource_ids_status = []
-        
-        try:
-            client = connection.client('ec2')
-            sts_client = connection.client('sts')
-            account_number = sts_client.get_caller_identity()['Account']
-            
-            # Step 1: Get all EC2 instances
-            instances = client.describe_instances()['Reservations']
+        client = connection.client('ec2')
+        sts_client = connection.client('sts')
 
-            # Step 2: Iterate over each instance
-            for reservation in instances:
-                for instance in reservation['Instances']:
+        try:
+            account_number = sts_client.get_caller_identity()['Account']
+            region = client.meta.region_name
+
+            # Pagination for describe_instances
+            reservations = []
+            next_token = None
+            while True:
+                response = client.describe_instances(NextToken=next_token) if next_token else client.describe_instances()
+                reservations.extend(response.get('Reservations', []))
+                next_token = response.get('NextToken')
+                if not next_token:
+                    break
+
+            # If no instances at all
+            if not reservations:
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name=""),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No EC2 instances found."
+                    )
+                )
+                return report
+
+            found_windows_instance = False
+
+            for reservation in reservations:
+                for instance in reservation.get('Instances', []):
                     instance_id = instance['InstanceId']
                     ami_id = instance['ImageId']
-                    instance_arn = f"arn:aws:ec2:{client.meta.region_name}:{account_number}:instance/{instance_id}"
+                    instance_arn = f"arn:aws:ec2:{region}:{account_number}:instance/{instance_id}"
                     resource = AwsResource(arn=instance_arn)
-                    
-                    # Skip non-Windows or non-running instances
-                    if instance['State']['Name'] != 'running':
-                        continue
-                    if instance.get('Platform') != 'windows':
+
+                    if instance['State']['Name'] != 'running' or instance.get('Platform') != 'windows':
                         continue
 
-                    # Step 3: Get AMI details
-                    ami_details = client.describe_images(ImageIds=[ami_id])['Images'][0]
-                    ami_name = ami_details['Name']
-                    ami_description = ami_details.get('Description', '')
+                    found_windows_instance = True  # At least one Windows EC2 found
 
-                    # Step 4: Determine if the AMI relates to Microsoft SQL Server
-                    if not ("sql" in ami_name.lower() or "sql server" in ami_description.lower()):
+                    try:
+                        ami_details = client.describe_images(ImageIds=[ami_id])['Images'][0]
+                    except Exception:
+                        report.status = CheckStatus.UNKNOWN
                         report.resource_ids_status.append(
                             ResourceStatus(
                                 resource=resource,
-                                status=CheckStatus.PASSED,
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"Failed to describe AMI {ami_id} for instance {instance_id}."
+                            )
+                        )
+                        continue
+
+                    ami_name = ami_details.get('Name', '')
+                    ami_description = ami_details.get('Description', '')
+
+                    def extract_sql_version(text1, text2):
+                        for version in ["2012", "2014", "2016", "2017", "2019", "2022"]:
+                            if version in text1 or version in text2:
+                                return version
+                        return None
+
+                    def calculate_eos(version):
+                        eos_map = {
+                            "2012": datetime(2022, 7, 12),
+                            "2014": datetime(2024, 7, 9),
+                            "2016": datetime(2026, 7, 14),
+                            "2017": datetime(2027, 10, 12),
+                            "2019": datetime(2030, 1, 9),
+                            "2022": datetime(2033, 1, 12),
+                        }
+                        return eos_map.get(version)
+
+                    sql_version = extract_sql_version(ami_name.lower(), ami_description.lower())
+                    if not sql_version:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=resource,
+                                status=CheckStatus.NOT_APPLICABLE,
                                 summary=f"Instance {instance_id} is not running Microsoft SQL Server."
                             )
                         )
                         continue
 
-                    # Extract the SQL Server version from the AMI name or description
-                    sql_version = self._extract_sql_version(ami_name, ami_description)
-                    if not sql_version:
-                        continue
-
-                    # Calculate end-of-support date and compare with today's date
-                    eos_date = self._calculate_end_of_support(sql_version)
+                    eos_date = calculate_eos(sql_version)
+                    #if sql server reached end of support, mark as failed
                     if eos_date and eos_date < datetime.now():
                         report.status = CheckStatus.FAILED
                         report.resource_ids_status.append(
@@ -75,44 +118,29 @@ class ec2_microsoft_sql_server_end_of_support(Check):
                             ResourceStatus(
                                 resource=resource,
                                 status=CheckStatus.PASSED,
-                                summary=f"Instance {instance_id} is running SQL Server {sql_version}, which is supported until {eos_date.date()}."
+                                summary=f"Instance {instance_id} is running SQL Server {sql_version}, supported until {eos_date.date()}."
                             )
                         )
+
+            # If no Windows EC2s were found in any reservation
+            if not found_windows_instance:
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name=""),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No Windows-based EC2 instances found."
+                    )
+                )
+
         except Exception as e:
-            report.status = CheckStatus.FAILED
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
+                    status=CheckStatus.UNKNOWN,
                     summary=f"Error occurred during execution: {str(e)}"
                 )
             )
-        
+
         return report
-
-    def _extract_sql_version(self, ami_name: str, ami_description: str) -> str:
-        """
-        Extracts the SQL Server version from the AMI name or description.
-        Assumes the version is indicated as a year (e.g., 2012, 2014, 2016, etc.).
-        """
-        for version in ["2012", "2014", "2016", "2017", "2019", "2022"]:  # All versions
-            if version in ami_name or version in ami_description:
-                return version
-        return None
-
-    from typing import Optional
-
-    def _calculate_end_of_support(self, sql_version: str) -> Optional[datetime]:
-        """
-        Calculates the end-of-support date based on the SQL Server version.
-        The end-of-support date is fixed for each version.
-        """
-        end_of_support = {
-            "2012": datetime(2022, 7, 12),
-            "2014": datetime(2024, 7, 9),
-            "2016": datetime(2026, 7, 14),
-            "2017": datetime(2027, 10, 12),
-            "2019": datetime(2030, 1, 9),
-            "2022": datetime(2033, 1, 12),
-        }
-        return end_of_support.get(sql_version)

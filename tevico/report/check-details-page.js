@@ -1,5 +1,9 @@
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (window.updateNavbarAccountInfo) {
+        window.updateNavbarAccountInfo(account_id, account_name);
+    }
+
     const source = getQueryParam('from');
     const id = getQueryParam('id');
 
@@ -65,7 +69,7 @@ function updateMetadataElements({ meta, report, status }) {
                     element.innerHTML = `<span class="badge bg-soft-info">Skipped</span>`;
                     break;
                 case 'not_applicable':
-                    element.innerHTML = `<span class="badge bg-softer-info">Not Applicable</span>`;
+                    element.innerHTML = `<span class="badge bg-soft-info">Not Applicable</span>`;
                     break;
                 case 'unknown':
                     element.innerHTML = `<span class="badge bg-softer-warning">Unknown</span>`;
@@ -191,7 +195,7 @@ function formatStatus(status) {
         case 'skipped':
             return `<span class="badge bg-soft-info">Skipped</span>`;
         case 'not_applicable':
-            return `<span class="badge bg-softer-info">Not Applicable</span>`;
+            return `<span class="badge bg-soft-info">Not Applicable</span>`;
         case 'unknown':
             return `<span class="badge bg-softer-warning">Unknown</span>`;
         case 'errored':

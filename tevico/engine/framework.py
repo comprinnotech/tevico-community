@@ -56,11 +56,15 @@ class TevicoFramework():
         return provider_metatdata
         
     
-    def __get_providers(self) -> List[Provider]:
+    def __get_provider(self, name) -> Provider:
         """
-        Retrieves a list of Provider objects based on the provider metadata.
+        Retrieves a Provider object based on the provider metadata.
+        Args:
+            name (str): The name of the provider to retrieve.
         Returns:
-            List[Provider]: A list of Provider objects.
+            Provider: The matching Provider object.
+        Raises:
+            Exception: If no provider with the specified name is found.
         """
         
         providers: List[Provider] = []
@@ -72,7 +76,12 @@ class TevicoFramework():
             if provider is not None:
                 providers.append(provider())
 
-        return providers
+        for provider_instance in providers:
+            print(f'Provider: {provider_instance.name}')
+            if provider_instance.name.lower() == name:
+                return provider_instance
+
+        raise Exception(f'Provider with name {name} not found.')
     
     
     def __create_check(self, provider: str, name: str, config: Union[Dict[str, str], None]) -> None:
@@ -271,20 +280,19 @@ class TevicoFramework():
         print('\n🚀 Starting Tevico Framework Execution\n')
 
         start_time = time.time()
-
-        providers = self.__get_providers()
+        print(self.core_utils.get_tevico_config().csp)
+        provider = self.__get_provider(self.core_utils.get_tevico_config().csp)
         checks: List[CheckReport] = []
         
-        for p in providers:
-            try:
-                print(f'\n* Running checks for provider 🚀: {p.name}')
-                p.connect()
-                result = p.start_execution()
-                checks.extend(result)
-            except Exception as e:
-                print(f'\n❌ Error: {e}')
-                print(traceback.format_exc())
-                os._exit(1)
+        try:
+            print(f'\n* Running checks for provider 🚀: {provider.name}')
+            provider.connect()
+            result = provider.start_execution()
+            checks.extend(result)
+        except Exception as e:
+            print(f'\n❌ Error: {e}')
+            print(traceback.format_exc())
+            os._exit(1)
         
         data = [s.model_dump(mode='json') for s in checks]
         
@@ -301,6 +309,8 @@ class TevicoFramework():
                 check_reports=data,
                 check_analytics=analytics_report.model_dump(),
                 war_report=self.__get_war_structure('aws'),
+                account_id=provider.account_id,
+                account_name=provider.account_name,
             ))
         
         print('\nReport Overview:')

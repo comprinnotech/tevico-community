@@ -32,6 +32,7 @@ class CreateParams(BaseModel):
     options: Optional[Dict[str, str]] = None
 
 class TevicoConfig(BaseModel):
+    csp: Optional[str] = 'aws'
     profile: Optional[str] = None
     aws_config: Optional[Dict[str, str]] = None
     create_params: Optional[CreateParams] = None
@@ -42,6 +43,10 @@ class ConfigUtils():
     def get_config_from_args(self, args: argparse.Namespace) -> TevicoConfig:
         config = TevicoConfig()
         
+        # TODO: Identify the CSP from the environment
+        if 'csp' in args and args.csp is not None:
+            config.csp = args.csp
+
         if 'profile' in args and args.profile is not None:
             config.profile = args.profile
         

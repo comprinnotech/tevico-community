@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     renderDOM({ warDetails: war_report, reportsData: check_reports })
     setActiveNavLink();
+    if (window.updateNavbarAccountInfo) {
+        window.updateNavbarAccountInfo(account_id, account_name);
+    }
 });
 
 const renderDOM = ({ warDetails, reportsData }) => {

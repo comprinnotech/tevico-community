@@ -16,6 +16,8 @@ const Status = {
   PASSED: 'passed'
 };
 
+const severityOrder = ['critical', 'high', 'medium', 'low'];
+
 // Configuration
 class ChartConfig {
   static heights = {
@@ -31,21 +33,29 @@ class ChartConfig {
     toolbar: { show: false },
     tooltip: {
       y: {
-        title: { formatter: () => "Count: " }
+        formatter: (val) => `${val}%`,
+        title: { formatter: () => "Percentage: " }
       }
     },
     plotOptions: {
       bar: {
         borderRadius: 4,
         horizontal: true,
-        dataLabels: { position: 'bottom' }
+        dataLabels: { position: 'top' }
       }
     },
     dataLabels: {
       enabled: true,
-      style: { colors: ['#fff'] },
-      offsetX: 20,
-      formatter: val => `${Number(val).toFixed(2)} %`
+      offsetX: 40,
+      style: {
+        fontSize: '12px',
+        fontWeight: 'bold',
+        colors: ['#333']
+      },
+      formatter: (val) => {
+        const value = parseFloat(val);
+        return value.toFixed(2) + ' %';
+      }
     },
     xaxis: {
       axisBorder: { show: false },
@@ -60,6 +70,15 @@ class ChartConfig {
   };
 
   static baseCircularConfig = {
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: (value) => value + ' checks',
+        title: {
+          formatter: (seriesName) => seriesName + ':'
+        }
+      }
+    },
     responsive: [{
       options: {
         legend: { position: 'bottom' }
@@ -82,18 +101,42 @@ class DataProcessor {
   }
 
   static calculatePercentages(data, status) {
-    return data.by_severities.map(item => ({
-      value: ((item.check_status[status] / item.check_status.total) * 100).toFixed(2),
-      name: item.name
-    }));
+
+    const severityMap = new Map();
+
+    severityOrder.forEach(severity => {
+      severityMap.set(severity, {
+        value: '0.00',
+        name: toTitleCase(severity)
+      });
+    });
+
+    const totalByStatus = data.by_severities.reduce((acc, item) => {
+      acc += item.check_status[status];
+      return acc;
+    }, 0);
+
+    data.by_severities.forEach(item => {
+      if (severityMap.has(item.name)) {
+        severityMap.set(item.name, {
+          value: ((item.check_status[status] / totalByStatus) * 100).toFixed(2),
+          name: toTitleCase(item.name)
+        });
+      }
+    });
+
+    return severityOrder.map(severity => severityMap.get(severity));
   }
+
 }
 
-// Chart Builders
+toTitleCase = (string) => string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+
 class ChartBuilder {
   static createBarChart(elementId, data) {
     const status = elementId.startsWith(Status.PASSED) ? Status.PASSED : Status.FAILED;
     const metrics = DataProcessor.calculatePercentages(data, status);
+
     return {
       series: [{ data: metrics.map(m => m.value) }],
       chart: {
@@ -132,7 +175,6 @@ class ChartManager {
 
   async initialize() {
     try {
-      // const data = await this.#fetchData();
       const data = check_analytics;
       await this.#renderCharts(data);
     } catch (error) {
@@ -140,14 +182,6 @@ class ChartManager {
       throw error;
     }
   }
-
-  // async #fetchData() {
-  //   const response = await fetch('./data/check_analytics.json');
-  //   if (!response.ok) {
-  //     throw new Error('Failed to fetch chart data');
-  //   }
-  //   return response.json();
-  // }
 
   async #renderCharts(data) {
     const renderTasks = [

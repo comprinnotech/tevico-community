@@ -51,6 +51,13 @@ class Provider(ABC):
     def is_connected(self) -> bool:
         return self.connection is not None
 
+    @property
+    def account_id(self) -> str:
+        raise NotImplementedError()
+
+    @property
+    def account_name(self) -> str:
+        raise NotImplementedError()
 
     """
     Abstract methods

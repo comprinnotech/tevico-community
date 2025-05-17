@@ -1,32 +1,38 @@
 Provider: aws
 CheckID: "cloudwatch_log_metric_filter_unauthorized_api_calls"
-CheckTitle: Ensure CloudWatch Log Metric Filter for Unauthorized API Calls is in place
+CheckTitle: Ensure a log metric filter and alarm exist for unauthorized API calls
 CheckType:
   - Software and Configuration Checks
-  - Security Best Practices
+  - Industry and Regulatory Standards
   - CIS AWS Foundations Benchmark
 ServiceName: cloudwatch
-SubServiceName: ""
-ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name:filter-name
+SubServiceName: logs
+ResourceIdTemplate: arn:aws:logs:region:account-id:log-group:log-group-name:*
 Severity: high
-ResourceType: AwsLogsMetricFilter
-Description: Ensure that CloudWatch Log Metric Filter is created for unauthorized API calls to detect and alert on suspicious activity.
+ResourceType: AwsCloudWatchLogMetricFilter
+Description: Ensure that CloudWatch log metric filters and alarms are configured to detect unauthorized API calls
 Risk:
-  Unauthorized API calls can expose your AWS resources to potential attacks or misuse. By ensuring that metric filters are configured for unauthorized API calls, you can detect and respond to security threats more quickly.
-RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
+  Unauthorized API calls may indicate attempted security breaches or compromised credentials. Without proper monitoring and alerting, these events could go undetected, potentially leading to unauthorized access to resources, data breaches, or other security incidents.
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html
 Remediation:
   Code:
-    CLI:
-      aws logs put-metric-filter --log-group-name <log-group-name> --filter-name <filter-name> --filter-pattern '{ $.errorCode = "UnauthorizedOperation" }' --metric-name UnauthorizedAPICalls --metric-namespace "MySecurityMetrics" --metric-value 1
-    Other: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
-    Terraform: ""
+    CLI: |
+      aws logs put-metric-filter \
+        --log-group-name <log-group-name> \
+        --filter-name UnauthorizedAPICalls \
+        --filter-pattern '{ ($.errorCode = "*UnauthorizedOperation") || ($.errorCode = "AccessDenied*") }' \
+        --metric-transformations \
+            metricName=UnauthorizedAPICalls,metricNamespace=CloudTrailMetrics,metricValue=1
+    NativeIaC: ""
+    Other: ""
   Recommendation:
-    Text:
-      Ensure that CloudWatch metric filters are configured to capture unauthorized API calls and trigger alerts for suspicious activity.
+    Text: |
+      Set up CloudWatch metric filters with patterns to capture unauthorized API calls and ensure they are monitored with alarms. This enables automatic alerting for potential security incidents.
     Url: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Metric-Filter-Examples.html
 Categories:
   - security
   - monitoring
+  - compliance
 DependsOn: []
 RelatedTo: []
-Notes: "This check ensures that CloudWatch Log Metric Filters are used to detect and alert on unauthorized API calls in your AWS environment."
+Notes: "This check is part of the CIS AWS Foundations Benchmark and helps ensure that unauthorized API calls are properly monitored."

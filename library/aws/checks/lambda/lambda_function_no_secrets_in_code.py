@@ -1,146 +1,159 @@
 """
-AUTHOR: deepak-puri-comprinno
+AUTHOR: Deepak Puri
 EMAIL: deepak.puri@comprinno.net
-DATE: 2024-11-17
+DATE: 2025-04-28
 """
 
 import boto3
-import tempfile
-import os
-import json
+import re
+import zipfile
+import io
 import requests
-from botocore.exceptions import ClientError
 from tevico.engine.entities.report.check_model import AwsResource, CheckReport, CheckStatus, GeneralResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
-from detect_secrets.core.secrets_collection import SecretsCollection
-from detect_secrets.settings import transient_settings
 
 
 class lambda_function_no_secrets_in_code(Check):
+    # Precompiled regex patterns for detecting secrets
+    SECRET_PATTERN = re.compile(
+        r'(?i)'
+        r'password\s*=\s*["\']?.{6,}["\']?|'
+        r'secret\s*=\s*["\']?.{6,}["\']?|'
+        r'credential\s*=\s*["\']?.{6,}["\']?|'
+        r'token\s*=\s*["\']?[A-Za-z0-9\-_]{8,}["\']?|'
+        r'key\s*=\s*["\']?[A-Za-z0-9]{16,}["\']?|'
+        r'auth\s*=\s*["\']?.{6,}["\']?|'
+        r'certificate\s*=\s*["\']?.{6,}["\']?|'
+        r'private[\s_-]?key|'
+        r'connection[\s_-]?string|'
+        r'jdbc|'
+        r'mongodb(\+srv)?://|'
+        r'postgres(ql)?://|'
+        r'mysql://|'
+        r'sqlserver://|'
+        r'oracle://|'
+        r'api[\s_-]?key|'
+        r'access[\s_-]?key|'
+        r'client[\s_-]?id|'
+        r'client[\s_-]?secret|'
+        r'bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+|'
+        r'oauth|'
+        r'aws_access_key_id|'
+        r'aws_secret_access_key|'
+        r'aws_session_token'
+    )
+        
     def execute(self, connection: boto3.Session) -> CheckReport:
-        client = connection.client('lambda')
         report = CheckReport(name=__name__)
         report.status = CheckStatus.PASSED
         report.resource_ids_status = []
-
-        paginator = client.get_paginator('list_functions')
+        lambda_client = connection.client("lambda")
 
         try:
-            for page in paginator.paginate():
-                functions = page.get('Functions', [])
+            functions = []
+            next_token = None
 
-                for function in functions:
-                    function_name = function['FunctionName']
-                    function_arn = function['FunctionArn']
+            # Pagination for listing Lambda functions
+            while True:
+                response = lambda_client.list_functions(Marker=next_token) if next_token else lambda_client.list_functions()
+                functions.extend(response.get("Functions", []))
+                next_token = response.get("NextMarker")
+                if not next_token:
+                    break
 
-                    try:
-                        response = client.get_function(FunctionName=function_name)
-                        code_url = response['Code']['Location']
+            if not functions:
+                report.status = CheckStatus.NOT_APPLICABLE
+                report.resource_ids_status.append(
+                    ResourceStatus(
+                        resource=GeneralResource(name=""),
+                        status=CheckStatus.NOT_APPLICABLE,
+                        summary="No Lambda functions found."
+                    )
+                )
+                return report
 
-                        # Download function code
-                        code = self.download_code_from_url(code_url)
+            for function in functions:
+                func_name = function["FunctionName"]
+                func_arn = function["FunctionArn"]
+                resource = AwsResource(arn=func_arn)
 
-                        # Scan code for potential secrets
-                        secrets_found = self.detect_secrets_scan(code)
+                try:
+                    # Get code location
+                    code = lambda_client.get_function(FunctionName=func_name)
+                    code_location = code.get("Code", {}).get("Location")
 
+                    if not code_location:
                         report.resource_ids_status.append(
                             ResourceStatus(
-                                resource=AwsResource(arn=function_arn),
-                                status=CheckStatus.FAILED if secrets_found else CheckStatus.PASSED,
-                                summary=f"Secrets {'found' if secrets_found else 'not found'} in {function_name}."
+                                resource=resource,
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"No code location found for function {func_name}."
                             )
                         )
+                        continue
 
-                        if secrets_found:
-                            report.status = CheckStatus.FAILED  # If any function fails, the overall status is FAILED
-
-                    except Exception as e:
+                    # Download deployment package
+                    response = requests.get(code_location)
+                    if response.status_code != 200:
                         report.resource_ids_status.append(
                             ResourceStatus(
-                                resource=GeneralResource(name=""),
-                                status=CheckStatus.FAILED,
-                                summary=f"Error scanning {function_name}: {str(e)}"
+                                resource=resource,
+                                status=CheckStatus.UNKNOWN,
+                                summary=f"Failed to download Lambda code for {func_name}, status code {response.status_code}"
                             )
                         )
+                        continue
+                    
+                    with zipfile.ZipFile(io.BytesIO(response.content)) as zipped:
+                        has_secret = False
+                        for file_info in zipped.infolist():
+                            if file_info.filename.endswith((".py", ".js", ".ts", ".env", ".json", ".sh", ".yml", ".yaml")):
+                                with zipped.open(file_info.filename) as f:
+                                    try:
+                                        content = f.read().decode(errors="ignore")
+                                        if self.SECRET_PATTERN.search(content):
+                                            has_secret = True
+                                            break
+                                    except Exception:
+                                        continue  # Ignore binary or unreadable files
+
+                    if has_secret:
                         report.status = CheckStatus.FAILED
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=resource,
+                                status=CheckStatus.FAILED,
+                                summary=f"Lambda function '{func_name}' code contains potential hardcoded secrets."
+                            )
+                        )
+                    else:
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=resource,
+                                status=CheckStatus.PASSED,
+                                summary=f"Lambda function '{func_name}' code has no detected hardcoded secrets."
+                            )
+                        )
+
+                except Exception as e:
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=resource,
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error processing function {func_name}: {str(e)}",
+                            exception=str(e)
+                        )
+                    )
 
         except Exception as e:
-            report.status = CheckStatus.FAILED
+            report.status = CheckStatus.UNKNOWN
             report.resource_ids_status.append(
                 ResourceStatus(
                     resource=GeneralResource(name=""),
-                    status=CheckStatus.FAILED,
-                    summary=f"Unexpected error: {str(e)}"
+                    status=CheckStatus.UNKNOWN,
+                    summary=f"Unexpected error while listing Lambda functions: {str(e)}",
+                    exception=str(e)
                 )
             )
 
         return report
-
-    def detect_secrets_scan(self, data: str) -> bool:
-        """
-        Scans the provided Lambda function code for secrets using detect-secrets.
-        Returns True if secrets are found, otherwise False.
-        """
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8") as temp_data_file:
-                temp_data_file.write(data)
-                temp_file_path = temp_data_file.name
-
-            secrets = SecretsCollection()
-
-            settings = {
-                "plugins_used": [
-                    {"name": "ArtifactoryDetector"},
-                    {"name": "AWSKeyDetector"},
-                    {"name": "BasicAuthDetector"},
-                    {"name": "CloudantDetector"},
-                    {"name": "DiscordBotTokenDetector"},
-                    {"name": "GitHubTokenDetector"},
-                    {"name": "GitLabTokenDetector"},
-                    {"name": "Base64HighEntropyString", "limit": 6.0},
-                    {"name": "HexHighEntropyString", "limit": 3.0},
-                    {"name": "IbmCloudIamDetector"},
-                    {"name": "IbmCosHmacDetector"},
-                    {"name": "JwtTokenDetector"},
-                    {"name": "KeywordDetector"},
-                    {"name": "MailchimpDetector"},
-                    {"name": "NpmDetector"},
-                    {"name": "OpenAIDetector"},
-                    {"name": "PrivateKeyDetector"},
-                    {"name": "PypiTokenDetector"},
-                    {"name": "SendGridDetector"},
-                    {"name": "SlackDetector"},
-                    {"name": "SoftlayerDetector"},
-                    {"name": "SquareOAuthDetector"},
-                    {"name": "StripeDetector"},
-                    {"name": "TwilioKeyDetector"},
-                ],
-                "filters_used": [
-                    {"path": "detect_secrets.filters.common.is_invalid_file"},
-                    {"path": "detect_secrets.filters.common.is_known_false_positive"},
-                    {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
-                    {"path": "detect_secrets.filters.heuristic.is_potential_secret"},
-                ],
-            }
-
-            with transient_settings(settings):
-                secrets.scan_file(temp_file_path)
-
-            os.remove(temp_file_path)
-            detect_secrets_output = secrets.json()
-            return bool(detect_secrets_output.get("results"))
-
-        except Exception:
-            return False
-
-    def download_code_from_url(self, url: str) -> str:
-        """
-        Downloads the Lambda function code from the provided URL.
-        Returns the code as a string.
-        """
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            return response.text
-        except requests.RequestException as e:
-            return ""
