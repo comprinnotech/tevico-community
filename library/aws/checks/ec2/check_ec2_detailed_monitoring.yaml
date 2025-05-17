@@ -1,0 +1,33 @@
+Provider: aws
+CheckID: ec2_detailed_monitoring_enabled
+CheckTitle: Ensure Detailed Monitoring is enabled for all EC2 instances
+CheckType:
+  - BestPractice
+  - Observability
+ServiceName: ec2
+SubServiceName: compute
+ResourceIdTemplate: arn:aws:ec2:<region>:<account-id>:instance/<instance-id>
+Severity: medium
+ResourceType: AwsEc2Instance
+Description: Verifies whether detailed monitoring is enabled on all EC2 instances. Detailed monitoring provides 1-minute granularity CloudWatch metrics for better visibility and operational insight.
+Risk: Without detailed monitoring, EC2 instances report CloudWatch metrics at 5-minute intervals, which can delay alerting and reduce observability during incidents.
+RelatedUrl: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html
+Remediation:
+  Code:
+    CLI: "aws ec2 monitor-instances --instance-ids <your-instance-id>"
+    Other: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html
+    Terraform: |
+      resource "aws_instance" "example" {
+        instance_type = "t2.micro"
+        ami           = "ami-0abcdef1234567890"
+        monitoring    = true
+      }
+  Recommendation:
+    Text: Enable detailed monitoring on all EC2 instances to receive more granular metrics and improve operational observability.
+    Url: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html
+Categories:
+  - Monitoring and Alerting
+  - Observability
+DependsOn: []
+RelatedTo: []
+Notes: This check ensures that detailed monitoring is turned on for better metric granularity in EC2 instances.

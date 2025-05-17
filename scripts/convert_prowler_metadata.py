@@ -21,7 +21,7 @@ war_reliability_checks = [
     'rds_instance_deletion_protection',
     'rds_instance_enhanced_monitoring_enabled',
     'rds_instance_integration_cloudwatch_logs',
-    'rds_instance_multi_az'
+    'rds_instance_multi_az',
 ]
 
 def fetch_metadata_files(dir) -> List[str]:
