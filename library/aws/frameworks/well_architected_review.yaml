@@ -35,7 +35,8 @@ sections:
           - ec2_microsoft_sql_server_end_of_support
           - ssm_managed_compliant_patching
           - ssm_patch_manager_enabled
-
+          - apigateway_unused_stages
+          
   - name: Security
     description: |
       The Security pillar includes the ability to protect information, systems, and assets while delivering business
