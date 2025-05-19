@@ -3,8 +3,9 @@ from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, 
 from tevico.engine.entities.check.check import Check
 from datetime import datetime, timedelta, UTC
 
-class CheckUnusedStages:
+class CheckUnusedStages(Check):
     def __init__(self, metadata):
+        super().__init__(metadata)
         self.metadata = metadata
 
     def execute(self):
@@ -55,5 +56,5 @@ class CheckUnusedStages:
             'message': f"{len(unused_stages)} unused stages found." if unused_stages else "No unused stages found."
         }
 
-# This exposes the class for Tevico to instantiate with metadata
+# Expose class for Tevico
 apigateway_unused_stages = CheckUnusedStages
