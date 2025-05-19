@@ -108,10 +108,8 @@ class apigateway_unused_stages(Check):
 
             if unused_stages_found:
                 report.status = CheckStatus.FAILED
-                report.message = "One or more unused API Gateway stages found."
             else:
                 report.status = CheckStatus.PASSED
-                report.message = "No unused API Gateway stages found."
 
         except Exception as e:
             report.resource_ids_status.append(
@@ -123,6 +121,5 @@ class apigateway_unused_stages(Check):
                 )
             )
             report.status = CheckStatus.UNKNOWN
-            report.message = "API Gateway listing error."
 
         return report
