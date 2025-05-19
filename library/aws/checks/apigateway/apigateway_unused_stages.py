@@ -9,7 +9,6 @@ from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, 
 from tevico.engine.entities.check.check import Check
 from datetime import datetime, timedelta, UTC
 
-
 class apigateway_unused_stages(Check):
 
     def execute(self, connection: boto3.Session) -> CheckReport:
