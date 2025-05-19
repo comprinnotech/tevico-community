@@ -1,4 +1,6 @@
 import boto3
+from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+from tevico.engine.entities.check.check import Check
 from datetime import datetime, timedelta, UTC
 
 class CheckUnusedStages:
