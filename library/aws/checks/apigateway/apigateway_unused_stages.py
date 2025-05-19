@@ -8,7 +8,7 @@ class CheckUnusedStages(Check):
         super().__init__(metadata)
         self.metadata = metadata
 
-    def execute(self):
+    def execute(self, connection=None):
         apigateway = boto3.client('apigateway')
         cloudwatch = boto3.client('cloudwatch')
         unused_stages = []
