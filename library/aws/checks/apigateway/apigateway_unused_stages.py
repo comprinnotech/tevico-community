@@ -1,60 +1,129 @@
+"""
+AUTHOR: deepak-puri-comprinno
+EMAIL: deepak.puri@comprinno.net
+DATE: 2025-01-13
+"""
+
 import boto3
-from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, GeneralResource, ResourceStatus
+from tevico.engine.entities.report.check_model import CheckReport, CheckStatus, AwsResource, ResourceStatus
 from tevico.engine.entities.check.check import Check
 from datetime import datetime, timedelta, UTC
 
-class CheckUnusedStages(Check):
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.metadata = metadata
 
-    def execute(self, connection=None):
-        apigateway = boto3.client('apigateway')
-        cloudwatch = boto3.client('cloudwatch')
-        unused_stages = []
+class apigateway_unused_stages(Check):
 
-        # Retrieve all REST APIs
-        apis = apigateway.get_rest_apis().get('items', [])
+    def execute(self, connection: boto3.Session) -> CheckReport:
+        client = connection.client("apigateway")
+        cloudwatch = connection.client("cloudwatch")
+        region = connection.region_name
 
-        for api in apis:
-            api_id = api['id']
-            api_name = api['name']
-            stages = apigateway.get_stages(restApiId=api_id).get('item', [])
+        report = CheckReport(name=__name__)
+        report.status = CheckStatus.PASSED
+        report.resource_ids_status = []
 
-            for stage in stages:
-                stage_name = stage['stageName']
-                cache_enabled = stage.get('cacheClusterEnabled', False)
+        unused_stages_found = False
 
-                # Retrieve CloudWatch metrics for the stage
-                metrics = cloudwatch.get_metric_statistics(
-                    Namespace='AWS/ApiGateway',
-                    MetricName='Count',
-                    Dimensions=[
-                        {'Name': 'ApiName', 'Value': api_name},
-                        {'Name': 'Stage', 'Value': stage_name}
-                    ],
-                    StartTime=datetime.now(UTC) - timedelta(days=30),
-                    EndTime=datetime.now(UTC),
-                    Period=86400,
-                    Statistics=['Sum']
+        try:
+            apis = []
+            next_token = None
+            # Paginate through all REST APIs
+            while True:
+                if next_token:
+                    response = client.get_rest_apis(position=next_token)
+                else:
+                    response = client.get_rest_apis()
+
+                apis.extend(response.get("items", []))
+                next_token = response.get("position")
+                if not next_token:
+                    break
+
+            for api in apis:
+                api_id = api.get("id")
+                api_name = api.get("name", "Unnamed API")
+                resource_arn = f"arn:aws:apigateway:{region}::/restapis/{api_id}"
+
+                try:
+                    stages = client.get_stages(restApiId=api_id).get("item", [])
+
+                    if not stages:
+                        # No stages found for this API - mark as skipped
+                        report.resource_ids_status.append(
+                            ResourceStatus(
+                                resource=AwsResource(arn=resource_arn),
+                                status=CheckStatus.SKIPPED,
+                                summary=f"API {api_name} has no stages.",
+                            )
+                        )
+                        continue
+
+                    for stage in stages:
+                        stage_name = stage.get("stageName")
+                        cache_enabled = stage.get("cacheClusterEnabled", False)
+
+                        # Fetch CloudWatch metrics to see if stage has any requests
+                        metrics = cloudwatch.get_metric_statistics(
+                            Namespace='AWS/ApiGateway',
+                            MetricName='Count',
+                            Dimensions=[
+                                {'Name': 'ApiName', 'Value': api_name},
+                                {'Name': 'Stage', 'Value': stage_name}
+                            ],
+                            StartTime=datetime.now(UTC) - timedelta(days=30),
+                            EndTime=datetime.now(UTC),
+                            Period=86400,
+                            Statistics=['Sum']
+                        )
+
+                        datapoints = metrics.get("Datapoints", [])
+                        total_requests = sum(point.get('Sum', 0) for point in datapoints)
+
+                        if total_requests == 0:
+                            unused_stages_found = True
+                            report.resource_ids_status.append(
+                                ResourceStatus(
+                                    resource=AwsResource(arn=resource_arn),
+                                    status=CheckStatus.FAILED,
+                                    summary=f"Stage '{stage_name}' of API '{api_name}' is unused (0 requests in last 30 days). Cache enabled: {cache_enabled}"
+                                )
+                            )
+                        else:
+                            report.resource_ids_status.append(
+                                ResourceStatus(
+                                    resource=AwsResource(arn=resource_arn),
+                                    status=CheckStatus.PASSED,
+                                    summary=f"Stage '{stage_name}' of API '{api_name}' has usage (total {total_requests} requests in last 30 days)."
+                                )
+                            )
+
+                except Exception as e:
+                    report.resource_ids_status.append(
+                        ResourceStatus(
+                            resource=AwsResource(arn=resource_arn),
+                            status=CheckStatus.UNKNOWN,
+                            summary=f"Error fetching stages for API {api_name}: {str(e)}",
+                            exception=str(e)
+                        )
+                    )
+                    report.status = CheckStatus.UNKNOWN
+
+            if unused_stages_found:
+                report.status = CheckStatus.FAILED
+                report.message = "One or more unused API Gateway stages found."
+            else:
+                report.status = CheckStatus.PASSED
+                report.message = "No unused API Gateway stages found."
+
+        except Exception as e:
+            report.resource_ids_status.append(
+                ResourceStatus(
+                    resource=AwsResource(arn=f"arn:aws:apigateway:{region}::/restapis"),
+                    status=CheckStatus.UNKNOWN,
+                    summary=f"Error listing API Gateway REST APIs: {str(e)}",
+                    exception=str(e)
                 )
+            )
+            report.status = CheckStatus.UNKNOWN
+            report.message = "API Gateway listing error."
 
-                request_counts = [point['Sum'] for point in metrics.get('Datapoints', [])]
-                total_requests = sum(request_counts)
-
-                if total_requests == 0:
-                    unused_stages.append({
-                        'api_id': api_id,
-                        'api_name': api_name,
-                        'stage_name': stage_name,
-                        'cache_enabled': cache_enabled
-                    })
-
-        return {
-            'status': 'PASS' if not unused_stages else 'FAIL',
-            'unused_stages': unused_stages,
-            'message': f"{len(unused_stages)} unused stages found." if unused_stages else "No unused stages found."
-        }
-
-# Expose class for Tevico
-apigateway_unused_stages = CheckUnusedStages
+        return report
