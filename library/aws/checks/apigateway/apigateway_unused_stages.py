@@ -46,3 +46,5 @@ def check_unused_stages():
                 })
 
     return unused_stages
+
+apigateway_unused_stages = check_unused_stages()
