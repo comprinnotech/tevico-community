@@ -83,12 +83,14 @@ class iam_rotate_access_keys_90_days(Check):
                         # Ensure time zone consistency
                         days_since_created = (datetime.datetime.now(datetime.timezone.utc) - create_date).days
                         
+                        # Masking the key_id for security reasons, Only show the first 4 and last 3 characters
+                        masked_key_id = key_id[:4] + "****" + key_id[-3:]
                         if status == 'Inactive':
                             report.resource_ids_status.append(
                                 ResourceStatus(
                                     resource=resource,
                                     status=CheckStatus.PASSED,
-                                    summary=f"Access Key {key_id} is inactive."
+                                    summary=f"Access Key {masked_key_id} is inactive."
                                 )
                             )
                         elif days_since_created > MAX_KEY_AGE:
@@ -97,7 +99,7 @@ class iam_rotate_access_keys_90_days(Check):
                                 ResourceStatus(
                                     resource=resource,
                                     status=CheckStatus.FAILED,
-                                    summary=f"Access Key {key_id} is {status} but older than {MAX_KEY_AGE} days ({days_since_created} days old)."
+                                    summary=f"Access Key {masked_key_id} is {status} but older than {MAX_KEY_AGE} days ({days_since_created} days old)."
                                 )
                             )
                             report.status = CheckStatus.FAILED
@@ -107,7 +109,7 @@ class iam_rotate_access_keys_90_days(Check):
                                 ResourceStatus(
                                     resource=resource,
                                     status=CheckStatus.PASSED,
-                                    summary=f"Access Key {key_id} is {status} and compliant ({days_since_created} days old)."
+                                    summary=f"Access Key {masked_key_id} is {status} and compliant ({days_since_created} days old)."
                                 )
                             )
                 except Exception as e:
