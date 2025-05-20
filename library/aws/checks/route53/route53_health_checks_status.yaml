@@ -1,0 +1,36 @@
+Provider: "aws"
+CheckID: "route53_health_checks_status"
+CheckTitle: "Ensure Route 53 health checks are associated with failover routing policies"
+CheckType:
+  - "Availability"
+  - "CostOptimization"
+ServiceName: "route53"
+SubServiceName: "healthchecks"
+ResourceIdTemplate: "arn:aws:route53:::healthcheck/{health_check_id}"
+Severity: medium
+ResourceType: "AwsRoute53HealthCheck"
+Description: "Verify that Route 53 health checks are associated with failover routing policies or DNS records to avoid unnecessary costs and misconfigurations."
+Risk: "Unassociated health checks increase AWS costs and may result in misconfigured failover policies."
+RelatedUrl: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html"
+Remediation:
+  Code:
+    CLI: "aws route53 delete-health-check --health-check-id <id>"
+    NativeIaC: ""
+    Other: "Delete or associate unused Route 53 health checks with failover routing policies."
+    Terraform: |
+      resource "aws_route53_health_check" "example" {
+        fqdn              = "example.com"
+        type              = "HTTPS"
+        resource_path     = "/"
+        port              = 443
+        failure_threshold = 3
+        request_interval  = 30
+      }
+  Recommendation:
+    Text: "Ensure Route 53 health checks are associated with failover routing policies or DNS records. Remove or reassign any that are unused."
+    Url: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html"
+Categories:
+  - "availability"
+  - "cost-optimization"
+DependsOn: []
+RelatedTo: []

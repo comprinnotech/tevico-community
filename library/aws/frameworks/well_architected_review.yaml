@@ -187,6 +187,7 @@ sections:
           - networkfirewall_multi_az_enabled
           - rds_instance_multi_az
           - dynamodb_tables_pitr_enabled
+          - route53_health_checks_status
       - name: Recovery Planning
         description: |
           The Recovery Planning section includes the ability to recover from failures and disruptions in a timely manner.
