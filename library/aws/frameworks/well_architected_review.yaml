@@ -35,6 +35,7 @@ sections:
           - ec2_microsoft_sql_server_end_of_support
           - ssm_managed_compliant_patching
           - ssm_patch_manager_enabled
+          - ec2_elastic_ips_unassociated
 
   - name: Security
     description: |
