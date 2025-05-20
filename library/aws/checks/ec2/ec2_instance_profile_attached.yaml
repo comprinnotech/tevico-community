@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: ec2_instance_profile_attached
-CheckTitle: Ensure IAM instance roles are used for AWS resource access from instances
+CheckTitle: Ensure an EC2 instance profile is attached to the EC2 instances.
 CheckType:
   - Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark
 ServiceName: ec2
@@ -8,9 +8,9 @@ SubServiceName: ""
 ResourceIdTemplate: arn:partition:service:region:account-id:resource-id
 Severity: medium
 ResourceType: AwsEc2Instance
-Description: Ensure IAM instance roles are used for AWS resource access from instances.
+Description: Ensure that an EC2 instance profile is associated with the EC2 instances.
 Risk: AWS access from within AWS instances can be done by either encoding AWS keys into AWS API calls or by assigning the instance to a role which has an appropriate permissions policy for the required access. AWS IAM roles reduce the risks associated with sharing and rotating credentials that can be used outside of AWS itself. If credentials are compromised, they can be used from outside of the AWS account.
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/codedeploy/latest/userguide/getting-started-create-iam-instance-profile.html
 Remediation:
   Code:
     CLI: ""

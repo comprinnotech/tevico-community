@@ -11,7 +11,7 @@ Description: Ensure no IAM policies within the account allow privilege escalatio
 
 Risk: >-
   Allowing privilege escalation through IAM policies can lead to unauthorized users obtaining higher-level privileges or full administrative access. This can result in data breaches, unauthorized resource usage, or complete control over the AWS environment. Restricting privilege escalation ensures the principle of least privilege is enforced, minimizing security vulnerabilities and potential misuse.
-RelatedUrl: ''
+RelatedUrl: "https://docs.aws.amazon.com/wellarchitected/latest/framework/sec_permissions_least_privileges.html"
 Remediation:
   Code:
     CLI: ''

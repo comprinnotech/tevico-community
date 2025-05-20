@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsElbLoadBalancer
 Description: Ensure Classic Elastic Load Balancers (ELBs) have SSL or HTTPS listeners enabled to encrypt traffic between clients and the load balancer.
 Risk: Non-SSL listeners could expose sensitive data to interception or tampering during transmission, posing a security risk to the application and users.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
 Remediation: 
   Code:
     CLI: ""

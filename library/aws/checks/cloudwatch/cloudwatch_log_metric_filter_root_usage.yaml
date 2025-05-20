@@ -20,7 +20,7 @@ Remediation:
       aws logs put-metric-filter --log-group-name <log-group-name> --filter-name <filter-name> --filter-pattern '{ $.userIdentity.type = "Root" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != "AwsServiceEvent" }' --metric-name <metric-name> --metric-namespace <namespace>
     NativeIaC: ""
     Other: ""
-    Terraform: "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#fix---buildtime"
+    Terraform: ""
   Recommendation:
     Text: |
       Set up CloudWatch metric filters with patterns to capture root account usage and ensure they are monitored with alarms. This enables automatic alerting for critical security events.

@@ -13,7 +13,7 @@ ResourceType: AwsCloudTrailTrail
 Description: Ensure that CloudTrail logs are delivered to an S3 bucket that has access logging enabled. This helps in tracking access to the log files, providing an audit trail for security and compliance purposes.
 Risk:
   CloudTrail logs must be protected and tracked to prevent unauthorized access. If the S3 bucket storing CloudTrail logs does not have logging enabled, it may expose sensitive trail data to unauthorized users without detection.
-RelatedUrl: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation.html
+RelatedUrl: https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-cloudtrail-logging-for-s3.html
 Remediation:
   Code:
     CLI:

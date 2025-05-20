@@ -15,7 +15,7 @@ Description:
 Risk:
   If logs are not enabled, monitoring of service use and threat analysis is not
   possible.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/audit-logs.html"
 Remediation:
   Code:
     CLI: ""

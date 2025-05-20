@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: eks_control_plane_endpoint_access_restricted
-CheckTitle: Ensure EKS cluster Control Plane endpoint access is restricted
+CheckTitle: Ensure EKS cluster control plane endpoint access is restricted
 CheckType: [Infrastructure Protection]
 ServiceName: eks
 SubServiceName: ""
@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsEksCluster
 Description: Ensure that the EKS control plane endpoint access is restricted to private IP addresses, limiting exposure to public networks.
 Risk: Allowing unrestricted public access to the control plane endpoint could lead to unauthorized access or attacks on your cluster.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html"
 Remediation: 
   Code:
     CLI: ""

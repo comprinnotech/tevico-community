@@ -4,7 +4,7 @@ Provider: aws
 CheckID: iam_attached_policy_admin_privileges_found
 
 # Short title/description of the check
-CheckTitle: "Ensure no IAM user, role or group has AdministratorAccess policy attached"
+CheckTitle: "Ensure no IAM user, role or group has a policy with admin-level privileges attached"
 
 # Check Type
 CheckType: 
@@ -27,13 +27,13 @@ Severity: high
 ResourceType: AwsIamUser, AwsIamRole
 
 # Description of the check
-Description: "This check ensures that no IAM user, role or group has an AdministratorAccess policy attached, as such policies grant excessive privileges and can pose security risks."
+Description: "This check ensures that no IAM user, role or group has a policy with admin-level privileges attached, as such policies grant excessive privileges and can pose security risks."
 
 # Explanation of the risk associated with the check
-Risk: "Attaching AdministratorAccess policy to IAM users, roles or groups grants full administrative privileges, increasing the risk of unintentional or malicious changes to your AWS account."
+Risk: "Attaching the AdministratorAccess policy to IAM users, roles or groups grants full administrative privileges, increasing the risk of unintentional or malicious changes to your AWS account."
 
 # Related URL for the check
-RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+RelatedUrl: https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege
 
 # Help section on how to fix the issue
 Remediation:
@@ -41,8 +41,8 @@ Remediation:
     CLI: |
       aws iam detach-user-policy --user-name <user_name> --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
     NativeIaC: ""
-    Other: https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/iam/iam-users-no-admin-access.html
-    Terraform: https://docs.prowler.com/checks/aws/general-policies/ensure-that-iam-users-do-not-have-administrator-access
+    Other: ""
+    Terraform: ""
   Recommendation:
     Text: |
       Review IAM users and roles, and detach any AdministratorAccess policies. 

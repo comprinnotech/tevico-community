@@ -9,12 +9,12 @@ Severity: medium
 ResourceType: AwsRdsDbInstance
 Description: "Check if RDS instances have CloudWatch logging enabled for integration."
 Risk: "If CloudWatch logging is not enabled, critical logs related to RDS performance and troubleshooting are not captured."
-RelatedUrl: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Monitoring.Overview.html"
+RelatedUrl: "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.LoggingAndMonitoring.html"
 Remediation:
   Code:
     CLI: "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --cloudwatch-logs-export-configuration <log_types>"
     NativeIaC: ""
-    Other: "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-cloudwatch-logs-enabled.html"
+    Other: ""
     Terraform: ""
   Recommendation:
     Text: "Enable CloudWatch logging for RDS instances to capture logs like error logs, general logs, and slow query logs."

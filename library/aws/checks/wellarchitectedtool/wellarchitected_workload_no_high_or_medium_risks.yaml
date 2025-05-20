@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: "wellarchitected_workload_no_high_or_medium_risks"
-CheckTitle: Ensure Well-Architected workload has high or medium risks.
+CheckTitle: Ensure the Well-Architected workload has high or medium risks.
 CheckType: []
 ServiceName: wellarchitected
 SubServiceName: ""
@@ -9,8 +9,6 @@ Severity: medium
 ResourceType: AwsWellArchitectedWorkload
 Description: |
   This check ensures that no AWS Well-Architected workloads have high or medium risks.
-  It checks the risk levels and marks the workload as failing if high or medium risks are found.
-  If no high or medium risks are found, the workload will pass.
 Risk: |
   Workloads containing high or medium risks could face architectural or operational challenges,
   which may affect security, cost optimization, and performance. Immediate action should be taken to address them.

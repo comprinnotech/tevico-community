@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: vpc_flowlogs_enable_logging
-CheckTitle: Ensure VPC Flow Logs are enabled for all VPCs.
+CheckTitle: Ensure VPC flow logs are enabled for all VPCs.
 CheckType: []
 ServiceName: ec2
 SubServiceName: ""

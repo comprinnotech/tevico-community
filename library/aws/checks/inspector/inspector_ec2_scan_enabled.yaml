@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEc2Instance
 Description: Verifies that Amazon Inspector EC2 scanning is enabled for all instances.
 Risk: Without active EC2 scanning, vulnerabilities may go undetected, increasing security risks.
-RelatedUrl: https://docs.aws.amazon.com/inspector/latest/user/getting-started.html
+RelatedUrl: https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html
 Remediation: 
   Code:
     CLI: aws inspector2 enable --resource-type EC2

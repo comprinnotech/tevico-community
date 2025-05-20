@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: iam_avoid_root_usage
-CheckTitle: Ensure Root Account usage is avoided
+CheckTitle: Ensure Root account usage is avoided
 CheckType: []
 ServiceName: iam
 SubServiceName: ''
@@ -10,7 +10,7 @@ ResourceType: AwsIamUser
 Description: Ensure that the root account is not used for everyday tasks. The root user has unrestricted access to all resources in the AWS account, and its usage should be avoided for security reasons. MFA should be enabled to secure the root account, adding an extra layer of protection to prevent unauthorized access.
 Risk: >-
   The root account has the highest level of privileges in an AWS account. If compromised, it could lead to complete control of the AWS environment, causing severe damage or data breaches. By avoiding the use of the root account for everyday tasks and enabling MFA, the risk of unauthorized access is significantly reduced. Additionally, enabling MFA for the root account ensures that even if the root credentials are compromised, an attacker would still need access to the MFA device.
-RelatedUrl: ''
+RelatedUrl: 'https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html'
 Remediation:
   Code:
     CLI: ''

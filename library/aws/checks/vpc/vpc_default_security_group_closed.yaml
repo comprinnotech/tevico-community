@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEc2SecurityGroup
 Description: Ensure that the default security groups for all VPCs do not allow inbound or outbound traffic.
 Risk: Open default security groups allow unrestricted network access, posing a security risk by potentially exposing resources to unauthorized access.
-RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html#DefaultSecurityGroup
+RelatedUrl: https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-2
 Remediation:
   Code:
     CLI:
@@ -20,7 +20,7 @@ Remediation:
   Recommendation:
     Text:
       Ensure that the default security group for each VPC has no inbound or outbound rules, leaving it effectively closed.
-    Url: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html#DefaultSecurityGroup
+    Url: https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-2
 Categories: [security, networking]
 DependsOn: []
 RelatedTo: []

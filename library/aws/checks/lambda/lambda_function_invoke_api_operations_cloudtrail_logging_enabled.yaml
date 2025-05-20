@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsCloudTrailTrail
 Description: Ensure CloudTrail is enabled for logging Lambda function invoke API operations to facilitate monitoring and auditing.
 Risk: Without CloudTrail logging enabled for Lambda invokes, it is challenging to monitor and audit Lambda function activity, potentially exposing the environment to undetected malicious activity.
-RelatedUrl: https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudtrail-events.html
+RelatedUrl: https://docs.aws.amazon.com/lambda/latest/dg/logging-using-cloudtrail.html
 Remediation: 
   Code:
     CLI: aws cloudtrail create-trail --name <trail_name> --is-multi-region-trail --enable-log-file-validation

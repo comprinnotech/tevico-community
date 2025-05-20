@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsLambdaFunction
 Description: Verifies that Amazon Inspector standard scanning is enabled for Lambda functions.
 Risk: Without Lambda scanning enabled, potential vulnerabilities in Lambda functions may go undetected, increasing security risks.
-RelatedUrl: https://docs.aws.amazon.com/inspector/latest/user/getting-started.html
+RelatedUrl: https://docs.aws.amazon.com/inspector/latest/user/scanning-lambda.html
 Remediation: 
   Code:
     CLI: aws inspector2 enable --resource-type LAMBDA

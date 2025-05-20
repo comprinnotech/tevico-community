@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsElbLoadBalancer
 Description: Ensure that a WAF ACL is attached to Application Load Balancers to protect against common web exploits.
 Risk: Without a WAF ACL, the application is more vulnerable to web-based attacks, potentially impacting data security and service availability.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-integrations.html#load-balancer-waf"
 Remediation: 
   Code:
     CLI: aws wafv2 associate-web-acl --resource-arn <alb-arn> --web-acl-arn <web-acl-arn>

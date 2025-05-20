@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEfsFileSystem
 Description: Ensure that EFS has encryption at rest enabled.
 Risk: EFS should be encrypted at rest to prevent exposure of sensitive data to bad actors.
-RelatedUrl: https://docs.aws.amazon.com/efs/latest/ug/encryption.html
+RelatedUrl: https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html
 Remediation: 
   Code:
     CLI: aws efs create-file-system --creation-token $(uuidgen) --performance-mode generalPurpose --encrypted --kms-key-id user/customer-managedCMKalias
@@ -18,7 +18,7 @@ Remediation:
     Terraform: ""
   Recommendation:
     Text: Ensure that encryption at rest is enabled for EFS file systems. Encryption at rest can only be enabled during the file system creation.
-    Url: https://docs.aws.amazon.com/efs/latest/ug/encryption.html
+    Url: https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html
 Categories: [Infrastructure Protection]
 DependsOn: []
 RelatedTo: []

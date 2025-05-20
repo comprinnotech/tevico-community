@@ -13,7 +13,7 @@ ResourceType: AwsCloudWatchLogGroup
 Description: Ensure CloudWatch metric filters and alarms are configured for VPC changes to monitor and alert on activities like VPC creation, deletion, or modification.
 Risk:
   CloudWatch metric filters and alarms provide visibility into critical changes in the AWS environment. Without configuring them for VPC-related events, there could be a lack of awareness and response to unauthorized or unintentional VPC changes.
-RelatedUrl: https://docs.aws.amazon.com/cloudwatchlogs/latest/APIReference/API_PutMetricFilter.html
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html
 Remediation:
   Code:
     CLI:

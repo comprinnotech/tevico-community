@@ -1,6 +1,6 @@
 Provider: "aws"
 CheckID: "s3_bucket_default_encryption"
-CheckTitle: "Ensure S3 buckets have default encryption (SSE) enabled and use a bucket policy to enforce it."
+CheckTitle: "Ensure S3 buckets have default encryption (SSE-S3) enabled."
 CheckType:
   - "Data Protection"
 ServiceName: "s3"
@@ -8,9 +8,9 @@ SubServiceName: ""
 ResourceIdTemplate: "arn:partition:s3:::bucket_name"
 Severity: medium
 ResourceType: "AwsS3Bucket"
-Description: "Ensure that S3 buckets have default encryption (SSE) enabled and use a bucket policy to enforce it."
+Description: "Ensure that S3 buckets have default encryption (SSE-S3) enabled"
 Risk: "Amazon S3 default encryption provides a way to set the default encryption behavior for an S3 bucket. This will ensure data-at-rest is encrypted."
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-bucket-encryption.html"
 Remediation:
   Code:
     CLI: "aws s3api put-bucket-encryption --bucket <bucket_name> --server-side-encryption-configuration '{'Rules': [{'ApplyServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}}]}'"

@@ -29,13 +29,13 @@ Severity: medium
 ResourceType: AwsAccount
 
 # Description of the check
-Description: Ensure security contact information is registered.
+Description: Ensures that the AWS account has security contact information registered.
 
 # Explanation of the risk associated with the check
 Risk: AWS provides customers with the option of specifying the contact information for accounts security team. It is recommended that this information be provided. Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.
 
 # Related URL for the check
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/security-ir/latest/userguide/update-account-contact-info.html
 
 # Help section on how to fix the issue
 Remediation:
@@ -60,10 +60,8 @@ Remediation:
 
   Recommendation:
     Text: |
-      Enable automated backup for production data. Define a retention period and
-      periodically test backup restoration. A Disaster Recovery process should be
-      in place to govern Data Protection approach.
-    Url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html
+      Register a dedicated security contact under your AWS account's alternate contacts. This ensures AWS can send security advisories directly to the responsible team in your organization. Update the information via the AWS Console or CLI and keep it current.
+    Url: https://docs.aws.amazon.com/security-ir/latest/userguide/update-account-contact-info.html
 
 # Categories for the check. Eg: forensics-ready, security, etc.
 Categories: [infrastructure_protection, security]
@@ -71,7 +69,7 @@ Categories: [infrastructure_protection, security]
 # Dependencies on other checks
 DependsOn: []
 
-# Related checks
+# Related checksthat
 RelatedTo: []
 
 # Side notes

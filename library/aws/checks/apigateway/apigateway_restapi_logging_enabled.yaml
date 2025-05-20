@@ -1,6 +1,6 @@
 Provider: aws
 CheckID: apigateway_restapi_logging_enabled
-CheckTitle: Check if API Gateway Stage has logging enabled.
+CheckTitle: Check if API Gateway stage has logging enabled.
 CheckAliases:
   - apigateway_logging_enabled
 CheckType:
@@ -15,13 +15,13 @@ Risk:
   If not enabled, monitoring of service use is not possible. Real-time monitoring
   of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs and
   establishing corresponding metric filters and alarms.
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html"
 Remediation:
   Code:
     CLI: ""
     NativeIaC: ""
     Other: ""
-    Terraform: https://docs.prowler.com/checks/aws/logging-policies/ensure-api-gateway-stage-have-logging-level-defined-as-appropiate#terraform
+    Terraform: ""
   Recommendation:
     Text:
       Monitoring is an important part of maintaining the reliability, availability

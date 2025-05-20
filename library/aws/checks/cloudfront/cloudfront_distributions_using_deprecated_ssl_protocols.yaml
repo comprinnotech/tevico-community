@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsCloudFrontDistribution
 Description: Checks if any CloudFront distributions are using deprecated SSL/TLS protocols such as SSLv3, TLSv1, or TLSv1.1.
 Risk: Deprecated SSL/TLS protocols like SSLv3, TLSv1, and TLSv1.1 are insecure and may expose data to interception or modification.
-RelatedUrl: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/security-policy.html
+RelatedUrl: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html
 Remediation:
   Code:
     CLI: ""

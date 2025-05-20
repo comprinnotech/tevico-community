@@ -9,7 +9,7 @@ Severity: high
 ResourceType: AwsMacie
 Description: Checks if automated sensitive data discovery is enabled for Amazon Macie.
 Risk: Without automated sensitive data discovery, your account may fail to detect sensitive data in real time, exposing you to potential compliance and security risks.
-RelatedUrl: https://docs.aws.amazon.com/macie/latest/user/discovery.html
+RelatedUrl: https://docs.aws.amazon.com/macie/latest/user/discovery-asdd.html
 Remediation:
   Code:
     CLI: ""

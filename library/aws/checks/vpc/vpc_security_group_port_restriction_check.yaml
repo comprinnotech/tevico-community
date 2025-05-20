@@ -1,13 +1,13 @@
 Provider: aws
 CheckID: vpc_security_group_port_restriction_check
-CheckTitle: Ensure VPC Security Groups restrict access to high-risk ports
+CheckTitle: Ensure VPC security groups restrict access to high-risk ports
 CheckType: []
 ServiceName: ec2
 SubServiceName: ""
 ResourceIdTemplate: arn:aws:ec2:region:account-id:security-group/security-group-id
 Severity: medium
 ResourceType: AwsSecurityGroup
-Description: Ensure VPC Security Groups restrict access to high-risk ports (e.g., SSH, FTP, RDP, database ports).
+Description: Ensure VPC security groups restrict access to high-risk ports (e.g., SSH, FTP, RDP, database ports).
 Risk: If security groups allow unrestricted access to high-risk ports, it could expose resources to unauthorized access, increasing the risk of exploitation and potential data breaches.
 RelatedUrl: https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-19
 Remediation:

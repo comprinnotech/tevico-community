@@ -9,7 +9,7 @@ Severity: medium
 ResourceType: AwsEc2NetworkAcl
 Description: Ensure no Network ACLs allow ingress from 0.0.0.0/0 to any port
 Risk: Even with a perimeter firewall in place, open network ACLs can allow any user or malware with VPC access to scan for well-known and sensitive ports, potentially gaining access to instances.
-RelatedUrl: https://tevi.co
+RelatedUrl: https://docs.aws.amazon.com/vpc/latest/userguide/custom-network-acl.html
 Remediation:
   Code:
     CLI: ""

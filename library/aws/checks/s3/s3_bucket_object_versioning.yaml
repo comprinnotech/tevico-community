@@ -11,7 +11,7 @@ Severity: medium
 ResourceType: "AwsS3Bucket"
 Description: "Ensure S3 buckets have object versioning enabled to protect against accidental deletion and provide data recovery capabilities."
 Risk: "Without versioning, accidentally deleted or overwritten objects cannot be recovered, potentially resulting in data loss. Versioning helps protect against both unintended user actions and application failures."
-RelatedUrl: ""
+RelatedUrl: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/manage-versioning-examples.html"
 Remediation:
   Code:
     CLI: "aws s3api put-bucket-versioning --bucket my-bucket-name --versioning-configuration Status=Enabled"
