@@ -35,7 +35,8 @@ sections:
           - ec2_microsoft_sql_server_end_of_support
           - ssm_managed_compliant_patching
           - ssm_patch_manager_enabled
-
+          - apigateway_unused_stages
+          
   - name: Security
     description: |
       The Security pillar includes the ability to protect information, systems, and assets while delivering business
@@ -104,6 +105,7 @@ sections:
           - ec2_imdsv2_enabled
           - lambda_function_no_secrets_in_code
           - lambda_function_no_secrets_in_variables
+          - sqs_kms_encryption_at_rest_enabled
       - name: Network Security
         description: |
           The Network Security section includes the ability to protect network traffic and resources from unauthorized

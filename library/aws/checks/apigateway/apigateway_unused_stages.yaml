@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: apigateway_unused_stages
+CheckTitle: Identify unused Amazon API Gateway REST API stages
+CheckType: [Cost Optimization, Operational Excellence]
+ServiceName: apigateway
+SubServiceName: ""
+ResourceIdTemplate: arn:partition:apigateway:region::/restapis/api-id/stages/stage-name
+Severity: low
+ResourceType: AwsApiGatewayStage
+Description: This check identifies Amazon API Gateway REST API stages that have had no request activity in the past 30 days. These stages may be legacy, unused, or forgotten deployments that contribute to maintenance overhead or additional costs if features like caching are enabled.
+Risk: Leaving unused API Gateway stages deployed can lead to unnecessary CloudWatch log generation, enabled caching costs, and increased attack surface if publicly accessible.
+RelatedUrl: "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html"
+Remediation:
+  Code:
+    CLI: aws apigateway delete-stage --rest-api-id <api_id> --stage-name <stage_name>
+    NativeIaC: ""
+    Other: ""
+    Terraform: ""
+  Recommendation:
+    Text: Review API Gateway stages with zero invocations over the past 30 days and remove them if no longer needed.
+    Url: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-stages.html
+Categories: [Cost Optimization, Operational Excellence]
+DependsOn: []
+RelatedTo: []
+Notes: Identifying and removing unused stages improves cost efficiency and infrastructure hygiene.

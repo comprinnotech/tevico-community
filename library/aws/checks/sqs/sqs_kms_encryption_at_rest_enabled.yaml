@@ -1,0 +1,25 @@
+Provider: aws
+CheckID: sqs_kms_encryption_at_rest_enabled
+CheckTitle: Ensure there are no SQS Queues unencrypted
+CheckType: []
+ServiceName: sqs
+SubServiceName: ""
+ResourceIdTemplate: arn:aws:sqs:region:account-id:queue-name
+Severity: high
+ResourceType: AwsSqsQueue
+Description: Ensure all SQS queues are encrypted using KMS to protect sensitive data at rest.
+Risk: If not enabled, sensitive information in the SQS queue is not protected at rest and may be exposed.
+RelatedUrl: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html
+Remediation:
+  Code:
+    CLI: aws sqs set-queue-attributes --queue-url <QUEUE_URL> --attributes KmsMasterKeyId=<KEY_ID>
+    Other: https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/encryption.html
+    Terraform: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue#kms_master_key_id
+  Recommendation:
+    Text: Use Amazon SQS with AWS KMS for encryption at rest.
+    Url: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html
+Categories:
+  - encryption
+DependsOn: []
+RelatedTo: []
+Notes: ""
