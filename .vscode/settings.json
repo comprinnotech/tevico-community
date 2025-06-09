@@ -1,5 +1,14 @@
 {
     "python.analysis.autoImportCompletions": true,
     "python.analysis.typeCheckingMode": "basic",
-    "sequence.replaceSelection": true
+    "sequence.replaceSelection": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./library",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }
