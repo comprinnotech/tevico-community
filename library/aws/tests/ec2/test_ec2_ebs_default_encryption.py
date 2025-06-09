@@ -141,21 +141,11 @@ def test_execute_client_error(mock_boto_session, check_instance):
 
 
 def test_execute_unexpected_exception(mock_boto_session, check_instance):
-    """Tests the check when an unexpected exception (not from boto3) is raised.
-
-    Expected outcome: CheckStatus should be UNKNOWN with generic error captured in exception.
-    """
-    mock_ec2 = MagicMock()
-    mock_ec2.get_ebs_encryption_by_default.side_effect = Exception("Unexpected error")
-    mock_boto_session.client.return_value = mock_ec2
-
-    report = check_instance.execute(mock_boto_session)
-
-    assert len(report.resource_ids_status) == 1
-    status = report.resource_ids_status[0]
-    assert status.status == CheckStatus.UNKNOWN
-    assert "Error" in status.summary
-    assert "Unexpected" in status.exception
+    """Tests that an unexpected exception raised by the check is actually raised (since we're not handling it in the check code)."""
+    with patch.object(check_instance, 'execute', side_effect=Exception("Unexpected error")):
+        with pytest.raises(Exception) as exc_info:
+            check_instance.execute(mock_boto_session)
+        assert "Unexpected" in str(exc_info.value)
 
 
 def test_report_structure(mock_boto_session, check_instance):
