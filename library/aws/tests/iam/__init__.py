@@ -1,3 +1,3 @@
 """
-Test package for IAM checks.
+Test package for AWS checks.
 """
