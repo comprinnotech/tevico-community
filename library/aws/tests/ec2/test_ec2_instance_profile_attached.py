@@ -30,7 +30,7 @@ class TestEc2InstanceProfileAttached:
 
         metadata = CheckMetadata(
             Provider="AWS",
-            CheckID="EC2-001",
+            CheckID="ec2_instance_profile_attached",
             CheckTitle="EC2 Instance Profile Attached",
             CheckType=["Security"],
             ServiceName="EC2",
