@@ -1,3 +1,1 @@
-"""
-Test package for IAM checks.
-"""
+"""IAM tests package for Tevico."""
