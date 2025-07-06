@@ -17,33 +17,37 @@ class TestEc2InstanceManagedBySSM:
         """Set up test method."""
         metadata = CheckMetadata(
             Provider="aws",
-            CheckID="iam_password_policy_lowercase",
-            CheckTitle="IAM Password Policy Requires Lowercase Characters",
-            CheckType=["security"],
-            ServiceName="iam",
-            SubServiceName="password-policy",
-            ResourceIdTemplate="arn:aws:iam::{account_id}:password-policy",
+            CheckID="ec2_instance_managed_by_ssm",
+            CheckTitle="EC2 Instance Managed by SSM",
+            CheckType=["security", "operations"],
+            ServiceName="ec2",
+            SubServiceName="instance",
+            ResourceIdTemplate="arn:aws:ec2:{region}:{account_id}:instance/{instance_id}",
             Severity="medium",
-            ResourceType="iam-password-policy",
-            Risk="Passwords without lowercase characters are easier to guess",
-            RelatedUrl="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html",
+            ResourceType="ec2-instance",
+            Risk="Unmanaged EC2 instances cannot be centrally monitored, patched, or controlled via Systems Manager",
+            RelatedUrl="https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up.html",
             Remediation=Remediation(
                 Code=RemediationCode(
-                    CLI="aws iam update-account-password-policy --require-lowercase-characters",
+                    CLI="aws ssm create-activation --default-instance-name \"ManagedInstance\" --iam-role \"AmazonSSMRoleForInstancesQuickSetup\" --registration-limit 10 --region {region}",
                     Terraform=(
-                        'resource "aws_iam_account_password_policy" "strict" {\n'
-                        '  require_lowercase_characters = true\n}'
+                        'resource "aws_ssm_activation" "example" {\n'
+                        '  name               = "ssm_activation"\n'
+                        '  description        = "SSM activation for EC2 instances"\n'
+                        '  iam_role           = aws_iam_role.ssm_role.name\n'
+                        '  registration_limit = 10\n'
+                        '}'
                     ),
                     NativeIaC=None,
                     Other=None
                 ),
                 Recommendation=RemediationRecommendation(
-                    Text="Configure IAM password policy to require at least one lowercase letter",
-                    Url="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html"
+                    Text="Install the SSM agent on your EC2 instances and ensure proper IAM permissions are configured",
+                    Url="https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html"
                 )
             ),
-            Description="Checks if the IAM password policy requires at least one lowercase letter",
-            Categories=["security", "compliance"]
+            Description="Checks if EC2 instances are managed by AWS Systems Manager",
+            Categories=["security", "operations", "management"]
         )
 
         self.check = ec2_instance_managed_by_ssm(metadata)
