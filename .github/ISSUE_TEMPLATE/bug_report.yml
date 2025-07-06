@@ -4,108 +4,53 @@ labels: ["bug", "status/needs-triage"]
 
 body:
   - type: textarea
-    id: reproduce
+    id: bug-description
     attributes:
-      label: Steps to Reproduce
-      description: Provide the steps to reproduce the issue.
-      placeholder: |-
-        1. What command or action are you running?
-        2. What environment setup do you have (e.g., single account, multi-account, organizations)?
-        3. Cloud provider or platform details.
-        4. See the error.
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected Behavior
-      description: Describe the expected outcome clearly.
-    validations:
-      required: true
-
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual Result with Screenshots or Logs
-      description: If applicable, include screenshots or logs to illustrate the issue.
-      placeholder: |-
-        - Run the following command for logs:
-          ```
-          tevico <your arguments> --log-level ERROR --log-file $(date +%F)_error.log
-          ```
-        - Attach the generated log file.
+      label: Bug Description
+      description: Please describe the bug and steps to reproduce it.
+      placeholder: |
+        1. What command or action were you running?
+        2. What happened?
+        3. What did you expect to happen?
     validations:
       required: true
 
   - type: dropdown
     id: installation-method
     attributes:
-      label: How did you install Tevico Community?
+      label: Installation Method
       options:
-        - Cloning the repository from GitHub (`git clone`)
-        - From pip package (`pip install tevico`)
-        - Docker (`docker pull comprinnotech/tevico-community`)
-        - Other (please specify)
+        - Git clone
+        - Pip package
+        - Docker
+        - Other (please specify in additional context)
     validations:
       required: true
 
   - type: textarea
-    id: environment
+    id: environment-info
     attributes:
-      label: Environment Resource
-      description: Where are you running Tevico Community?
-      placeholder: |-
-        1. EC2 instance
-        2. Docker container (local or remote)
-        3. Kubernetes/EKS
-        4. Cloud9
-        5. Fargate task
-        6. CodeBuild
-        7. Workstation
-        8. Other (please specify)
+      label: Environment Information
+      description: Tell us about your environment
+      placeholder: |
+        - Tevico version: (run `tevico --version`)
+        - Operating system:
+        - Where you're running Tevico (EC2, local, etc):
     validations:
       required: true
-
+      
   - type: textarea
-    id: os
+    id: logs
     attributes:
-      label: Operating System
-      description: Which operating system are you using?
-      placeholder: |-
-        1. Amazon Linux 2
-        2. MacOS
-        3. Alpine Linux
-        4. Windows
-        5. Other (please specify)
+      label: Relevant Logs/Screenshots
+      description: If applicable, include logs or screenshots of the issue
     validations:
-      required: true
-
-  - type: input
-    id: tevico-version
-    attributes:
-      label: Tevico Community Version
-      description: Provide the version of Tevico Community you are using.
-      placeholder: |-
-        tevico --version
-    validations:
-      required: true
-
-  - type: input
-    id: pip-version
-    attributes:
-      label: Pip Version
-      description: Provide the version of pip used to install Tevico Community.
-      placeholder: |-
-        pip --version
-    validations:
-      required: true
-
+      required: false
+      
   - type: textarea
     id: additional-context
     attributes:
       label: Additional Context
-      description: Include any other relevant information or context.
-      placeholder: Add additional information here.
+      description: Any other information that might help us solve the issue
     validations:
       required: false

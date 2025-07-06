@@ -1,17 +1,14 @@
 name: 💡 Feature Request
-description: Suggest an idea or enhancement for `tevico-community`
+description: Suggest an idea for tevico-community
 labels: ["feature-request", "status/needs-triage"]
 
 body:
   - type: textarea
     id: problem
     attributes:
-      label: New Feature Motivation
-      description: Is your feature request related to a problem? Please describe the problem and how it impacts you.
-      placeholder: |-
-        1. Provide a clear and concise description of the problem.
-           Ex. "I'm always frustrated when..."
-        2. Explain how this issue affects your workflow or usage of `tevico-community`.
+      label: Problem Description
+      description: What problem does this feature solve?
+      placeholder: Describe the issue you're facing that led to this request.
     validations:
       required: true
 
@@ -19,21 +16,8 @@ body:
     id: solution
     attributes:
       label: Proposed Solution
-      description: Describe the feature or enhancement you'd like to see in `tevico-community`.
-      placeholder: |-
-        1. What do you want to happen?
-        2. Describe how the feature should behave or interact.
-    validations:
-      required: true
-
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives Considered
-      description: Describe any alternative solutions or features you have considered.
-      placeholder: |-
-        1. What other options have you explored?
-        2. Why do you think this feature is better than the alternatives?
+      description: What would you like to see implemented?
+      placeholder: Describe your proposed feature or enhancement.
     validations:
       required: true
 
@@ -41,9 +25,7 @@ body:
     id: context
     attributes:
       label: Additional Context
-      description: Add any other context, use cases, or screenshots that might help explain the feature request.
-      placeholder: |-
-        1. Provide any additional information here.
-        2. Include screenshots, diagrams, or use cases if applicable.
+      description: Any other details that might help explain your request.
+      placeholder: Add screenshots, alternatives considered, or other relevant information.
     validations:
       required: false
