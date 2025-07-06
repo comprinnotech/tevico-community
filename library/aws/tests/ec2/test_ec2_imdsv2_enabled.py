@@ -8,7 +8,7 @@ DATE: 09-06-2025
 
 import pytest
 from unittest.mock import MagicMock
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
 
 from library.aws.checks.ec2.ec2_imdsv2_enabled import ec2_imdsv2_enabled
 from tevico.engine.entities.report.check_model import (
@@ -19,6 +19,13 @@ from tevico.engine.entities.report.check_model import (
 
 class TestEc2Imdsv2Enabled:
     """Test cases for EC2 IMDSv2 enforcement check."""
+
+    # Constants for instance IDs to improve readability and reuse
+    INSTANCE_ID_COMPLIANT = "i-1234567890abcdef0"
+    INSTANCE_ID_NON_COMPLIANT = "i-abcdef0123456789"
+    INSTANCE_ID_NO_METADATA = "i-no-meta-options"
+    INSTANCE_ID_TERMINATED = "i-terminated"
+    INSTANCE_ID_PENDING = "i-pending"
 
     def setup_method(self):
         """Set up test method."""
@@ -63,7 +70,7 @@ class TestEc2Imdsv2Enabled:
                     {
                         "Instances": [
                             {
-                                "InstanceId": "i-1234567890abcdef0",
+                                "InstanceId": self.INSTANCE_ID_COMPLIANT,
                                 "State": {"Name": "running"},
                                 "MetadataOptions": {
                                     "HttpTokens": "required",
@@ -77,7 +84,7 @@ class TestEc2Imdsv2Enabled:
         ]
 
         report = self.check.execute(self.mock_session)
-        assert report.status == CheckStatus.PASSED or all(res.status == CheckStatus.PASSED for res in report.resource_ids_status)
+        # The implementation doesn't set report.status for this case
         assert len(report.resource_ids_status) == 1
         assert report.resource_ids_status[0].status == CheckStatus.PASSED
         assert "has IMDSv2 fully enabled" in (report.resource_ids_status[0].summary or "")
@@ -90,7 +97,7 @@ class TestEc2Imdsv2Enabled:
                     {
                         "Instances": [
                             {
-                                "InstanceId": "i-abcdef0123456789",
+                                "InstanceId": self.INSTANCE_ID_NON_COMPLIANT,
                                 "State": {"Name": "running"},
                                 "MetadataOptions": {
                                     "HttpTokens": "optional",
@@ -104,7 +111,7 @@ class TestEc2Imdsv2Enabled:
         ]
 
         report = self.check.execute(self.mock_session)
-        assert report.status == CheckStatus.FAILED or any(res.status == CheckStatus.FAILED for res in report.resource_ids_status)
+        # The implementation doesn't set report.status for this case
         assert len(report.resource_ids_status) == 1
         assert report.resource_ids_status[0].status == CheckStatus.FAILED
         assert "does NOT fully enforce IMDSv2" in (report.resource_ids_status[0].summary or "")
@@ -117,7 +124,7 @@ class TestEc2Imdsv2Enabled:
                     {
                         "Instances": [
                             {
-                                "InstanceId": "i-no-meta-options",
+                                "InstanceId": self.INSTANCE_ID_NO_METADATA,
                                 "State": {"Name": "running"}
                             }
                         ]
@@ -127,6 +134,7 @@ class TestEc2Imdsv2Enabled:
         ]
 
         report = self.check.execute(self.mock_session)
+        # The implementation doesn't set report.status for this case
         assert len(report.resource_ids_status) == 1
         assert report.resource_ids_status[0].status == CheckStatus.FAILED
         assert "does NOT fully enforce IMDSv2" in (report.resource_ids_status[0].summary or "")
@@ -156,3 +164,82 @@ class TestEc2Imdsv2Enabled:
         assert len(report.resource_ids_status) == 1
         assert report.resource_ids_status[0].status == CheckStatus.UNKNOWN
         assert "Error retrieving EC2 metadata service configuration" in (report.resource_ids_status[0].summary or "")
+    def test_boto_core_error(self):
+        """Test BotoCoreError is handled properly."""
+        from botocore.exceptions import EndpointConnectionError
+        self.mock_client.get_paginator.side_effect = EndpointConnectionError(endpoint_url="https://ec2.amazonaws.com")
+
+        report = self.check.execute(self.mock_session)
+        assert report.status == CheckStatus.UNKNOWN
+        assert len(report.resource_ids_status) == 1
+        assert report.resource_ids_status[0].status == CheckStatus.UNKNOWN
+        assert "Error retrieving EC2 metadata service configuration" in (report.resource_ids_status[0].summary or "")
+        
+    def test_mixed_instance_states(self):
+        """Test with running, pending, and terminated instances to confirm filtering logic."""
+        self.mock_client.get_paginator.return_value.paginate.return_value = [
+            {
+                "Reservations": [
+                    {
+                        "Instances": [
+                            {
+                                "InstanceId": self.INSTANCE_ID_COMPLIANT,
+                                "State": {"Name": "running"},
+                                "MetadataOptions": {
+                                    "HttpTokens": "required",
+                                    "HttpEndpoint": "enabled"
+                                }
+                            },
+                            {
+                                "InstanceId": self.INSTANCE_ID_NON_COMPLIANT,
+                                "State": {"Name": "running"},
+                                "MetadataOptions": {
+                                    "HttpTokens": "optional",
+                                    "HttpEndpoint": "enabled"
+                                }
+                            },
+                            {
+                                "InstanceId": self.INSTANCE_ID_TERMINATED,
+                                "State": {"Name": "terminated"},
+                                "MetadataOptions": {
+                                    "HttpTokens": "optional",
+                                    "HttpEndpoint": "enabled"
+                                }
+                            },
+                            {
+                                "InstanceId": self.INSTANCE_ID_PENDING,
+                                "State": {"Name": "pending"},
+                                "MetadataOptions": {
+                                    "HttpTokens": "optional",
+                                    "HttpEndpoint": "enabled"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+
+        report = self.check.execute(self.mock_session)
+        # The implementation doesn't set report.status for this case
+        assert len(report.resource_ids_status) == 2  # Only running instances should be checked
+        
+        # Create a map of instance IDs to their statuses for easier assertion
+        status_map = {res.resource.name: res.status for res in report.resource_ids_status}
+        
+        # Assert that only running instances are included
+        assert self.INSTANCE_ID_COMPLIANT in status_map
+        assert self.INSTANCE_ID_NON_COMPLIANT in status_map
+        assert self.INSTANCE_ID_TERMINATED not in status_map
+        assert self.INSTANCE_ID_PENDING not in status_map
+        
+        # Assert the status of each instance
+        assert status_map[self.INSTANCE_ID_COMPLIANT] == CheckStatus.PASSED
+        assert status_map[self.INSTANCE_ID_NON_COMPLIANT] == CheckStatus.FAILED
+        
+        # Assert summary messages
+        for res in report.resource_ids_status:
+            if res.resource.name == self.INSTANCE_ID_COMPLIANT:
+                assert "has IMDSv2 fully enabled" in (res.summary or "")
+            elif res.resource.name == self.INSTANCE_ID_NON_COMPLIANT:
+                assert "does NOT fully enforce IMDSv2" in (res.summary or "")
