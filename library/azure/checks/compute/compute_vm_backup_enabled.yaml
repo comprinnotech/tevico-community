@@ -1,0 +1,71 @@
+name: Azure VM Backup Enabled Check
+
+description: |
+  This check verifies that Azure Virtual Machines have backup enabled through Azure Backup service.
+  Regular backups are essential for data protection and disaster recovery compliance.
+
+service: compute
+subservice: virtual_machines
+
+risk: HIGH
+muted: false
+
+metadata:
+  Provider: Azure
+  Category: Reliability
+  Service: Virtual Machines
+  Resource: VM Backup
+  Severity: High
+  RequiredPermissions:
+    - Microsoft.Compute/virtualMachines/read
+    - Microsoft.RecoveryServices/vaults/read
+    - Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems/read
+  Documentation:
+    - https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction
+  Tags:
+    - backup
+    - disaster-recovery
+    - compliance
+    - reliability
+
+remediation: |
+  To enable backup for Azure VMs:
+  
+  1. Using Azure Portal:
+     - Navigate to Virtual Machines
+     - Select the VM
+     - Go to Operations > Backup
+     - Configure backup policy and Recovery Services Vault
+  
+  2. Using Azure CLI:
+     ```bash
+     # Create Recovery Services Vault
+     az backup vault create \
+       --resource-group myResourceGroup \
+       --name myRecoveryServicesVault \
+       --location eastus
+     
+     # Enable backup for VM
+     az backup protection enable-for-vm \
+       --resource-group myResourceGroup \
+       --vault-name myRecoveryServicesVault \
+       --vm myVM \
+       --policy-name DefaultPolicy
+     ```
+  
+  3. Using PowerShell:
+     ```powershell
+     # Get Recovery Services Vault
+     $vault = Get-AzRecoveryServicesVault -ResourceGroupName "myResourceGroup" -Name "myRecoveryServicesVault"
+     
+     # Enable backup
+     Enable-AzRecoveryServicesBackupProtection \
+       -ResourceGroupName "myResourceGroup" \
+       -Name "myVM" \
+       -Policy $policy \
+       -Vault $vault
+     ```
+
+references:
+  - https://docs.microsoft.com/en-us/azure/backup/backup-azure-arm-vms-prepare
+  - https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm

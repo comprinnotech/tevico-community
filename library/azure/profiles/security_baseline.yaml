@@ -1,0 +1,24 @@
+name: Azure Security Baseline Profile
+
+description: |
+  This profile focuses on essential security checks for Azure environments.
+  It includes checks for encryption, access controls, and security configurations.
+
+version: 1.0.0
+
+include_checks:
+  - vm_managed_disk_encryption
+  - storage_account_secure_transfer
+  - key_vault_soft_delete_enabled
+  - storage_account_public_access_disabled
+  - vm_disk_encryption_enabled
+
+exclude_checks: []
+
+metadata:
+  author: Tevico Community
+  category: Security
+  compliance_frameworks:
+    - Azure Security Benchmark
+    - CIS Azure Foundations
+  last_updated: "2025-01-10"

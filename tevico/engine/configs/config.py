@@ -35,6 +35,7 @@ class TevicoConfig(BaseModel):
     csp: Optional[str] = 'aws'
     profile: Optional[str] = None
     aws_config: Optional[Dict[str, str]] = None
+    azure_config: Optional[Dict[str, str]] = None
     create_params: Optional[CreateParams] = None
     thread_workers: Optional[int] = 5
 
@@ -58,6 +59,15 @@ class ConfigUtils():
                 aws_config[key] = value
             
             config.aws_config = aws_config
+        
+        if 'azure_config' in args and args.azure_config is not None:
+            azure_config = {}
+
+            for key_value in args.azure_config.split(','):
+                key, value = key_value.split(':')
+                azure_config[key] = value
+            
+            config.azure_config = azure_config
             
         
         if args.command == CommandsEnum.run.value:
@@ -98,6 +108,7 @@ class ConfigUtils():
         run_parser = subparser.add_parser('run')
         run_parser.add_argument('--profile', help='The profile to run the checks against.')
         run_parser.add_argument('--aws_config', help='The AWS configuration to use for the checks.')
+        run_parser.add_argument('--azure_config', help='The Azure configuration to use for the checks.')
         run_parser.add_argument('--thread_workers', help='The number of workers to use for running the checks.', type=int)
 
         create_parser = subparser.add_parser('create')
