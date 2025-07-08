@@ -6,6 +6,7 @@ import pytest
 from unittest.mock import MagicMock
 from botocore.exceptions import ClientError
 
+# Importing the check to test and supporting entities
 from library.aws.checks.opensearch.opensearch_service_domains_cloudwatch_logging_enabled import opensearch_service_domains_cloudwatch_logging_enabled
 from tevico.engine.entities.report.check_model import CheckStatus, CheckMetadata, AwsResource, GeneralResource
 from tevico.engine.entities.report.check_model import Remediation, RemediationCode, RemediationRecommendation
@@ -15,7 +16,8 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
     """Test cases for CloudWatch logging enabled check on OpenSearch domains."""
 
     def setup_method(self):
-        """Set up test method."""
+        """Set up shared test context: metadata, mock session, and mock client."""
+        # Define check metadata used by the check under test
         metadata = CheckMetadata(
             Provider="aws",
             CheckID="opensearch_service_domains_cloudwatch_logging_enabled",
@@ -43,7 +45,10 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
             Description="Checks whether OpenSearch domains have CloudWatch logging enabled.",
             Categories=["observability", "compliance"]
         )
+        # Initialize the check with mock metadata
         self.check = opensearch_service_domains_cloudwatch_logging_enabled(metadata)
+
+        # Setup mocked AWS session and client
         self.mock_session = MagicMock()
         self.mock_client = MagicMock()
         self.mock_session.client.return_value = self.mock_client
@@ -54,12 +59,14 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
 
         report = self.check.execute(self.mock_session)
 
+        # Expect NOT_APPLICABLE when no domains are returned
         assert report.status == CheckStatus.NOT_APPLICABLE
         assert report.resource_ids_status[0].status == CheckStatus.NOT_APPLICABLE
         assert "No OpenSearch domains found" in (report.resource_ids_status[0].summary or "")
 
     def test_domain_with_logging_enabled(self):
         """Test domain with logging enabled."""
+        # Simulate one domain with SEARCH_SLOW_LOGS enabled
         self.mock_client.list_domain_names.return_value = {"DomainNames": [{"DomainName": "domain1"}]}
         self.mock_client.describe_domain.return_value = {
             "DomainStatus": {
@@ -81,6 +88,7 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
 
     def test_domain_with_logging_disabled(self):
         """Test domain with all logging disabled."""
+        # Simulate one domain with all logs disabled
         self.mock_client.list_domain_names.return_value = {"DomainNames": [{"DomainName": "domain1"}]}
         self.mock_client.describe_domain.return_value = {
             "DomainStatus": {
@@ -101,7 +109,8 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
         assert "Logging not enabled" in (res_status.summary or "")
 
     def test_error_during_list_domains(self):
-        """Test error when listing domains."""
+        """Test error when listing domains (e.g., due to lack of permissions)."""
+        # Simulate AccessDenied exception
         self.mock_client.list_domain_names.side_effect = ClientError(
             {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}},
             "ListDomainNames"
@@ -115,7 +124,7 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
         assert "Error retrieving OpenSearch domains" in (res_status.summary or "")
 
     def test_error_during_describe_domain(self):
-        """Test error when describing domain."""
+        """Test error when describing a domain (generic exception)."""
         self.mock_client.list_domain_names.return_value = {"DomainNames": [{"DomainName": "domain1"}]}
         self.mock_client.describe_domain.side_effect = Exception("Describe failure")
 
@@ -125,8 +134,10 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
         res_status = report.resource_ids_status[0]
         assert res_status.status == CheckStatus.UNKNOWN
         assert "Error retrieving logging status" in (res_status.summary or "")
+
     def test_no_such_entity_exception_during_describe(self):
         """Test specific handling of NoSuchEntityException during describe_domain."""
+        # Simulate NoSuchEntity error from AWS
         self.mock_client.list_domain_names.return_value = {"DomainNames": [{"DomainName": "domain1"}]}
         self.mock_client.describe_domain.side_effect = ClientError(
             {
