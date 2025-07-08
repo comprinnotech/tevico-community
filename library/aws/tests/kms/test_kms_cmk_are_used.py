@@ -1,4 +1,5 @@
 import pytest
+from botocore.exceptions import ClientError
 from unittest.mock import MagicMock
 from tevico.engine.entities.report.check_model import (
     CheckStatus,
@@ -59,8 +60,11 @@ class TestKMSCMKsAreUsed:
         }
 
         report = self.check.execute(self.mock_session)
+
         assert report.status == CheckStatus.PASSED
-        assert any(r.summary and "enabled" in r.summary.lower() for r in report.resource_ids_status)
+        assert len(report.resource_ids_status) == 1
+        assert "enabled" in report.resource_ids_status[0].summary.lower()
+        assert "key-123" in report.resource_ids_status[0].summary
 
     def test_disabled_customer_cmk_exists(self):
         self.mock_kms_client.get_paginator.return_value.paginate.return_value = [
@@ -76,8 +80,11 @@ class TestKMSCMKsAreUsed:
         }
 
         report = self.check.execute(self.mock_session)
+
         assert report.status == CheckStatus.FAILED
-        assert any(r.summary and "disabled" in r.summary.lower() for r in report.resource_ids_status)
+        assert len(report.resource_ids_status) == 1
+        assert "disabled" in report.resource_ids_status[0].summary.lower()
+        assert "key-456" in report.resource_ids_status[0].summary
 
     def test_no_customer_cmk_found(self):
         self.mock_kms_client.get_paginator.return_value.paginate.return_value = [
@@ -87,12 +94,13 @@ class TestKMSCMKsAreUsed:
             "KeyMetadata": {
                 "KeyId": "key-789",
                 "Arn": "arn:aws:kms:region:acct:key/key-789",
-                "KeyManager": "AWS",  # Not customer managed
+                "KeyManager": "AWS",
                 "KeyState": "Enabled"
             }
         }
 
         report = self.check.execute(self.mock_session)
+
         assert report.status == CheckStatus.FAILED
         assert len(report.resource_ids_status) == 0
 
@@ -100,5 +108,23 @@ class TestKMSCMKsAreUsed:
         self.mock_kms_client.get_paginator.side_effect = Exception("Simulated API failure")
 
         report = self.check.execute(self.mock_session)
+
         assert report.status == CheckStatus.FAILED
-        assert any(r.summary and "error fetching kms" in r.summary.lower() for r in report.resource_ids_status)
+        assert len(report.resource_ids_status) == 1
+        assert "error fetching kms keys" in report.resource_ids_status[0].summary.lower()
+
+    def test_describe_key_client_error(self):
+        self.mock_kms_client.get_paginator.return_value.paginate.return_value = [
+            {"Keys": [{"KeyId": "key-err"}]}
+        ]
+        self.mock_kms_client.describe_key.side_effect = ClientError(
+            error_response={"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+            operation_name="DescribeKey"
+        )
+
+        report = self.check.execute(self.mock_session)
+
+        assert report.status == CheckStatus.FAILED
+        assert len(report.resource_ids_status) == 1
+        assert "error fetching kms keys" in report.resource_ids_status[0].summary.lower()
+        assert "accessdenied" in report.resource_ids_status[0].summary.lower()
