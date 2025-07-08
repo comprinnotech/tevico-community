@@ -1,6 +1,13 @@
 import pytest
 from unittest.mock import MagicMock
-from tevico.engine.entities.report.check_model import CheckStatus, CheckMetadata, Remediation, RemediationCode, RemediationRecommendation
+from botocore.exceptions import ClientError
+from tevico.engine.entities.report.check_model import (
+    CheckStatus,
+    CheckMetadata,
+    Remediation,
+    RemediationCode,
+    RemediationRecommendation,
+)
 from library.aws.checks.inspector.inspector_ec2_scan_enabled import inspector_ec2_scan_enabled
 
 
@@ -27,11 +34,11 @@ class TestInspectorEC2ScanEnabled:
                 ),
                 Recommendation=RemediationRecommendation(
                     Text="Enable Inspector2 EC2 scanning.",
-                    Url="https://docs.aws.amazon.com/inspector/latest/user/ec2-scan.html"
-                )
+                    Url="https://docs.aws.amazon.com/inspector/latest/user/ec2-scan.html",
+                ),
             ),
             Description="Checks whether Inspector EC2 standard scan is enabled.",
-            Categories=["security", "compliance"]
+            Categories=["security", "compliance"],
         )
 
         self.check = inspector_ec2_scan_enabled(metadata)
@@ -41,20 +48,24 @@ class TestInspectorEC2ScanEnabled:
 
         self.mock_session.client.side_effect = lambda service: {
             "inspector2": self.mock_inspector_client,
-            "sts": self.mock_sts_client
+            "sts": self.mock_sts_client,
         }[service]
 
-        self.mock_sts_client.get_caller_identity.return_value = {"Account": "123456789012"}
+        self.mock_sts_client.get_caller_identity.return_value = {
+            "Account": "123456789012"
+        }
 
     def set_inspector_response(self, status):
         self.mock_inspector_client.batch_get_account_status.return_value = {
-            "accounts": [{
-                "resourceState": {
-                    "ec2": {
-                        "status": status
+            "accounts": [
+                {
+                    "resourceState": {
+                        "ec2": {
+                            "status": status
+                        }
                     }
                 }
-            }]
+            ]
         }
 
     def test_ec2_scan_enabled(self):
@@ -62,33 +73,56 @@ class TestInspectorEC2ScanEnabled:
         report = self.check.execute(self.mock_session)
 
         assert report.status == CheckStatus.PASSED
-        assert any(r.summary is not None and "enabled" in r.summary.lower() for r in report.resource_ids_status)
+        assert any(r.summary and "enabled" in r.summary.lower() for r in report.resource_ids_status)
 
     def test_ec2_scan_disabled(self):
         self.set_inspector_response("DISABLED")
         report = self.check.execute(self.mock_session)
 
         assert report.status == CheckStatus.FAILED
-        assert any(r.summary is not None and "not enabled" in r.summary.lower() for r in report.resource_ids_status)
+        assert any(r.summary and "not enabled" in r.summary.lower() for r in report.resource_ids_status)
 
     def test_ec2_scan_suspended(self):
         self.set_inspector_response("SUSPENDED")
         report = self.check.execute(self.mock_session)
 
         assert report.status == CheckStatus.FAILED
-        assert any(r.summary is not None and "suspended" in r.summary.lower() for r in report.resource_ids_status)
+        assert any(r.summary and "suspended" in r.summary.lower() for r in report.resource_ids_status)
 
     def test_ec2_scan_transitional(self):
         self.set_inspector_response("TRANSITIONING")
         report = self.check.execute(self.mock_session)
 
         assert report.status == CheckStatus.UNKNOWN
-        assert any(r.summary is not None and "transitional" in r.summary.lower() for r in report.resource_ids_status)
+        assert any(r.summary and "transitional" in r.summary.lower() for r in report.resource_ids_status)
 
     def test_api_failure(self):
         self.mock_inspector_client.batch_get_account_status.side_effect = Exception("Simulated API failure")
-
         report = self.check.execute(self.mock_session)
 
         assert report.status == CheckStatus.UNKNOWN
-        assert any(r.summary is not None and "error checking" in r.summary.lower() for r in report.resource_ids_status)
+        assert any("error checking" in r.summary.lower() for r in report.resource_ids_status)
+
+    def test_ec2_scan_status_missing(self):
+        """Test when 'ec2' key is completely missing from resourceState."""
+        self.mock_inspector_client.batch_get_account_status.return_value = {
+            "accounts": [{"resourceState": {}}]  # ec2 key missing
+        }
+        report = self.check.execute(self.mock_session)
+
+        assert report.status == CheckStatus.UNKNOWN
+        assert any(
+            "transitional" in r.summary.lower() or r.status == CheckStatus.UNKNOWN
+            for r in report.resource_ids_status
+        )
+
+    def test_client_error_handling(self):
+        """Test AWS ClientError (e.g., access denied)."""
+        self.mock_inspector_client.batch_get_account_status.side_effect = ClientError(
+            error_response={"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
+            operation_name="BatchGetAccountStatus"
+        )
+        report = self.check.execute(self.mock_session)
+
+        assert report.status == CheckStatus.UNKNOWN
+        assert any("access denied" in r.summary.lower() for r in report.resource_ids_status)
