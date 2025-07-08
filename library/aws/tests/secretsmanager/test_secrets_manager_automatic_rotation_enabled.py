@@ -104,3 +104,4 @@ class TestSecretsManagerAutomaticRotation:
         assert report.status == CheckStatus.FAILED
         assert all(r.status == CheckStatus.FAILED for r in report.resource_ids_status)
         assert len(report.resource_ids_status) == 2
+        # TEMP TEST LINE — will remove after confirming Git works
