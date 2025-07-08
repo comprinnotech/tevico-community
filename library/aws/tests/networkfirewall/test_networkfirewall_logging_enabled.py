@@ -1,6 +1,13 @@
 import pytest
 from unittest.mock import MagicMock
-from tevico.engine.entities.report.check_model import CheckStatus, CheckMetadata, Remediation, RemediationCode, RemediationRecommendation
+from botocore.exceptions import ClientError
+from tevico.engine.entities.report.check_model import (
+    CheckStatus,
+    CheckMetadata,
+    Remediation,
+    RemediationCode,
+    RemediationRecommendation,
+)
 from library.aws.checks.networkfirewall.networkfirewall_logging_enabled import networkfirewall_logging_enabled
 
 
@@ -106,4 +113,42 @@ class TestNetworkFirewallLoggingEnabled:
 
         assert report.status == CheckStatus.UNKNOWN
         assert report.resource_ids_status[0].status == CheckStatus.UNKNOWN
-        assert report.resource_ids_status[0].summary and "Error retrieving firewall list" in report.resource_ids_status[0].summary
+        assert "Error retrieving firewall list" in report.resource_ids_status[0].summary
+
+    def test_list_firewalls_client_error(self):
+        self.mock_client.list_firewalls.side_effect = ClientError(
+            error_response={"Error": {"Code": "AccessDeniedException", "Message": "You don't have permission"}},
+            operation_name="ListFirewalls"
+        )
+
+        report = self.check.execute(self.mock_session)
+
+        assert report.status == CheckStatus.UNKNOWN
+        assert report.resource_ids_status[0].status == CheckStatus.UNKNOWN
+        assert "Error retrieving firewall list" in report.resource_ids_status[0].summary
+        assert "accessdenied" in report.resource_ids_status[0].summary.lower()
+
+    def test_paginated_firewall_list(self):
+        # Simulate two pages of results
+        self.mock_client.list_firewalls.side_effect = [
+            {"Firewalls": [
+                {"FirewallName": "fw1", "FirewallArn": "arn:aws:network-firewall:region:acct:firewall/fw1"}
+            ], "NextToken": "page2"},
+            {"Firewalls": [
+                {"FirewallName": "fw2", "FirewallArn": "arn:aws:network-firewall:region:acct:firewall/fw2"}
+            ]}
+        ]
+
+        self.mock_client.describe_logging_configuration.side_effect = [
+            {"LoggingConfiguration": {"LogDestinationConfigs": []}},  # fw1 - disabled
+            {"LoggingConfiguration": {"LogDestinationConfigs": [{"LogType": "FLOW"}]}}  # fw2 - enabled
+        ]
+
+        report = self.check.execute(self.mock_session)
+
+        # One firewall failed, one passed → overall FAILED
+        assert report.status == CheckStatus.FAILED
+        assert len(report.resource_ids_status) == 2
+        summaries = [r.summary for r in report.resource_ids_status]
+        assert any("fw1" in s and "not enabled" in s for s in summaries)
+        assert any("fw2" in s and "enabled" in s for s in summaries)
