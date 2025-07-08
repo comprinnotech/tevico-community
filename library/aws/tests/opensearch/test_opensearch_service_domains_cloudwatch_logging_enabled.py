@@ -125,3 +125,22 @@ class TestOpenSearchServiceDomainsCloudWatchLoggingEnabled:
         res_status = report.resource_ids_status[0]
         assert res_status.status == CheckStatus.UNKNOWN
         assert "Error retrieving logging status" in (res_status.summary or "")
+    def test_no_such_entity_exception_during_describe(self):
+        """Test specific handling of NoSuchEntityException during describe_domain."""
+        self.mock_client.list_domain_names.return_value = {"DomainNames": [{"DomainName": "domain1"}]}
+        self.mock_client.describe_domain.side_effect = ClientError(
+            {
+                "Error": {
+                    "Code": "NoSuchEntity",
+                    "Message": "Domain does not exist"
+                }
+            },
+            "DescribeDomain"
+        )
+
+        report = self.check.execute(self.mock_session)
+
+        assert report.status == CheckStatus.UNKNOWN
+        res_status = report.resource_ids_status[0]
+        assert res_status.status == CheckStatus.UNKNOWN
+        assert "Domain does not exist" in (res_status.summary or "")
