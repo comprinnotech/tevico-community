@@ -2,4 +2,3 @@ name: Checks only meant for startups!
 description: |
   This section checks for the presence of a Well Architected Review in the AWS account and is only meant for startups.
 include_checks:
-  - guardduty_enabled_centralized

@@ -1,0 +1,100 @@
+site_name: Tevico Community
+theme:
+  name: material
+  font:
+    text: Hanken Grotesk
+    code: Roboto Mono
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - navigation.path
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - toc.follow
+  
+  # At a later time, we can define the light and the dark theme for the website
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Dark Mode
+      primary: white
+      accent: white
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Light Mode
+      primary: green
+      accent: white
+
+repo_url: https://github.com/comprinnotech/tevico-community
+repo_name: Tevico Community
+
+extra_css:
+  - overrides/custom.css
+
+nav:
+  - Get Started:
+    - Welcome to Tevico Community: index.md
+    - Auto Generate Report:
+      - CLI Command: auto-generate-report.md
+    - Manually Generate Report:
+      - Project Setup: project-setup.md
+      - CLI Params: cli-params.md
+    - Additional Resources:
+        - Help with Tevico Community: help.md
+        - Project Status: project-status.md
+        - Contribute to the Project: contribute.md
+    # - Generated Report:
+    #   - Overview: report/overview.md
+    #   - Structure: report/structure.md
+    #   - Example: report/example.md
+  - Developer:
+    - Get Started: developer/getting-started.md
+    - Tevico:
+      - Vision & Workflow: developer/concepts/workflow.md
+      - Entities & Concepts:
+          - Check: developer/entities/check.md
+          - Provider: developer/entities/provider.md
+          - Profile: developer/entities/profile.md
+          - Framework: developer/entities/framework.md
+          # - Channel: developer/entities/channel.md
+      - File Structure: developer/concepts/file-structure.md
+      - Standard Operating Procedure: developer/sop.md
+
+plugins:
+  - search
+  - open-in-new-tab
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+      title: Page contents
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+
+copyright: |
+  &copy; 2025 Comprinno Technologies Pvt. Ltd.
