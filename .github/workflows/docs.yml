@@ -1,0 +1,48 @@
+name: Deploy MKDocs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Deploy only if there are changes in the docs directory
+    # if: contains(join(github.event.commits.*.modified, ' '), 'docs/') || 
+    #     contains(join(github.event.commits.*.added, ' '), 'docs/') || 
+    #     contains(join(github.event.commits.*.removed, ' '), 'docs/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocs-open-in-new-tab
+
+      - name: Build documentation
+        run: mkdocs build --site-dir site
+
+      - name: Upload documentation artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+  deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    permissions: 
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

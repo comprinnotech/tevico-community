@@ -13,12 +13,7 @@ def parse_args() -> None:
     
     tevico_config = config_utils.get_config_from_args(args)
     
-    framework = FrameworkHandler(config=tevico_config)
-    
-    if args.command == CommandsEnum.run.value:
-        return framework.handle_run()
-    elif args.command == CommandsEnum.create.value:
-        return framework.handle_create()
-    
-    return framework.handle_run()
+    handler = FrameworkHandler(config=tevico_config)
+
+    return handler.execute_framework(command=args.command)
 
