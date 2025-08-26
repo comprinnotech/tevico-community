@@ -12,10 +12,26 @@ branch_name="${1:-"main"}"
 echo -ne 'Cloning the repository...\n'
 git clone -b $branch_name https://github.com/comprinnotech/tevico-community.git > /dev/null 2> /dev/null
 cd tevico-community
+git branch
 
 echo -ne 'Setting up virtual environment...\n'
 python3 -m venv .venv
 source .venv/bin/activate
+
+echo 'Upgrading pip and installing Poetry...'
+pip install --upgrade pip > /dev/null
+pip install poetry > /dev/null
+
+echo 'Resolving dependencies...'
+# if lock file is outdated, refresh it
+if ! poetry lock --check > /dev/null 2>&1; then
+  echo 'Lock file out of date → regenerating...'
+  poetry lock
+fi
+poetry install
+
+echo 'Dependencies installed successfully.'
+poetry --version
 
 echo 'Installing dependencies...\n'
 
